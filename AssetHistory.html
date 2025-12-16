@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Asset History - Gretex ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f3f4f6; }
+        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; }
+        .sidebar a { color: #aab8c5; padding: 15px 25px; display: block; text-decoration: none; }
+        .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
+        .main-content { margin-left: 250px; padding: 30px; }
+        
+        /* Table Styles */
+        .table-hover tbody tr { cursor: pointer; transition: 0.2s; }
+        .table-hover tbody tr:hover { background-color: #eef2ff; }
+        
+        /* Timeline Styles for Modal */
+        .timeline { border-left: 3px solid #4e73df; margin-left: 20px; padding-left: 20px; position: relative; }
+        .timeline-item { margin-bottom: 20px; position: relative; }
+        .timeline-item::before { content: ''; width: 12px; height: 12px; background: #4e73df; border-radius: 50%; position: absolute; left: -27px; top: 5px; }
+        .timeline-date { font-size: 0.85rem; color: #888; font-weight: bold; }
+        .timeline-content { background: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
+    </style>
+    <script>
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        if (!user) window.location.href = "index.html";
+    </script>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h4 class="text-center mb-4"><i class="fas fa-warehouse"></i> ERP System</h4>
+        <a href="dashboard.html"><i class="fas fa-home me-2"></i> Dashboard</a>
+        <a href="Emp.html"><i class="fas fa-users me-2"></i> Add Employee</a>
+        <a href="asset.html"><i class="fas fa-laptop-medical me-2"></i> Add Asset</a>
+        <a href="allocate.html"><i class="fas fa-hand-holding me-2"></i> Allocate Asset</a>
+        <a href="Return.html"><i class="fas fa-undo me-2"></i> Return Asset</a>
+        <a href="AssetHistory.html" class="active"><i class="fas fa-history me-2"></i> Asset History</a>
+        <a href="EmpHistory.html"><i class="fas fa-user-clock me-2"></i> Emp History</a>
+        <a href="stock.html"><i class="fas fa-exchange-alt me-2"></i> Stock In/Out</a>
+        <a href="data.html"><i class="fas fa-database me-2"></i> Import / Export</a>
+        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h3 class="mb-4">Asset History & Tracking</h3>
+
+        <div class="card p-3 mb-4 border-0 shadow-sm">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search Asset ID, Brand, Model..." onkeyup="filterTable()">
+                </div>
+                <div class="col-md-3">
+                    <select id="catFilter" class="form-select" onchange="filterTable()">
+                        <option value="">All Categories</option>
+                        <option value="Laptop">Laptop</option>
+                        <option value="Desktop">Desktop</option>
+                        <option value="Printer">Printer</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="statusFilter" class="form-select" onchange="filterTable()">
+                        <option value="">All Status</option>
+                        <option value="Available">Available</option>
+                        <option value="In-Use">In-Use</option>
+                        <option value="Repair">Repair</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" onclick="loadData()">Refresh</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0" id="assetTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Asset ID</th>
+                            <th>Category</th>
+                            <th>Brand / Model</th>
+                            <th>Serial No</th>
+                            <th>Current User</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="6" class="text-center p-4">Loading Data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="historyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitle">Asset Timeline</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="assetDetails" class="mb-4 p-3 bg-light rounded">
+                        </div>
+                    <h6 class="text-muted border-bottom pb-2">Lifecycle Timeline</h6>
+                    <div class="timeline" id="timelineContainer">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // *** UPDATE API URL ***
+        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+
+        let globalAssets = [];
+        let globalTxns = [];
+
+        window.onload = loadData;
+
+        function loadData() {
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "getHistoryData" })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    globalAssets = result.assets;
+                    globalTxns = result.transactions;
+                    renderTable(globalAssets);
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+            
+            // Asset Cols: 0=ID, 1=Cat, 2=Brand, 3=Model, 4=Serial, 11=AssignedTo, 12=Status
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="fw-bold text-primary">${row[0]}</td>
+                    <td><span class="badge bg-secondary">${row[1]}</span></td>
+                    <td>${row[2]} ${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td>${row[11] || 'Unassigned'}</td>
+                    <td>
+                        <span class="badge ${getStatusBadge(row[12])}">${row[12]}</span>
+                    </td>
+                `;
+                tr.onclick = () => showHistory(row[0]);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getStatusBadge(status) {
+            if(status === 'Available') return 'bg-success';
+            if(status === 'In-Use') return 'bg-warning text-dark';
+            if(status === 'Repair') return 'bg-danger';
+            return 'bg-secondary';
+        }
+
+        // --- FILTER LOGIC ---
+        function filterTable() {
+            const search = document.getElementById("searchInput").value.toLowerCase();
+            const cat = document.getElementById("catFilter").value;
+            const status = document.getElementById("statusFilter").value;
+
+            const filtered = globalAssets.filter(row => {
+                const textMatch = (row[0]+row[2]+row[3]+row[4]).toLowerCase().includes(search);
+                const catMatch = cat ? row[1] === cat : true;
+                const statusMatch = status ? row[12] === status : true;
+                return textMatch && catMatch && statusMatch;
+            });
+            renderTable(filtered);
+        }
+
+        // --- SHOW HISTORY (MODAL) ---
+        function showHistory(assetId) {
+            // 1. Find Asset Details
+            const asset = globalAssets.find(r => r[0] === assetId);
+            
+            // 2. Find Related Transactions (Col E is ItemID in Txn Sheet)
+            // Txn Cols: 1=Date, 2=Type, 6=Qty, 7=IssuedTo, 10=Remarks
+            const txns = globalTxns.filter(t => t[4] === assetId);
+
+            // 3. Populate Details
+            document.getElementById("modalTitle").innerText = `Timeline: ${assetId}`;
+            document.getElementById("assetDetails").innerHTML = `
+                <strong>${asset[2]} ${asset[3]}</strong> (${asset[1]})<br>
+                Serial: ${asset[4]} | Purchased: ${formatDate(asset[6])}<br>
+                Current Location: ${asset[10]} | Cost: ₹${asset[13]}
+            `;
+
+            // 4. Build Timeline
+            const container = document.getElementById("timelineContainer");
+            container.innerHTML = "";
+
+            // A. Creation Entry (From Master)
+            addTimelineItem(container, asset[6], "Asset Purchased / Added", "Initial Entry", "bg-primary");
+
+            // B. Transactions Loop
+            txns.forEach(t => {
+                let title = "";
+                let color = "bg-secondary";
+                
+                if(t[2] === "OUT") { title = `Allocated to ${t[7]}`; color = "bg-warning"; }
+                else if(t[2] === "IN") { title = `Returned by ${t[7]}`; color = "bg-success"; }
+                
+                addTimelineItem(container, t[1], title, t[10], color);
+            });
+
+            // Show Modal
+            new bootstrap.Modal(document.getElementById('historyModal')).show();
+        }
+
+        function addTimelineItem(container, dateStr, title, desc, colorClass) {
+            const div = document.createElement("div");
+            div.className = "timeline-item";
+            div.innerHTML = `
+                <div class="timeline-date">${formatDate(dateStr)}</div>
+                <div class="timeline-content shadow-sm">
+                    <strong class="${colorClass.replace('bg-', 'text-')}">${title}</strong>
+                    <p class="mb-0 small text-muted">${desc || ''}</p>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return "-";
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB'); // DD/MM/YYYY
+        }
+        
+        function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>
