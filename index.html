@@ -1,180 +1,52 @@
-<!-- V 1.0.0 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP System</title>
+    <title>Login - Gretex ERP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #f4f6f9; overflow-x: hidden; }
-        
-        /* LOGIN STYLES */
-        #login-section {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .login-card {
-            width: 100%;
-            max-width: 400px;
-            padding: 30px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        /* DASHBOARD & SIDEBAR STYLES */
-        #app-section { display: none; } /* Hidden by default */
-        
-        .sidebar {
-            height: 100vh;
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #343a40;
-            padding-top: 20px;
-            color: white;
-        }
-        .sidebar a {
-            padding: 15px 20px;
-            text-decoration: none;
-            font-size: 16px;
-            color: #d1d1d1;
-            display: block;
-            transition: 0.3s;
-        }
-        .sidebar a:hover, .sidebar a.active {
-            color: white;
-            background-color: #495057;
-            border-left: 4px solid #0d6efd;
-        }
-        .sidebar .brand {
-            font-size: 22px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 30px;
-            color: #fff;
-        }
-        
-        .main-content {
-            margin-left: 250px; /* Same as sidebar width */
-            padding: 20px;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .sidebar { width: 70px; }
-            .sidebar span { display: none; } /* Hide text on mobile */
-            .sidebar .brand { font-size: 14px; }
-            .main-content { margin-left: 70px; }
-        }
+        body { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { width: 100%; max-width: 400px; padding: 40px; background: white; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <div id="login-section">
-        <div class="login-card">
-            <h3 class="text-center mb-4">ERP Login</h3>
-            <form id="loginForm">
-                <div class="mb-3">
-                    <label>Email Address</label>
-                    <input type="email" name="email" class="form-control" placeholder="admin@test.com" required>
-                </div>
-                <div class="mb-3">
-                    <label>Password</label>
-                    <input type="password" name="password" class="form-control" placeholder="******" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100">Login</button>
-                <div id="loginMsg" class="mt-3 text-center text-danger small"></div>
-            </form>
+    <div class="login-card">
+        <div class="text-center mb-4">
+            <i class="fas fa-cubes fa-3x text-primary"></i>
+            <h3 class="mt-3">Gretex ERP</h3>
+            <p class="text-muted">Sign In to continue</p>
         </div>
-    </div>
-
-    <div id="app-section">
-        
-        <div class="sidebar">
-            <div class="brand"><i class="fas fa-boxes"></i> <span>Stock ERP</span></div>
-            <a href="#" class="active" onclick="showView('dashboard')"><i class="fas fa-home"></i> <span>Dashboard</span></a>
-            <a href="#" onclick="showView('add-asset')"><i class="fas fa-laptop-medical"></i> <span>Add Asset</span></a>
-            <a href="#" onclick="showView('stock-txn')"><i class="fas fa-exchange-alt"></i> <span>Stock In/Out</span></a>
-            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
-        </div>
-
-        <div class="main-content">
-            <nav class="navbar navbar-light bg-white shadow-sm mb-4 rounded">
-                <div class="container-fluid">
-                    <span class="navbar-brand mb-0 h1">Welcome, <span id="userNameDisplay">User</span></span>
-                </div>
-            </nav>
-
-            <div id="view-dashboard" class="content-view">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card text-white bg-primary mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">Total Assets</h5>
-                                <p class="card-text display-6">Loading...</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card text-white bg-success mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">Stock Items</h5>
-                                <p class="card-text display-6">Loading...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <form id="loginForm">
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" placeholder="admin@example.com" required>
             </div>
-
-            <div id="view-add-asset" class="content-view d-none">
-                <div class="card p-4 shadow-sm">
-                    <h4>Add New Asset</h4>
-                    <form id="assetForm">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label>Category</label>
-                                <select class="form-select" name="category"><option>Laptop</option><option>Desktop</option></select>
-                            </div>
-                            <div class="col-md-6"><label>Brand</label><input type="text" class="form-control" name="brand"></div>
-                            <div class="col-12"><button class="btn btn-primary">Save Asset</button></div>
-                        </div>
-                    </form>
-                </div>
+            <div class="mb-4">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••" required>
             </div>
-
-            <div id="view-stock-txn" class="content-view d-none">
-                <div class="card p-4 shadow-sm">
-                    <h4>Stock Transaction</h4>
-                    <form id="txnForm">
-                        <div class="mb-3"><label>Item ID</label><input type="text" class="form-control"></div>
-                        <button class="btn btn-warning">Submit</button>
-                    </form>
-                </div>
-            </div>
-
-        </div>
+            <button type="submit" class="btn btn-primary w-100 fw-bold">LOGIN</button>
+            <p id="errorMsg" class="text-danger text-center mt-3 small"></p>
+        </form>
     </div>
 
     <script>
+        // *** PASTE YOUR GAS WEB APP URL HERE ***
         const API_URL = "https://script.google.com/macros/s/AKfycbxLlqMwPCQaYho_n_1eqxHT1ZXJmeS9wz8v8gAZyGcU4UCLfyx3ryJKRpSJAko0aSEOEA/exec"; 
 
-        // 1. LOGIN LOGIC
+        // Clear previous session on load
+        sessionStorage.clear();
+
         document.getElementById("loginForm").addEventListener("submit", function(e) {
             e.preventDefault();
             const btn = e.target.querySelector("button");
-            const msg = document.getElementById("loginMsg");
+            const msg = document.getElementById("errorMsg");
             
-            // UI Loading state
             btn.disabled = true;
-            btn.innerText = "Checking...";
+            btn.innerText = "Verifying...";
             msg.innerText = "";
 
             const formData = new FormData(e.target);
@@ -188,44 +60,23 @@
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
-                    // Switch to App View
-                    document.getElementById("login-section").style.display = "none";
-                    document.getElementById("app-section").style.display = "block";
-                    document.getElementById("userNameDisplay").innerText = result.user.name;
+                    // SAVE USER SESSION
+                    sessionStorage.setItem("user", JSON.stringify(result.user));
+                    // REDIRECT TO DASHBOARD
+                    window.location.href = "dashboard.html";
                 } else {
                     msg.innerText = result.message;
                     btn.disabled = false;
-                    btn.innerText = "Login";
+                    btn.innerText = "LOGIN";
                 }
             })
             .catch(err => {
                 console.error(err);
                 msg.innerText = "Connection Error";
                 btn.disabled = false;
-                btn.innerText = "Login";
+                btn.innerText = "LOGIN";
             });
         });
-
-        // 2. SIDEBAR NAVIGATION LOGIC
-        function showView(viewId) {
-            // Hide all views
-            document.querySelectorAll('.content-view').forEach(el => el.classList.add('d-none'));
-            // Show selected view
-            document.getElementById('view-' + viewId).classList.remove('d-none');
-            
-            // Update Sidebar Active State
-            document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
-            // (Optional: logic to highlight clicked link)
-        }
-
-        // 3. LOGOUT LOGIC
-        function logout() {
-            document.getElementById("app-section").style.display = "none";
-            document.getElementById("login-section").style.display = "flex";
-            document.getElementById("loginForm").reset();
-            document.querySelector("#loginForm button").disabled = false;
-            document.querySelector("#loginForm button").innerText = "Login";
-        }
     </script>
 </body>
 </html>
