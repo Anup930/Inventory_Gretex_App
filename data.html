@@ -27,6 +27,7 @@
     <div class="sidebar">
         <h4 class="text-center mb-4"><i class="fas fa-warehouse"></i> ERP System</h4>
         <a href="dashboard.html"><i class="fas fa-home me-2"></i> Dashboard</a>
+        <a href="Emp.html"><i class="fas fa-users me-2"></i> Add Employee</a>
         <a href="asset.html"><i class="fas fa-laptop-medical me-2"></i> Add Asset</a>
         <a href="stock.html"><i class="fas fa-exchange-alt me-2"></i> Stock In/Out</a>
         <a href="data.html" class="active"><i class="fas fa-database me-2"></i> Import / Export</a>
@@ -45,7 +46,7 @@
                         <select id="exportSheet" class="form-select">
                             <option value="Asset_Master">Asset Master (Inventory)</option>
                             <option value="Stock_Master">Stock Master (Consumables)</option>
-                            <option value="Transactions">Transaction Logs</option>
+                            <option value="Employees">Employees (Staff List)</option> <option value="Transactions">Transaction Logs</option>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -65,7 +66,7 @@
                         <select id="importSheet" class="form-select">
                             <option value="Asset_Master">Asset Master</option>
                             <option value="Stock_Master">Stock Master</option>
-                        </select>
+                            <option value="Employees">Employees</option> </select>
                     </div>
                     
                     <div class="col-md-4 align-self-end">
@@ -91,25 +92,29 @@
 
     <script>
         // *** PASTE YOUR GAS WEB APP URL HERE ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
 
-        // --- NEW: SAMPLE FILE GENERATOR ---
+        // --- SAMPLE FILE GENERATOR ---
         function downloadSample() {
             const sheet = document.getElementById("importSheet").value;
             let csvContent = "";
             let fileName = "";
 
             if (sheet === "Asset_Master") {
-                // Header + 1 Dummy Row
                 csvContent = "AssetID,Category,Brand,Model,Serial,Config,PurchaseDate,Warranty,Vendor,InvoiceNo,Location,AssignedTo,Status,Cost,InvoiceLink,Remarks\n";
                 csvContent += "L-2025-001,Laptop,Dell,Latitude 3420,CN123456,i5 16GB,2025-01-01,2026-01-01,NehruPlace,INV-999,Office,Unassigned,Available,45000,,Sample Entry";
                 fileName = "Sample_Asset_Template.csv";
             } 
             else if (sheet === "Stock_Master") {
-                // Header + 1 Dummy Row
                 csvContent = "ItemID,ItemName,Category,Description,CurrentQty,Unit,ReorderLevel,Location,UnitPrice,TotalValue,LastUpdated\n";
                 csvContent += "STK-001,Mouse,IT Peripherals,Logitech Wireless,10,Pcs,5,Rack A,500,5000,2025-01-01";
                 fileName = "Sample_Stock_Template.csv";
+            }
+            else if (sheet === "Employees") {
+                // NEW: Employee Sample
+                csvContent = "EmpID,Name,Email,Company,Location,Status,JoinedDate\n";
+                csvContent += "EMP-101,Rahul Kumar,rahul@gretex.com,Gretex IT,Head Office,Active,2025-01-01";
+                fileName = "Sample_Employees_Template.csv";
             }
 
             // Create Download Link dynamically
@@ -158,17 +163,16 @@
             const file = fileInput.files[0];
 
             Papa.parse(file, {
-                header: false, // We treat it as array of arrays
+                header: false,
                 skipEmptyLines: true,
                 complete: function(results) {
                     let rows = results.data;
                     
-                    // Remove Header Row (Assume Row 0 is header)
-                    // If user downloads sample, row 0 is header.
-                    // If your backend appends directly, we usually remove the header to avoid duplicate headers in DB
+                    // Remove Header Row Logic
                     if (rows.length > 0) {
-                        // Optional: Check if first row looks like header (contains 'AssetID' etc)
-                         if(rows[0][0].includes("ID")) {
+                         // Check for known headers in first cell
+                         const firstCell = rows[0][0] ? rows[0][0].toString().toLowerCase() : "";
+                         if(firstCell.includes("id") || firstCell.includes("asset") || firstCell.includes("emp")) {
                              rows.shift(); // Remove header
                          }
                     }
