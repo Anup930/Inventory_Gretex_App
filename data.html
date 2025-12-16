@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Import/Export - Gretex ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
+    <style>
+        body { background-color: #f3f4f6; }
+        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; }
+        .sidebar a { color: #aab8c5; padding: 15px 25px; display: block; text-decoration: none; }
+        .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
+        .main-content { margin-left: 250px; padding: 30px; }
+        .card-custom { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card-header-custom { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #eee; border-radius: 10px 10px 0 0; font-weight: bold; }
+    </style>
+    <script>
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        if (!user) window.location.href = "index.html";
+    </script>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h4 class="text-center mb-4"><i class="fas fa-warehouse"></i> ERP System</h4>
+        <a href="dashboard.html"><i class="fas fa-home me-2"></i> Dashboard</a>
+        <a href="asset.html"><i class="fas fa-laptop-medical me-2"></i> Add Asset</a>
+        <a href="stock.html"><i class="fas fa-exchange-alt me-2"></i> Stock In/Out</a>
+        <a href="data.html" class="active"><i class="fas fa-database me-2"></i> Import / Export</a>
+        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h3 class="mb-4">Data Management</h3>
+
+        <div class="card card-custom">
+            <div class="card-header-custom text-success"><i class="fas fa-file-download"></i> Export Data (Download)</div>
+            <div class="card-body p-4">
+                <div class="row align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label">Select Data Source</label>
+                        <select id="exportSheet" class="form-select">
+                            <option value="Asset_Master">Asset Master (Inventory)</option>
+                            <option value="Stock_Master">Stock Master (Consumables)</option>
+                            <option value="Transactions">Transaction Logs</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button onclick="downloadData()" class="btn btn-success w-100"><i class="fas fa-download me-2"></i> Download CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-custom">
+            <div class="card-header-custom text-primary"><i class="fas fa-file-upload"></i> Import Data (Bulk Upload)</div>
+            <div class="card-body p-4">
+                <div class="alert alert-warning small">
+                    <i class="fas fa-info-circle"></i> <b>Note:</b> Please download the current data first to understand the column format. The CSV must have the exact same number of columns.
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Target Sheet</label>
+                        <select id="importSheet" class="form-select">
+                            <option value="Asset_Master">Asset Master</option>
+                            <option value="Stock_Master">Stock Master</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Select CSV File</label>
+                        <input type="file" id="csvFile" class="form-control" accept=".csv">
+                    </div>
+                    <div class="col-md-4 align-self-end">
+                        <button onclick="processUpload()" class="btn btn-primary w-100"><i class="fas fa-cloud-upload-alt me-2"></i> Upload & Import</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // *** PASTE YOUR GAS WEB APP URL HERE ***
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
+
+        // --- 1. EXPORT FUNCTION ---
+        function downloadData() {
+            const sheetName = document.getElementById("exportSheet").value;
+            Swal.fire({ title: 'Downloading...', didOpen: () => Swal.showLoading() });
+
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "exportData", sheetName: sheetName })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    Swal.close();
+                    // Convert Array to CSV and Download
+                    const csv = Papa.unparse(result.data);
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = sheetName + "_" + new Date().toISOString().slice(0,10) + ".csv";
+                    link.click();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            });
+        }
+
+        // --- 2. IMPORT FUNCTION ---
+        function processUpload() {
+            const fileInput = document.getElementById("csvFile");
+            const sheetName = document.getElementById("importSheet").value;
+
+            if (fileInput.files.length === 0) {
+                Swal.fire('Warning', 'Please select a CSV file first', 'warning');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            Papa.parse(file, {
+                complete: function(results) {
+                    const rows = results.data;
+                    
+                    // Remove empty rows if any
+                    const cleanRows = rows.filter(r => r.length > 1);
+
+                    // Confirm before upload
+                    Swal.fire({
+                        title: `Import ${cleanRows.length} Rows?`,
+                        text: "This will append data to the sheet. Make sure IDs are unique!",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Upload'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            sendDataToBackend(sheetName, cleanRows);
+                        }
+                    });
+                }
+            });
+        }
+
+        function sendDataToBackend(sheetName, rows) {
+            Swal.fire({ title: 'Importing...', text: 'Please wait, this may take a moment', didOpen: () => Swal.showLoading() });
+
+            // Remove Header row if user included it (Optional check)
+            // Assuming user is uploading data only, or we skip row 0 if it matches header
+            // For now, sending RAW data. 
+
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ 
+                    action: "importData", 
+                    sheetName: sheetName,
+                    rows: rows 
+                })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    Swal.fire('Success', result.message, 'success');
+                    document.getElementById("csvFile").value = ""; // Clear input
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            });
+        }
+
+        function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>
