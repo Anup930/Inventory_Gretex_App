@@ -13,6 +13,7 @@
         .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
         .main-content { margin-left: 250px; padding: 30px; }
         .form-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .id-preview { font-weight: bold; color: #4e73df; background: #eef2ff; padding: 5px 10px; border-radius: 5px; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -30,39 +31,57 @@
     </div>
 
     <div class="main-content">
-        <h3 class="mb-4">Register New Asset</h3>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Register New Asset</h3>
+            <div id="idPreviewBox" class="d-none">
+                Preview ID: <span id="idPreviewText" class="id-preview">--</span>
+            </div>
+        </div>
+
         <div class="form-card">
             <form id="assetForm">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Category</label>
-                        <select class="form-select" name="category" id="catSelect" onchange="toggleAssetFields()">
-                            <option value="Laptop">Laptop</option>
-                            <option value="Desktop">Desktop</option>
-                            <option value="Printer">Printer</option>
-                            <option value="Furniture">Furniture</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" required></div>
-                    <div class="col-md-4"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
-                    
-                    <div class="col-12" id="tech-fields">
-                        <div class="card bg-light border-0 p-3">
-                            <div class="row g-3">
-                                <div class="col-md-6"><label class="form-label">Serial No</label><input type="text" class="form-control" name="serialNo"></div>
-                                <div class="col-md-6"><label class="form-label">Configuration</label><input type="text" class="form-control" name="config" placeholder="i5, 16GB RAM..."></div>
-                            </div>
+                
+                <div class="alert alert-light border mb-4">
+                    <h6 class="text-muted mb-3"><i class="fas fa-fingerprint"></i> Define Asset ID</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Category (Type)</label>
+                            <select class="form-select" name="category" id="catSelect" onchange="updatePreview()">
+                                <option value="Laptop">Laptop (L)</option>
+                                <option value="Desktop">Desktop (D)</option>
+                                <option value="Tablet">Tablet (T)</option>
+                                <option value="Printer">Printer (P)</option>
+                                <option value="Furniture">Furniture (F)</option>
+                                <option value="Other">Other (O)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Asset Year</label>
+                            <select class="form-select" name="assetYear" id="yearSelect" onchange="updatePreview()">
+                                </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sequence No (e.g. 01, 150)</label>
+                            <input type="text" class="form-control" name="assetSeq" id="seqInput" placeholder="001" required oninput="updatePreview()">
                         </div>
                     </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" required></div>
+                    <div class="col-md-4"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
+                    <div class="col-md-4"><label class="form-label">Serial No</label><input type="text" class="form-control" name="serialNo"></div>
+                    
+                    <div class="col-12"><label class="form-label">Configuration</label><input type="text" class="form-control" name="config" placeholder="i5, 16GB RAM..."></div>
 
                     <div class="col-md-4"><label class="form-label">Purchase Date</label><input type="date" class="form-control" name="purchaseDate" required></div>
                     <div class="col-md-4"><label class="form-label">Warranty Expires</label><input type="date" class="form-control" name="warrantyDate"></div>
                     <div class="col-md-4"><label class="form-label">Cost</label><input type="number" class="form-control" name="cost" required></div>
+                    
                     <div class="col-md-6"><label class="form-label">Vendor</label><input type="text" class="form-control" name="vendor"></div>
                     <div class="col-md-6"><label class="form-label">Location</label><input type="text" class="form-control" name="location"></div>
 
-                    <div class="col-12 mt-4"><button type="submit" class="btn btn-primary px-5">Save Asset</button></div>
+                    <div class="col-12 mt-4"><button type="submit" class="btn btn-primary px-5 w-100">Check & Save Asset</button></div>
                 </div>
             </form>
         </div>
@@ -72,11 +91,32 @@
         // *** PASTE YOUR GAS WEB APP URL HERE ***
         const API_URL = "https://script.google.com/macros/s/AKfycbxLlqMwPCQaYho_n_1eqxHT1ZXJmeS9wz8v8gAZyGcU4UCLfyx3ryJKRpSJAko0aSEOEA/exec"; 
 
-        function toggleAssetFields() {
-            const cat = document.getElementById('catSelect').value;
-            document.getElementById('tech-fields').style.display = (cat === 'Furniture' || cat === 'Other') ? 'none' : 'block';
+        // 1. POPULATE YEARS (1990 to Current Year)
+        const yearSelect = document.getElementById("yearSelect");
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear; y >= 1990; y--) {
+            let option = document.createElement("option");
+            option.value = y;
+            option.text = y;
+            yearSelect.appendChild(option);
         }
 
+        // 2. LIVE ID PREVIEW
+        const catMap = { "Laptop": "L", "Desktop": "D", "Tablet": "T", "Printer": "P", "Furniture": "F", "Other": "O" };
+        
+        function updatePreview() {
+            const cat = document.getElementById("catSelect").value;
+            const year = document.getElementById("yearSelect").value;
+            const seq = document.getElementById("seqInput").value || "XX";
+            
+            const code = catMap[cat] || "O";
+            const previewId = `${code}-${year}-${seq}`;
+            
+            document.getElementById("idPreviewBox").classList.remove("d-none");
+            document.getElementById("idPreviewText").innerText = previewId;
+        }
+
+        // 3. SUBMIT HANDLER
         document.getElementById("assetForm").addEventListener("submit", function(e) {
             e.preventDefault();
             Swal.showLoading();
@@ -89,11 +129,26 @@
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
-                    Swal.fire('Success', 'Asset ID: ' + result.id, 'success');
+                    // SUCCESS: Green Popup
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: 'Asset Created: ' + result.id
+                    });
                     e.target.reset();
+                    document.getElementById("idPreviewBox").classList.add("d-none");
                 } else {
-                    Swal.fire('Error', result.message, 'error');
+                    // ERROR: Red Popup (DUPLICATE FOUND)
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed',
+                        text: result.message
+                    });
                 }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Network Error', 'error');
             });
         });
 
