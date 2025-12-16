@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Repair Management - Gretex ERP</title>
+    <title>Return Asset - Gretex ERP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -11,7 +11,7 @@
     <style>
         body { background-color: #f3f4f6; }
         .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; }
-        .sidebar a { color: #aab8c5; padding: 12px 25px; display: block; text-decoration: none; }
+        .sidebar a { color: #aab8c5; padding: 15px 25px; display: block; text-decoration: none; }
         .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
         .main-content { margin-left: 250px; padding: 30px; }
         .form-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -29,65 +29,50 @@
         <a href="Emp.html"><i class="fas fa-users me-2"></i> Add Employee</a>
         <a href="asset.html"><i class="fas fa-laptop-medical me-2"></i> Add Asset</a>
         <a href="allocate.html"><i class="fas fa-hand-holding me-2"></i> Allocate Asset</a>
-        <a href="Return.html"><i class="fas fa-undo me-2"></i> Return Asset</a>
-        <a href="Repair.html" class="active"><i class="fas fa-tools me-2"></i> Maintenance</a>
-        <a href="AssetHistory.html"><i class="fas fa-history me-2"></i> Asset History</a>
-        <a href="EmpHistory.html"><i class="fas fa-user-clock me-2"></i> Emp History</a>
+        <a href="Return.html" class="active"><i class="fas fa-undo me-2"></i> Return Asset</a>
         <a href="stock.html"><i class="fas fa-exchange-alt me-2"></i> Stock In/Out</a>
         <a href="data.html"><i class="fas fa-database me-2"></i> Import / Export</a>
         <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
     </div>
 
     <div class="main-content">
-        <h3 class="mb-4">Repair & Maintenance</h3>
+        <h3 class="mb-4">Return Asset</h3>
         
         <div class="form-card">
-            <h5 class="mb-4 text-secondary"><i class="fas fa-tools"></i> Asset Repair Update</h5>
-            <div class="alert alert-info small">
-                Updates status of assets currently in <b>Repair/Damaged</b> state.
-            </div>
-
-            <form id="repairForm">
+            <h5 class="mb-4 text-danger"><i class="fas fa-undo-alt"></i> Receive Asset from Employee</h5>
+            <form id="returnForm">
                 <div class="row g-3">
                     
                     <div class="col-12">
-                        <label class="form-label">Select Asset (In Repair)</label>
+                        <label class="form-label">Select Assigned Asset (Search by ID/Name/User)</label>
                         <select class="form-select select2" name="assetId" id="assetSelect" required>
-                            <option value="">Loading Repair Assets...</option>
+                            <option value="">Loading In-Use Assets...</option>
                         </select>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label">New Status</label>
-                        <select class="form-select" name="newStatus" required>
-                            <option value="Available">Fixed (Available)</option>
-                            <option value="Scrap">Not Fixable (Scrap)</option>
+                        <label class="form-label">Return Condition (Status)</label>
+                        <select class="form-select" name="returnStatus" required>
+                            <option value="Available">In Stock (Good Condition)</option>
+                            <option value="Repair">Needs Repair</option>
+                            <option value="Damaged">Damaged / Broken</option>
+                            <option value="Scrap">Scrap / Retired</option>
                         </select>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label">Vendor / Service Center</label>
-                        <input type="text" class="form-control" name="vendor" placeholder="e.g. HP Service Center">
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Repair Cost (₹)</label>
-                        <input type="number" class="form-control" name="repairCost" placeholder="0">
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-primary">Attach Repair Invoice</label>
-                        <input type="file" id="repairFile" class="form-control" accept="application/pdf, image/*">
+                        <label class="form-label">Return Date</label>
+                        <input type="date" class="form-control" name="returnDate" id="returnDate" required>
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label">Remarks / Work Done</label>
-                        <textarea class="form-control" name="remarks" rows="2" placeholder="e.g. Motherboard replaced"></textarea>
+                        <label class="form-label">Remarks / Damage Details</label>
+                        <textarea class="form-control" name="remarks" rows="2" placeholder="e.g. Screen cracked, Charger missing..."></textarea>
                     </div>
 
                     <div class="col-12 mt-4">
-                        <button type="submit" class="btn btn-success px-5 w-100 fw-bold">
-                            Update Status & Upload Bill
+                        <button type="submit" class="btn btn-danger px-5 w-100 fw-bold">
+                            Process Return
                         </button>
                     </div>
 
@@ -100,29 +85,33 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-        // *** PASTE YOUR DEPLOYED GAS URL HERE ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        // *** PASTE YOUR GAS WEB APP URL HERE ***
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
 
+        document.getElementById("returnDate").valueAsDate = new Date();
+
+        // Initialize Select2
         $(document).ready(function() {
             $('.select2').select2();
-            loadRepairAssets();
+            loadReturnableAssets();
         });
 
-        // 1. FETCH ASSETS IN REPAIR
-        function loadRepairAssets() {
+        // 1. FETCH ASSETS
+        function loadReturnableAssets() {
             fetch(API_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "getRepairData" })
+                body: JSON.stringify({ action: "getReturnData" })
             })
             .then(res => res.json())
             .then(result => {
-                const select = document.getElementById("assetSelect");
-                select.innerHTML = '<option value="">-- Select Asset --</option>';
-                
                 if(result.status === "success") {
+                    const select = document.getElementById("assetSelect");
+                    select.innerHTML = '<option value="">-- Select Asset --</option>';
+                    
                     if(result.assets.length === 0) {
-                        select.innerHTML = '<option value="">No assets currently in repair</option>';
+                        select.innerHTML = '<option value="">No Assets currently In-Use</option>';
                     }
+
                     result.assets.forEach(item => {
                         let opt = document.createElement("option");
                         opt.value = item.id;
@@ -133,34 +122,39 @@
             });
         }
 
-        // 2. SUBMIT WITH FILE
-        document.getElementById("repairForm").addEventListener("submit", async function(e) {
+        // 2. SUBMIT RETURN
+        document.getElementById("returnForm").addEventListener("submit", function(e) {
             e.preventDefault();
             
+            // Validation
             const assetId = $('#assetSelect').val();
-            if(!assetId) { Swal.fire('Error', 'Select an asset first', 'warning'); return; }
+            if(!assetId) {
+                Swal.fire('Error', 'Please select an asset', 'warning');
+                return;
+            }
 
             Swal.fire({
-                title: 'Uploading...',
-                text: "Saving data and invoice...",
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
+                title: 'Confirm Return?',
+                text: "Status will be updated and asset will be unassigned.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, Return It'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    submitReturn(assetId, e.target);
+                }
             });
+        });
 
-            const formData = new FormData(e.target);
+        function submitReturn(assetId, form) {
+            Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading() });
+
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            data.action = "updateRepairStatus";
+            data.action = "returnAsset";
             data.user = user.name;
-            data.assetId = assetId;
-
-            // Handle File
-            const fileInput = document.getElementById("repairFile");
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                data.fileName = file.name;
-                data.fileMimeType = file.type;
-                data.fileData = await getBase64(file);
-            }
+            data.assetId = assetId; // Ensure Select2 value is captured
 
             fetch(API_URL, {
                 method: "POST",
@@ -170,24 +164,13 @@
             .then(result => {
                 if(result.status === "success") {
                     Swal.fire('Success', result.message, 'success').then(() => {
-                        loadRepairAssets();
-                        e.target.reset();
+                        loadReturnableAssets(); // Refresh list
+                        form.reset();
                         $('#assetSelect').val(null).trigger('change');
                     });
                 } else {
                     Swal.fire('Error', result.message, 'error');
                 }
-            })
-            .catch(err => Swal.fire('Error', 'Connection Failed', 'error'));
-        });
-
-        // Helper: File to Base64
-        function getBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
             });
         }
 
