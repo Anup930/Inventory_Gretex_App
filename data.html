@@ -3,20 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Data Import/Export - Gretex ERP</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     
     <style>
-        body { background-color: #f3f4f6; }
-        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; }
-        .sidebar a { color: #aab8c5; padding: 15px 25px; display: block; text-decoration: none; }
+        body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+        
+        /* SIDEBAR STYLES */
+        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; }
+        .sidebar a { color: #aab8c5; padding: 12px 25px; display: flex; align-items: center; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
+        .sidebar a i { width: 25px; text-align: center; margin-right: 10px; }
         .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
+        
         .main-content { margin-left: 250px; padding: 30px; }
-        .card-custom { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card-header-custom { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #eee; border-radius: 10px 10px 0 0; font-weight: bold; }
+        
+        /* CARD STYLES */
+        .card-custom { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; border: none; }
+        .card-header-custom { padding: 20px; border-bottom: 1px solid #f0f0f0; font-weight: bold; font-size: 1.1rem; border-radius: 12px 12px 0 0; }
+        
+        .text-success-custom { color: #1cc88a; }
+        .text-primary-custom { color: #4e73df; }
     </style>
+    
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
         if (!user) window.location.href = "index.html";
@@ -25,69 +36,86 @@
 <body>
 
     <div class="sidebar">
-        <a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a>
-        <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
-        <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
-        <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
-        <a href="Emp.html"><i class="fas fa-users me-2"></i> Add Employee</a>
-        <a href="allocate.html"><i class="fas fa-hand-holding me-2"></i> Allocate Asset</a>
-        <a href="Return.html"><i class="fas fa-undo me-2"></i> Return Asset</a>
-        <a href="AssetHistory.html"><i class="fas fa-history me-2"></i> Asset History</a>
-        <a href="EmpHistory.html"><i class="fas fa-user-clock me-2"></i> Emp History</a>
+        <h4 class="text-center mb-4"><i class="fas fa-warehouse"></i> Gretex ERP</h4>
         
-        <div style="margin-top: 50px; border-top: 1px solid #34495e;"></div>
+        <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
+        <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
+        <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
+        <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
+        <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
+        <a href="EmpHistory.html"><i class="fas fa-user-clock"></i> Emp History</a>
+        <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
+        <a href="data.html" class="active"><i class="fas fa-database"></i> Import / Export</a>
+        
+        <div style="margin-top: 40px; border-top: 1px solid #3e4b5b;"></div>
         <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
     <div class="main-content">
-        <h3 class="mb-4">Data Management</h3>
+        <h3 class="mb-4 fw-bold text-dark">Data Management Center</h3>
 
         <div class="card card-custom">
-            <div class="card-header-custom text-success"><i class="fas fa-file-download"></i> Export Data</div>
+            <div class="card-header-custom text-success-custom bg-light">
+                <i class="fas fa-file-download me-2"></i> Export Data (Download CSV)
+            </div>
             <div class="card-body p-4">
-                <div class="row align-items-end">
-                    <div class="col-md-6">
-                        <label class="form-label">Select Data Source</label>
-                        <select id="exportSheet" class="form-select">
-                            <option value="Asset_Master">Asset Master (Inventory)</option>
+                <div class="row align-items-end g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold text-muted">Select Data Source</label>
+                        <select id="exportSheet" class="form-select form-select-lg">
+                            <option value="Asset_Master">Asset Master (Inventory List)</option>
+                            <option value="Employees">Employees (Staff List)</option>
                             <option value="Stock_Master">Stock Master (Consumables)</option>
-                            <option value="Employees">Employees (Staff List)</option> <option value="Transactions">Transaction Logs</option>
+                            <option value="Transactions">All Transaction Logs</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <button onclick="downloadData()" class="btn btn-success w-100"><i class="fas fa-download me-2"></i> Download CSV</button>
+                        <button onclick="downloadData()" class="btn btn-success btn-lg w-100 shadow-sm">
+                            <i class="fas fa-download me-2"></i> Download Data
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="card card-custom">
-            <div class="card-header-custom text-primary"><i class="fas fa-file-upload"></i> Import Data</div>
+            <div class="card-header-custom text-primary-custom bg-light">
+                <i class="fas fa-file-upload me-2"></i> Import Data (Bulk Upload)
+            </div>
             <div class="card-body p-4">
                 
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Target Sheet</label>
+                <div class="alert alert-info border-0 bg-info-subtle text-info-emphasis mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Tip:</strong> Always download the "Sample Template" first to ensure your CSV columns match the system requirements.
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold text-muted">1. Select Target Module</label>
                         <select id="importSheet" class="form-select">
-                            <option value="Asset_Master">Asset Master</option>
-                            <option value="Stock_Master">Stock Master</option>
-                            <option value="Employees">Employees</option> </select>
+                            <option value="Asset_Master">Asset Master (Inventory)</option>
+                            <option value="Employees">Employees (Staff)</option>
+                            <option value="Stock_Master">Stock Master (Consumables)</option>
+                        </select>
                     </div>
                     
                     <div class="col-md-4 align-self-end">
                         <button onclick="downloadSample()" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-file-csv me-2"></i> Download Sample
+                            <i class="fas fa-file-csv me-2"></i> Download Sample Template
                         </button>
                     </div>
 
-                    <div class="col-md-12"><hr></div>
+                    <div class="col-12"><hr class="text-muted"></div>
 
                     <div class="col-md-8">
-                        <label class="form-label">Upload Filled CSV</label>
+                        <label class="form-label fw-bold text-muted">2. Upload Your CSV File</label>
                         <input type="file" id="csvFile" class="form-control" accept=".csv">
                     </div>
                     <div class="col-md-4 align-self-end">
-                        <button onclick="processUpload()" class="btn btn-primary w-100"><i class="fas fa-cloud-upload-alt me-2"></i> Upload & Import</button>
+                        <button onclick="processUpload()" class="btn btn-primary w-100">
+                            <i class="fas fa-cloud-upload-alt me-2"></i> Upload & Import
+                        </button>
                     </div>
                 </div>
             </div>
@@ -96,33 +124,35 @@
     </div>
 
     <script>
-        // *** PASTE YOUR GAS WEB APP URL HERE ***
+        // **********************************************************
+        // PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL HERE
         const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        // **********************************************************
 
-        // --- SAMPLE FILE GENERATOR ---
+        // --- SAMPLE TEMPLATE GENERATOR ---
         function downloadSample() {
             const sheet = document.getElementById("importSheet").value;
             let csvContent = "";
             let fileName = "";
 
             if (sheet === "Asset_Master") {
+                // Header + Dummy Data
                 csvContent = "AssetID,Category,Brand,Model,Serial,Config,PurchaseDate,Warranty,Vendor,InvoiceNo,Location,AssignedTo,Status,Cost,InvoiceLink,Remarks\n";
                 csvContent += "L-2025-001,Laptop,Dell,Latitude 3420,CN123456,i5 16GB,2025-01-01,2026-01-01,NehruPlace,INV-999,Office,Unassigned,Available,45000,,Sample Entry";
                 fileName = "Sample_Asset_Template.csv";
             } 
+            else if (sheet === "Employees") {
+                csvContent = "EmpID,Name,Email,Company,Location,Status,JoinedDate\n";
+                csvContent += "EMP-101,Rahul Kumar,rahul@gretex.com,Gretex IT,Head Office,Active,2025-01-01";
+                fileName = "Sample_Employee_Template.csv";
+            }
             else if (sheet === "Stock_Master") {
                 csvContent = "ItemID,ItemName,Category,Description,CurrentQty,Unit,ReorderLevel,Location,UnitPrice,TotalValue,LastUpdated\n";
                 csvContent += "STK-001,Mouse,IT Peripherals,Logitech Wireless,10,Pcs,5,Rack A,500,5000,2025-01-01";
                 fileName = "Sample_Stock_Template.csv";
             }
-            else if (sheet === "Employees") {
-                // NEW: Employee Sample
-                csvContent = "EmpID,Name,Email,Company,Location,Status,JoinedDate\n";
-                csvContent += "EMP-101,Rahul Kumar,rahul@gretex.com,Gretex IT,Head Office,Active,2025-01-01";
-                fileName = "Sample_Employees_Template.csv";
-            }
 
-            // Create Download Link dynamically
+            // Trigger Download
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
@@ -133,7 +163,7 @@
         // --- EXPORT FUNCTION ---
         function downloadData() {
             const sheetName = document.getElementById("exportSheet").value;
-            Swal.fire({ title: 'Downloading...', didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Preparing Download...', text: 'Fetching data from server...', didOpen: () => Swal.showLoading() });
 
             fetch(API_URL, {
                 method: "POST",
@@ -152,6 +182,9 @@
                 } else {
                     Swal.fire('Error', result.message, 'error');
                 }
+            })
+            .catch(err => {
+                Swal.fire('Connection Error', 'Could not reach the server.', 'error');
             });
         }
 
@@ -173,26 +206,27 @@
                 complete: function(results) {
                     let rows = results.data;
                     
-                    // Remove Header Row Logic
+                    // Remove Header Row if present
                     if (rows.length > 0) {
-                         // Check for known headers in first cell
-                         const firstCell = rows[0][0] ? rows[0][0].toString().toLowerCase() : "";
-                         if(firstCell.includes("id") || firstCell.includes("asset") || firstCell.includes("emp")) {
-                             rows.shift(); // Remove header
-                         }
+                        const firstCell = rows[0][0] ? rows[0][0].toString().toLowerCase() : "";
+                        // Check common header names to identify header row
+                        if(firstCell.includes("id") || firstCell.includes("asset") || firstCell.includes("emp")) {
+                            rows.shift(); 
+                        }
                     }
 
                     if (rows.length === 0) {
-                        Swal.fire('Error', 'File contains only headers or is empty', 'error');
+                        Swal.fire('Error', 'File is empty or contains only headers.', 'error');
                         return;
                     }
 
                     Swal.fire({
                         title: `Import ${rows.length} Rows?`,
-                        text: `Target: ${sheetName}`,
+                        text: `This will append data to: ${sheetName}`,
                         icon: 'question',
                         showCancelButton: true,
-                        confirmButtonText: 'Yes, Upload'
+                        confirmButtonText: 'Yes, Start Import',
+                        confirmButtonColor: '#4e73df'
                     }).then((result) => {
                         if (result.isConfirmed) {
                             sendDataToBackend(sheetName, rows);
@@ -203,7 +237,12 @@
         }
 
         function sendDataToBackend(sheetName, rows) {
-            Swal.fire({ title: 'Importing...', text: 'Please wait...', didOpen: () => Swal.showLoading() });
+            Swal.fire({ 
+                title: 'Importing Data...', 
+                html: 'Please wait while we process the file.<br><b>Do not close this window.</b>', 
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading() 
+            });
 
             fetch(API_URL, {
                 method: "POST",
@@ -217,9 +256,9 @@
             .then(result => {
                 if(result.status === "success") {
                     Swal.fire('Success', result.message, 'success');
-                    document.getElementById("csvFile").value = "";
+                    document.getElementById("csvFile").value = ""; // Clear Input
                 } else {
-                    Swal.fire('Error', result.message, 'error');
+                    Swal.fire('Import Failed', result.message, 'error');
                 }
             })
             .catch(err => Swal.fire('Error', 'Connection Failed', 'error'));
