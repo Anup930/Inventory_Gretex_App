@@ -1,65 +1,222 @@
-<!-- V1.7.5 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Gretex ERP</title>
+    <title>Data Import/Export - Gretex ERP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
     <style>
-        body { background-color: #f3f4f6; overflow-x: hidden; }
+        body { background-color: #f3f4f6; }
         .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; }
         .sidebar a { color: #aab8c5; padding: 15px 25px; display: block; text-decoration: none; }
         .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
         .main-content { margin-left: 250px; padding: 30px; }
-        .stat-card { background: white; padding: 20px; border-radius: 10px; border-left: 5px solid #4e73df; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card-custom { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card-header-custom { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #eee; border-radius: 10px 10px 0 0; font-weight: bold; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
-        if (!user) window.location.href = "index.html"; // Kick out if not logged in
+        if (!user) window.location.href = "index.html";
     </script>
 </head>
 <body>
 
     <div class="sidebar">
-    <h4 class="text-center mb-4"><i class="fas fa-warehouse"></i> ERP System</h4>
-    <a href="dashboard.html" class="active"><i class="fas fa-home me-2"></i> Dashboard</a>
-    <a href="asset.html"><i class="fas fa-laptop-medical me-2"></i> Add Asset</a>
-    <a href="stock.html"><i class="fas fa-exchange-alt me-2"></i> Stock In/Out</a>
-    <a href="data.html"><i class="fas fa-database me-2"></i> Import / Export</a>
-    <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
-</div>
+        <h4 class="text-center mb-4"><i class="fas fa-warehouse"></i> ERP System</h4>
+        <a href="dashboard.html"><i class="fas fa-home me-2"></i> Dashboard</a>
+        <a href="asset.html"><i class="fas fa-laptop-medical me-2"></i> Add Asset</a>
+        <a href="stock.html"><i class="fas fa-exchange-alt me-2"></i> Stock In/Out</a>
+        <a href="data.html" class="active"><i class="fas fa-database me-2"></i> Import / Export</a>
+        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
+    </div>
 
     <div class="main-content">
-        <div class="d-flex justify-content-between mb-4">
-            <h3>Dashboard Overview</h3>
-            <span class="fw-bold text-muted">User: <span id="uName"></span></span>
+        <h3 class="mb-4">Data Management</h3>
+
+        <div class="card card-custom">
+            <div class="card-header-custom text-success"><i class="fas fa-file-download"></i> Export Data</div>
+            <div class="card-body p-4">
+                <div class="row align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label">Select Data Source</label>
+                        <select id="exportSheet" class="form-select">
+                            <option value="Asset_Master">Asset Master (Inventory)</option>
+                            <option value="Stock_Master">Stock Master (Consumables)</option>
+                            <option value="Transactions">Transaction Logs</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button onclick="downloadData()" class="btn btn-success w-100"><i class="fas fa-download me-2"></i> Download CSV</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <h6>Total Assets</h6>
-                    <h2>--</h2>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card" style="border-left-color: #1cc88a;">
-                    <h6>Stock Items</h6>
-                    <h2>--</h2>
+        <div class="card card-custom">
+            <div class="card-header-custom text-primary"><i class="fas fa-file-upload"></i> Import Data</div>
+            <div class="card-body p-4">
+                
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Target Sheet</label>
+                        <select id="importSheet" class="form-select">
+                            <option value="Asset_Master">Asset Master</option>
+                            <option value="Stock_Master">Stock Master</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4 align-self-end">
+                        <button onclick="downloadSample()" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-file-csv me-2"></i> Download Sample
+                        </button>
+                    </div>
+
+                    <div class="col-md-12"><hr></div>
+
+                    <div class="col-md-8">
+                        <label class="form-label">Upload Filled CSV</label>
+                        <input type="file" id="csvFile" class="form-control" accept=".csv">
+                    </div>
+                    <div class="col-md-4 align-self-end">
+                        <button onclick="processUpload()" class="btn btn-primary w-100"><i class="fas fa-cloud-upload-alt me-2"></i> Upload & Import</button>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <script>
-        document.getElementById("uName").innerText = user.name;
-        function logout() {
-            sessionStorage.clear();
-            window.location.href = "index.html";
+        // *** PASTE YOUR GAS WEB APP URL HERE ***
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
+
+        // --- NEW: SAMPLE FILE GENERATOR ---
+        function downloadSample() {
+            const sheet = document.getElementById("importSheet").value;
+            let csvContent = "";
+            let fileName = "";
+
+            if (sheet === "Asset_Master") {
+                // Header + 1 Dummy Row
+                csvContent = "AssetID,Category,Brand,Model,Serial,Config,PurchaseDate,Warranty,Vendor,InvoiceNo,Location,AssignedTo,Status,Cost,InvoiceLink,Remarks\n";
+                csvContent += "L-2025-001,Laptop,Dell,Latitude 3420,CN123456,i5 16GB,2025-01-01,2026-01-01,NehruPlace,INV-999,Office,Unassigned,Available,45000,,Sample Entry";
+                fileName = "Sample_Asset_Template.csv";
+            } 
+            else if (sheet === "Stock_Master") {
+                // Header + 1 Dummy Row
+                csvContent = "ItemID,ItemName,Category,Description,CurrentQty,Unit,ReorderLevel,Location,UnitPrice,TotalValue,LastUpdated\n";
+                csvContent += "STK-001,Mouse,IT Peripherals,Logitech Wireless,10,Pcs,5,Rack A,500,5000,2025-01-01";
+                fileName = "Sample_Stock_Template.csv";
+            }
+
+            // Create Download Link dynamically
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
         }
+
+        // --- EXPORT FUNCTION ---
+        function downloadData() {
+            const sheetName = document.getElementById("exportSheet").value;
+            Swal.fire({ title: 'Downloading...', didOpen: () => Swal.showLoading() });
+
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "exportData", sheetName: sheetName })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    Swal.close();
+                    const csv = Papa.unparse(result.data);
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = sheetName + "_" + new Date().toISOString().slice(0,10) + ".csv";
+                    link.click();
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            });
+        }
+
+        // --- IMPORT FUNCTION ---
+        function processUpload() {
+            const fileInput = document.getElementById("csvFile");
+            const sheetName = document.getElementById("importSheet").value;
+
+            if (fileInput.files.length === 0) {
+                Swal.fire('Warning', 'Please select a CSV file first', 'warning');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            Papa.parse(file, {
+                header: false, // We treat it as array of arrays
+                skipEmptyLines: true,
+                complete: function(results) {
+                    let rows = results.data;
+                    
+                    // Remove Header Row (Assume Row 0 is header)
+                    // If user downloads sample, row 0 is header.
+                    // If your backend appends directly, we usually remove the header to avoid duplicate headers in DB
+                    if (rows.length > 0) {
+                        // Optional: Check if first row looks like header (contains 'AssetID' etc)
+                         if(rows[0][0].includes("ID")) {
+                             rows.shift(); // Remove header
+                         }
+                    }
+
+                    if (rows.length === 0) {
+                        Swal.fire('Error', 'File contains only headers or is empty', 'error');
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: `Import ${rows.length} Rows?`,
+                        text: `Target: ${sheetName}`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Upload'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            sendDataToBackend(sheetName, rows);
+                        }
+                    });
+                }
+            });
+        }
+
+        function sendDataToBackend(sheetName, rows) {
+            Swal.fire({ title: 'Importing...', text: 'Please wait...', didOpen: () => Swal.showLoading() });
+
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ 
+                    action: "importData", 
+                    sheetName: sheetName,
+                    rows: rows 
+                })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    Swal.fire('Success', result.message, 'success');
+                    document.getElementById("csvFile").value = "";
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            })
+            .catch(err => Swal.fire('Error', 'Connection Failed', 'error'));
+        }
+
+        function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
     </script>
 </body>
 </html>
