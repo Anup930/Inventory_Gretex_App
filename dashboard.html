@@ -1,4 +1,3 @@
-<!-- V 9.1.8 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,25 +75,21 @@
                     <div class="icon-box text-primary"><i class="fas fa-laptop"></i></div><p class="text-primary">Total Assets</p><h2 id="totalAssets">0</h2>
                 </div>
             </div>
-            
             <div class="col">
                 <div class="stat-card" style="border-left-color: #1cc88a;" onclick="showAvailableModal()" onmouseenter="showBreakdown(this, 'available')" onmouseleave="hideBreakdown()" title="Click to view Stock List">
                     <div class="icon-box text-success"><i class="fas fa-check-circle"></i></div><p class="text-success">Available</p><h2 id="totalAvailable">0</h2>
                 </div>
             </div>
-
             <div class="col">
                 <div class="stat-card" style="border-left-color: #f6c23e;" onmouseenter="showBreakdown(this, 'allocated')" onmouseleave="hideBreakdown()">
                     <div class="icon-box text-warning"><i class="fas fa-user-check"></i></div><p class="text-warning">Allocated</p><h2 id="totalAllocated">0</h2>
                 </div>
             </div>
-
             <div class="col">
                 <div class="stat-card" style="border-left-color: #858796;" onmouseenter="showBreakdown(this, 'repair')" onmouseleave="hideBreakdown()">
                     <div class="icon-box text-secondary"><i class="fas fa-tools"></i></div><p class="text-secondary">Maintenance</p><h2 id="totalRepair">0</h2>
                 </div>
             </div>
-
             <div class="col">
                 <div class="stat-card alert-card" onclick="showInactiveModal()" title="Click to View Details">
                     <div class="icon-box text-danger"><i class="fas fa-exclamation-triangle"></i></div><p class="text-danger fw-bold">Assets with Inactive Emp</p><h2 id="totalInactiveAssets">0</h2>
@@ -117,6 +112,17 @@
         <div class="row g-4 mb-4">
             <div class="col-md-6"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Category Distribution</h6><div class="chart-wrapper"><canvas id="categoryChart"></canvas></div></div></div>
             <div class="col-md-6"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Brand Distribution</h6><div class="chart-wrapper"><canvas id="brandChart"></canvas></div></div></div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="chart-box">
+                    <h6 class="text-muted mb-3 fw-bold">Overall Asset Status Distribution</h6>
+                    <div class="chart-wrapper" style="height: 250px;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="row">
@@ -145,10 +151,7 @@
                         <button onclick="downloadInactiveReport()" class="btn btn-sm btn-success"><i class="fas fa-download me-2"></i>Download CSV</button>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light"><tr><th>Asset ID</th><th>Serial No</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr></thead>
-                            <tbody id="inactiveTableBody"></tbody>
-                        </table>
+                        <table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Asset ID</th><th>Serial No</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr></thead><tbody id="inactiveTableBody"></tbody></table>
                     </div>
                 </div>
             </div>
@@ -163,29 +166,14 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    
                     <div class="row g-2 mb-3">
-                        <div class="col-md-8">
-                            <input type="text" id="availableSearch" class="form-control" placeholder="Search by Asset ID, Serial, Category, Brand or Location..." onkeyup="filterAvailableTable()">
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button onclick="downloadAvailableReport()" class="btn btn-primary w-100"><i class="fas fa-download me-2"></i>Export Stock List</button>
-                        </div>
+                        <div class="col-md-8"><input type="text" id="availableSearch" class="form-control" placeholder="Search by Asset ID, Serial, Category, Brand or Location..." onkeyup="filterAvailableTable()"></div>
+                        <div class="col-md-4 text-end"><button onclick="downloadAvailableReport()" class="btn btn-primary w-100"><i class="fas fa-download me-2"></i>Export Stock List</button></div>
                     </div>
-
                     <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
                         <table class="table table-bordered table-hover text-center align-middle">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th>Asset ID</th>
-                                    <th>Serial No</th>
-                                    <th>Category</th>
-                                    <th>Brand / Type</th>
-                                    <th>Location</th>
-                                </tr>
-                            </thead>
-                            <tbody id="availableTableBody">
-                                </tbody>
+                            <thead class="table-light sticky-top"><tr><th>Asset ID</th><th>Serial No</th><th>Category</th><th>Brand / Type</th><th>Location</th></tr></thead>
+                            <tbody id="availableTableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -196,14 +184,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        // ********************************************
+        // PASTE YOUR GAS WEB APP URL HERE
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
+        // ********************************************
+        
         document.getElementById("userNameDisplay").innerText = user.name;
 
-        let locChartInstance = null, ownChartInstance = null, catChartInstance = null, brandChartInstance = null, hoverChartInstance = null;
+        // Global Chart Instances
+        let locChartInstance = null, ownChartInstance = null, catChartInstance = null, brandChartInstance = null, hoverChartInstance = null, statusChartInstance = null;
         let breakdownData = { total: {}, available: {}, allocated: {}, repair: {} };
         
         let inactiveAssetsList = []; 
-        let availableAssetsList = []; // New List for Available
+        let availableAssetsList = []; 
 
         async function loadData() {
             try {
@@ -218,6 +211,7 @@
         }
 
         function processDashboard(assetData, empData) {
+            // 1. Employee Processing (For Inactive Check)
             const empHeaders = empData[0];
             const empRows = empData.slice(1);
             const getEmpIdx = (name) => empHeaders.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
@@ -233,6 +227,7 @@
                 }
             });
 
+            // 2. Asset Processing
             const headers = assetData[0]; 
             const rows = assetData.slice(1);
             const getIdx = (name) => headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
@@ -245,10 +240,9 @@
             const IDX_SERIAL = getIdx("Serial");
 
             let total = 0, available = 0, allocated = 0, repair = 0;
-            const locationMap = {}, categoryMap = {}, brandMap = {}, userAssetCounts = {};
+            const locationMap = {}, categoryMap = {}, brandMap = {}, userAssetCounts = {}, statusMap = {};
             const allStatuses = new Set();
             
-            // Reset Lists
             inactiveAssetsList = [];
             availableAssetsList = [];
 
@@ -265,20 +259,14 @@
 
                 total++;
                 breakdownData.total[cat] = (breakdownData.total[cat] || 0) + 1;
+                
+                // Aggregating Status Counts for New Chart
+                statusMap[status] = (statusMap[status] || 0) + 1;
 
                 if(status === 'Available') {
                     available++;
                     breakdownData.available[cat] = (breakdownData.available[cat] || 0) + 1;
-                    
-                    // Add to Available List
-                    availableAssetsList.push({
-                        id: assetId,
-                        serial: serial,
-                        cat: cat,
-                        brand: brand,
-                        loc: loc
-                    });
-
+                    availableAssetsList.push({ id: assetId, serial: serial, cat: cat, brand: brand, loc: loc });
                 } else if(status === 'In-Use') {
                     allocated++;
                     breakdownData.allocated[cat] = (breakdownData.allocated[cat] || 0) + 1;
@@ -286,13 +274,10 @@
                     const userLower = user.toLowerCase();
                     for (const [inactiveName, empId] of Object.entries(inactiveEmpMap)) {
                         if (userLower.includes(inactiveName)) {
-                            inactiveAssetsList.push({
-                                assetId: assetId, serial: serial, type: cat, user: user, empId: empId
-                            });
+                            inactiveAssetsList.push({ assetId: assetId, serial: serial, type: cat, user: user, empId: empId });
                             break;
                         }
                     }
-
                 } else if(['Repair', 'Damaged', 'Scrap'].includes(status)) {
                     repair++;
                     breakdownData.repair[cat] = (breakdownData.repair[cat] || 0) + 1;
@@ -320,39 +305,58 @@
             renderOwnershipChart(ownershipDist);
             renderStackedChart('categoryChart', categoryMap, statusArray, catChartInstance, (i) => catChartInstance = i);
             renderStackedChart('brandChart', brandMap, statusArray, brandChartInstance, (i) => brandChartInstance = i);
+            
+            // Render New Status Chart
+            renderStatusChart(statusMap);
         }
 
-        // --- AVAILABLE MODAL LOGIC (NEW) ---
+        // --- NEW: RENDER STATUS CHART ---
+        function renderStatusChart(map) {
+            const ctx = document.getElementById("statusChart").getContext("2d");
+            if(statusChartInstance) statusChartInstance.destroy();
+            
+            const labels = Object.keys(map);
+            const data = Object.values(map);
+            const colors = ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#20c9a6', '#6610f2'];
+
+            statusChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Count',
+                        data: data,
+                        backgroundColor: colors,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // --- AVAILABLE MODAL LOGIC ---
         function showAvailableModal() {
-            renderAvailableTable(availableAssetsList); // Render all initially
+            renderAvailableTable(availableAssetsList); 
             new bootstrap.Modal(document.getElementById('availableModal')).show();
         }
 
         function filterAvailableTable() {
             const input = document.getElementById("availableSearch").value.toLowerCase();
-            const filtered = availableAssetsList.filter(item => 
-                (item.id + item.serial + item.cat + item.brand + item.loc).toLowerCase().includes(input)
-            );
+            const filtered = availableAssetsList.filter(item => (item.id + item.serial + item.cat + item.brand + item.loc).toLowerCase().includes(input));
             renderAvailableTable(filtered);
         }
 
         function renderAvailableTable(data) {
             const tbody = document.getElementById("availableTableBody");
             tbody.innerHTML = "";
-            if(data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='5' class='text-muted'>No assets found.</td></tr>";
-                return;
-            }
+            if(data.length === 0) { tbody.innerHTML = "<tr><td colspan='5' class='text-muted'>No assets found.</td></tr>"; return; }
             data.forEach(item => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="fw-bold text-primary">${item.id}</td>
-                        <td>${item.serial}</td>
-                        <td><span class="badge bg-info text-dark">${item.cat}</span></td>
-                        <td>${item.brand}</td>
-                        <td>${item.loc}</td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr><td class="fw-bold text-primary">${item.id}</td><td>${item.serial}</td><td><span class="badge bg-info text-dark">${item.cat}</span></td><td>${item.brand}</td><td>${item.loc}</td></tr>`;
             });
         }
 
@@ -366,38 +370,25 @@
             link.click();
         }
 
-        // --- INACTIVE MODAL LOGIC ---
+        // --- OTHER FUNCTIONS ---
         function showInactiveModal() {
-            const tbody = document.getElementById("inactiveTableBody");
-            tbody.innerHTML = "";
-            if(inactiveAssetsList.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='5' class='text-center text-success fw-bold'>No Risky Assets Found! All clear.</td></tr>";
-            } else {
-                inactiveAssetsList.forEach(item => {
-                    tbody.innerHTML += `<tr><td class="fw-bold text-danger">${item.assetId}</td><td>${item.serial}</td><td>${item.type}</td><td>${item.user}</td><td>${item.empId}</td></tr>`;
-                });
-            }
+            const tbody = document.getElementById("inactiveTableBody"); tbody.innerHTML = "";
+            if(inactiveAssetsList.length === 0) { tbody.innerHTML = "<tr><td colspan='5' class='text-center text-success fw-bold'>No Risky Assets Found! All clear.</td></tr>"; } 
+            else { inactiveAssetsList.forEach(item => { tbody.innerHTML += `<tr><td class="fw-bold text-danger">${item.assetId}</td><td>${item.serial}</td><td>${item.type}</td><td>${item.user}</td><td>${item.empId}</td></tr>`; }); }
             new bootstrap.Modal(document.getElementById('inactiveModal')).show();
         }
 
         function downloadInactiveReport() {
             if(inactiveAssetsList.length === 0) return;
             const csv = Papa.unparse(inactiveAssetsList);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Inactive_Emp_Assets_${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `Inactive_Emp_Assets.csv`; link.click();
         }
 
-        // --- HELPER FUNCTIONS ---
         function showBreakdown(el, type) {
-            const popup = document.getElementById("hoverChartCard");
-            const rect = el.getBoundingClientRect();
+            const popup = document.getElementById("hoverChartCard"); const rect = el.getBoundingClientRect();
             popup.style.display = "block"; popup.style.top = (rect.top + window.scrollY + 10) + "px"; popup.style.left = (rect.left + rect.width - 20) + "px";
             document.getElementById("hoverChartTitle").innerText = type.toUpperCase() + " Breakdown";
-            const dataObj = breakdownData[type];
-            const labels = Object.keys(dataObj); const vals = Object.values(dataObj);
+            const dataObj = breakdownData[type]; const labels = Object.keys(dataObj); const vals = Object.values(dataObj);
             if(labels.length===0) { labels.push("No Data"); vals.push(1); }
             const ctx = document.getElementById("hoverChartCanvas").getContext("2d");
             if(hoverChartInstance) hoverChartInstance.destroy();
@@ -406,8 +397,7 @@
         function hideBreakdown() { document.getElementById("hoverChartCard").style.display = "none"; }
 
         function renderStackedChart(id, map, stats, inst, setInst) {
-            const ctx = document.getElementById(id).getContext('2d');
-            const labs = Object.keys(map).sort();
+            const ctx = document.getElementById(id).getContext('2d'); const labs = Object.keys(map).sort();
             if(inst) inst.destroy();
             const dsets = stats.map((s, i) => ({ label: s, data: labs.map(l => map[l][s]||0), backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc'][i%6] }));
             setInst(new Chart(ctx, { type: 'bar', data: { labels: labs, datasets: dsets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } }));
@@ -421,15 +411,9 @@
         }
 
         function renderPivotTable(map, stats) {
-            const t = document.getElementById("pivotTable");
-            const locs = Object.keys(map).sort();
+            const t = document.getElementById("pivotTable"); const locs = Object.keys(map).sort();
             let h = `<thead class="table-light"><tr><th class="row-header">Location</th>` + stats.map(s=>`<th>${s}</th>`).join('') + `<th class="fw-bold-total">Total</th></tr></thead><tbody>`;
-            locs.forEach(l => {
-                let tot = 0;
-                h += `<tr><td class="row-header">${l}</td>`;
-                stats.forEach(s => { const c = map[l][s]||0; tot+=c; h+=`<td>${c||'-'}</td>`; });
-                h += `<td class="fw-bold-total">${tot}</td></tr>`;
-            });
+            locs.forEach(l => { let tot = 0; h += `<tr><td class="row-header">${l}</td>`; stats.forEach(s => { const c = map[l][s]||0; tot+=c; h+=`<td>${c||'-'}</td>`; }); h += `<td class="fw-bold-total">${tot}</td></tr>`; });
             t.innerHTML = h + "</tbody>";
         }
 
