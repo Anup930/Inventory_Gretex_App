@@ -12,39 +12,18 @@
 
     <style>
         body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
-        
-        /* SIDEBAR */
         .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; }
         .sidebar-header { text-align: center; margin-bottom: 30px; font-weight: bold; font-size: 1.2rem; border-bottom: 1px solid #34495e; padding-bottom: 20px; }
         .sidebar a { color: #aab8c5; padding: 12px 25px; display: flex; align-items: center; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
         .sidebar a i { width: 25px; text-align: center; margin-right: 10px; }
         .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
-
-        /* CONTENT */
         .main-content { margin-left: 250px; padding: 30px; }
-        
-        /* CARDS */
-        .stat-card { 
-            background: white; border-radius: 12px; padding: 25px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; 
-            border-left: 5px solid #ccc; cursor: pointer; position: relative; overflow: hidden;
-        }
+        .stat-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; border-left: 5px solid #ccc; cursor: pointer; position: relative; overflow: hidden; }
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .stat-card h2 { font-weight: bold; margin: 10px 0 0 0; color: #333; }
-        
-        /* ALERT CARD STYLE */
         .alert-card { border-left: 5px solid #e74a3b !important; background: #fff5f5; }
         .alert-card:hover { background: #fee2e2; }
-
-        /* HOVER CHART POPUP */
-        #hoverChartCard {
-            display: none; position: absolute; z-index: 9999; width: 280px;
-            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
-            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            pointer-events: none; border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        /* CONTAINERS */
+        #hoverChartCard { display: none; position: absolute; z-index: 9999; width: 280px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: none; border: 1px solid rgba(0,0,0,0.1); }
         .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .chart-wrapper { position: relative; height: 300px; width: 100%; }
         .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 0; }
@@ -52,7 +31,6 @@
         .pivot-table td { font-size: 0.9rem; border: 1px solid #dee2e6; }
         .fw-bold-total { font-weight: 700; background-color: #d1d3e2 !important; }
     </style>
-    
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
         if (!user) window.location.href = "index.html";
@@ -77,53 +55,35 @@
     </div>
 
     <div class="main-content">
-        
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3 class="fw-bold text-dark m-0">Analytics Dashboard</h3>
-                <small class="text-muted">Live Inventory Status</small>
-            </div>
-            <div class="bg-white px-3 py-2 rounded shadow-sm">
-                <i class="fas fa-user-circle text-primary me-2"></i>
-                <span class="fw-bold" id="userNameDisplay">User</span>
-            </div>
+            <div><h3 class="fw-bold text-dark m-0">Analytics Dashboard</h3><small class="text-muted">Live Inventory Status</small></div>
+            <div class="bg-white px-3 py-2 rounded shadow-sm"><i class="fas fa-user-circle text-primary me-2"></i><span class="fw-bold" id="userNameDisplay">User</span></div>
         </div>
 
         <div class="row g-3 mb-4">
             <div class="col">
                 <div class="stat-card" style="border-left-color: #4e73df;" onmouseenter="showBreakdown(this, 'total')" onmouseleave="hideBreakdown()">
-                    <div class="icon-box text-primary"><i class="fas fa-laptop"></i></div>
-                    <p class="text-primary">Total Assets</p>
-                    <h2 id="totalAssets">0</h2>
+                    <div class="icon-box text-primary"><i class="fas fa-laptop"></i></div><p class="text-primary">Total Assets</p><h2 id="totalAssets">0</h2>
                 </div>
             </div>
             <div class="col">
                 <div class="stat-card" style="border-left-color: #1cc88a;" onmouseenter="showBreakdown(this, 'available')" onmouseleave="hideBreakdown()">
-                    <div class="icon-box text-success"><i class="fas fa-check-circle"></i></div>
-                    <p class="text-success">Available</p>
-                    <h2 id="totalAvailable">0</h2>
+                    <div class="icon-box text-success"><i class="fas fa-check-circle"></i></div><p class="text-success">Available</p><h2 id="totalAvailable">0</h2>
                 </div>
             </div>
             <div class="col">
                 <div class="stat-card" style="border-left-color: #f6c23e;" onmouseenter="showBreakdown(this, 'allocated')" onmouseleave="hideBreakdown()">
-                    <div class="icon-box text-warning"><i class="fas fa-user-check"></i></div>
-                    <p class="text-warning">Allocated</p>
-                    <h2 id="totalAllocated">0</h2>
+                    <div class="icon-box text-warning"><i class="fas fa-user-check"></i></div><p class="text-warning">Allocated</p><h2 id="totalAllocated">0</h2>
                 </div>
             </div>
             <div class="col">
                 <div class="stat-card" style="border-left-color: #858796;" onmouseenter="showBreakdown(this, 'repair')" onmouseleave="hideBreakdown()">
-                    <div class="icon-box text-secondary"><i class="fas fa-tools"></i></div>
-                    <p class="text-secondary">Maintenance</p>
-                    <h2 id="totalRepair">0</h2>
+                    <div class="icon-box text-secondary"><i class="fas fa-tools"></i></div><p class="text-secondary">Maintenance</p><h2 id="totalRepair">0</h2>
                 </div>
             </div>
-            
             <div class="col">
                 <div class="stat-card alert-card" oncontextmenu="showInactiveModal(event)" title="Right Click to View Details">
-                    <div class="icon-box text-danger"><i class="fas fa-exclamation-triangle"></i></div>
-                    <p class="text-danger fw-bold">Assets with Inactive Emp</p>
-                    <h2 id="totalInactiveAssets">0</h2>
+                    <div class="icon-box text-danger"><i class="fas fa-exclamation-triangle"></i></div><p class="text-danger fw-bold">Assets with Inactive Emp</p><h2 id="totalInactiveAssets">0</h2>
                 </div>
             </div>
         </div>
@@ -136,33 +96,13 @@
         </div>
 
         <div class="row g-4 mb-4">
-            <div class="col-md-8">
-                <div class="chart-box">
-                    <h6 class="text-muted mb-3 fw-bold">Location-wise Asset Status</h6>
-                    <div class="chart-wrapper"><canvas id="locationChart"></canvas></div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="chart-box">
-                    <h6 class="text-muted mb-3 fw-bold">Assets per Employee</h6>
-                    <div class="chart-wrapper"><canvas id="ownershipChart"></canvas></div>
-                </div>
-            </div>
+            <div class="col-md-8"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Location-wise Asset Status</h6><div class="chart-wrapper"><canvas id="locationChart"></canvas></div></div></div>
+            <div class="col-md-4"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Assets per Employee</h6><div class="chart-wrapper"><canvas id="ownershipChart"></canvas></div></div></div>
         </div>
 
         <div class="row g-4 mb-4">
-            <div class="col-md-6">
-                <div class="chart-box">
-                    <h6 class="text-muted mb-3 fw-bold">Category Distribution</h6>
-                    <div class="chart-wrapper"><canvas id="categoryChart"></canvas></div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="chart-box">
-                    <h6 class="text-muted mb-3 fw-bold">Brand Distribution</h6>
-                    <div class="chart-wrapper"><canvas id="brandChart"></canvas></div>
-                </div>
-            </div>
+            <div class="col-md-6"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Category Distribution</h6><div class="chart-wrapper"><canvas id="categoryChart"></canvas></div></div></div>
+            <div class="col-md-6"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Brand Distribution</h6><div class="chart-wrapper"><canvas id="brandChart"></canvas></div></div></div>
         </div>
 
         <div class="row">
@@ -171,14 +111,12 @@
                     <h5 class="text-dark mb-3 fw-bold"><i class="fas fa-table me-2"></i>Location vs Status Summary</h5>
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover pivot-table text-center align-middle" id="pivotTable">
-                            <thead class="table-light"><tr><th>Loading...</th></tr></thead>
-                            <tbody></tbody>
+                            <thead class="table-light"><tr><th>Loading...</th></tr></thead><tbody></tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <div class="modal fade" id="inactiveModal" tabindex="-1">
@@ -195,9 +133,7 @@
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered">
-                            <thead class="table-light">
-                                <tr><th>Asset ID</th><th>Serial No</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr>
-                            </thead>
+                            <thead class="table-light"><tr><th>Asset ID</th><th>Serial No</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr></thead>
                             <tbody id="inactiveTableBody"></tbody>
                         </table>
                     </div>
@@ -209,23 +145,19 @@
     <script>
         // ********************************************
         // PASTE YOUR GAS WEB APP URL HERE
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         // ********************************************
         
         document.getElementById("userNameDisplay").innerText = user.name;
 
-        // Global Variables
         let locChartInstance = null, ownChartInstance = null, catChartInstance = null, brandChartInstance = null, hoverChartInstance = null;
         let breakdownData = { total: {}, available: {}, allocated: {}, repair: {} };
-        let inactiveAssetsList = []; // Stores risky assets
+        let inactiveAssetsList = []; 
 
-        // --- FETCH DATA (ASSETS + EMPLOYEES) ---
         async function loadData() {
             try {
-                // Fetch both sheets in parallel
                 const assetReq = fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "exportData", sheetName: "Asset_Master" }) });
                 const empReq = fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "exportData", sheetName: "Employees" }) });
-
                 const [assetRes, empRes] = await Promise.all([assetReq, empReq].map(p => p.then(r => r.json())));
 
                 if (assetRes.status === "success" && empRes.status === "success") {
@@ -235,27 +167,26 @@
         }
 
         function processDashboard(assetData, empData) {
-            // 1. Process Employees first to find Inactive ones
+            // 1. Process Employees
             const empHeaders = empData[0];
             const empRows = empData.slice(1);
-            
-            // Find Columns
             const getEmpIdx = (name) => empHeaders.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
             const EMP_NAME = getEmpIdx("Name");
             const EMP_STATUS = getEmpIdx("Status");
-            const EMP_ID = getEmpIdx("ID"); // Emp ID
+            const EMP_ID = getEmpIdx("ID"); 
 
-            const inactiveEmpMap = {}; // Name -> ID
+            const inactiveEmpMap = {};
             empRows.forEach(row => {
-                if(row[EMP_STATUS] === 'Inactive') {
-                    inactiveEmpMap[row[EMP_NAME]] = row[EMP_ID] || "N/A";
+                const status = (row[EMP_STATUS] || "").toString().trim(); // FIX: Trim added
+                if(status === 'Inactive') {
+                    // Normalize name to lowercase for matching
+                    inactiveEmpMap[row[EMP_NAME].toString().toLowerCase()] = row[EMP_ID] || "N/A";
                 }
             });
 
             // 2. Process Assets
             const headers = assetData[0]; 
             const rows = assetData.slice(1);
-
             const getIdx = (name) => headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
             const IDX_ID = getIdx("AssetID");
             const IDX_LOC = getIdx("Location");
@@ -268,8 +199,7 @@
             let total = 0, available = 0, allocated = 0, repair = 0;
             const locationMap = {}, categoryMap = {}, brandMap = {}, userAssetCounts = {};
             const allStatuses = new Set();
-            
-            inactiveAssetsList = []; // Reset Risk List
+            inactiveAssetsList = [];
 
             rows.forEach(r => {
                 const loc = (r[IDX_LOC] || "Unknown").toString().trim();
@@ -282,7 +212,6 @@
 
                 if(loc === "") return;
 
-                // KPI & Hover Data
                 total++;
                 breakdownData.total[cat] = (breakdownData.total[cat] || 0) + 1;
 
@@ -293,18 +222,16 @@
                     allocated++;
                     breakdownData.allocated[cat] = (breakdownData.allocated[cat] || 0) + 1;
                     
-                    // --- CHECK FOR RISK (INACTIVE EMP) ---
-                    // Does the assigned user exist in our Inactive Map?
-                    // We check if 'user' string matches keys in inactiveEmpMap
-                    // (Simple check, assumes Names match exactly. For robustness, using ID is better but Asset Master stores Name often)
-                    if (inactiveEmpMap.hasOwnProperty(user)) {
-                        inactiveAssetsList.push({
-                            assetId: assetId,
-                            serial: serial,
-                            type: cat,
-                            user: user,
-                            empId: inactiveEmpMap[user]
-                        });
+                    // --- FIXED: CHECK FOR INACTIVE EMP (PARTIAL MATCH) ---
+                    // "Assigned To" might be "Anup (1302)", but map key is "anup".
+                    const userLower = user.toLowerCase();
+                    for (const [inactiveName, empId] of Object.entries(inactiveEmpMap)) {
+                        if (userLower.includes(inactiveName)) {
+                            inactiveAssetsList.push({
+                                assetId: assetId, serial: serial, type: cat, user: user, empId: empId
+                            });
+                            break; // Found match, stop checking other inactive names
+                        }
                     }
 
                 } else if(['Repair', 'Damaged', 'Scrap'].includes(status)) {
@@ -312,33 +239,19 @@
                     breakdownData.repair[cat] = (breakdownData.repair[cat] || 0) + 1;
                 }
 
-                // Charts Data
                 allStatuses.add(status);
-                if (!locationMap[loc]) locationMap[loc] = {};
-                if (!locationMap[loc][status]) locationMap[loc][status] = 0;
-                locationMap[loc][status]++;
-
-                if (!categoryMap[cat]) categoryMap[cat] = {};
-                if (!categoryMap[cat][status]) categoryMap[cat][status] = 0;
-                categoryMap[cat][status]++;
-
-                if (!brandMap[brand]) brandMap[brand] = {};
-                if (!brandMap[brand][status]) brandMap[brand][status] = 0;
-                brandMap[brand][status]++;
-
-                if(status === 'In-Use' && user !== "Unassigned") {
-                    userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
-                }
+                if (!locationMap[loc]) locationMap[loc] = {}; locationMap[loc][status] = (locationMap[loc][status] || 0) + 1;
+                if (!categoryMap[cat]) categoryMap[cat] = {}; categoryMap[cat][status] = (categoryMap[cat][status] || 0) + 1;
+                if (!brandMap[brand]) brandMap[brand] = {}; brandMap[brand][status] = (brandMap[brand][status] || 0) + 1;
+                if(status === 'In-Use' && user !== "Unassigned") userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
             });
 
-            // UPDATE UI NUMBERS
             document.getElementById("totalAssets").innerText = total;
             document.getElementById("totalAvailable").innerText = available;
             document.getElementById("totalAllocated").innerText = allocated;
             document.getElementById("totalRepair").innerText = repair;
             document.getElementById("totalInactiveAssets").innerText = inactiveAssetsList.length;
 
-            // RENDER CHARTS
             const statusArray = Array.from(allStatuses).sort();
             const ownershipDist = {};
             Object.values(userAssetCounts).forEach(c => ownershipDist[c + (c===1?" Device":" Devices")] = (ownershipDist[c + (c===1?" Device":" Devices")] || 0) + 1);
@@ -350,37 +263,22 @@
             renderStackedChart('brandChart', brandMap, statusArray, brandChartInstance, (i) => brandChartInstance = i);
         }
 
-        // --- RIGHT CLICK LOGIC (Show Inactive Assets) ---
         function showInactiveModal(e) {
-            e.preventDefault(); // Stop default right-click menu
-            
+            e.preventDefault();
             const tbody = document.getElementById("inactiveTableBody");
             tbody.innerHTML = "";
-
             if(inactiveAssetsList.length === 0) {
                 tbody.innerHTML = "<tr><td colspan='5' class='text-center text-success fw-bold'>No Risky Assets Found! All clear.</td></tr>";
             } else {
                 inactiveAssetsList.forEach(item => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="fw-bold text-danger">${item.assetId}</td>
-                            <td>${item.serial}</td>
-                            <td>${item.type}</td>
-                            <td>${item.user}</td>
-                            <td>${item.empId}</td>
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr><td class="fw-bold text-danger">${item.assetId}</td><td>${item.serial}</td><td>${item.type}</td><td>${item.user}</td><td>${item.empId}</td></tr>`;
                 });
             }
-
-            const modal = new bootstrap.Modal(document.getElementById('inactiveModal'));
-            modal.show();
+            new bootstrap.Modal(document.getElementById('inactiveModal')).show();
         }
 
-        // --- DOWNLOAD CSV ---
         function downloadInactiveReport() {
             if(inactiveAssetsList.length === 0) return;
-            
             const csv = Papa.unparse(inactiveAssetsList);
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -389,21 +287,14 @@
             link.click();
         }
 
-        // --- HOVER & CHART RENDERERS (Standard) ---
         function showBreakdown(el, type) {
             const popup = document.getElementById("hoverChartCard");
-            const title = document.getElementById("hoverChartTitle");
             const rect = el.getBoundingClientRect();
-            popup.style.display = "block";
-            popup.style.top = (rect.top + window.scrollY + 10) + "px";
-            popup.style.left = (rect.left + rect.width - 20) + "px";
-            
-            title.innerText = type.toUpperCase() + " Breakdown";
+            popup.style.display = "block"; popup.style.top = (rect.top + window.scrollY + 10) + "px"; popup.style.left = (rect.left + rect.width - 20) + "px";
+            document.getElementById("hoverChartTitle").innerText = type.toUpperCase() + " Breakdown";
             const dataObj = breakdownData[type];
-            const labels = Object.keys(dataObj);
-            const vals = Object.values(dataObj);
+            const labels = Object.keys(dataObj); const vals = Object.values(dataObj);
             if(labels.length===0) { labels.push("No Data"); vals.push(1); }
-
             const ctx = document.getElementById("hoverChartCanvas").getContext("2d");
             if(hoverChartInstance) hoverChartInstance.destroy();
             hoverChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: labels, datasets: [{ data: vals, backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'] }] }, options: { responsive: true, maintainAspectRatio: false, animation: { duration: 0 }, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } } });
