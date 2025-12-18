@@ -44,7 +44,16 @@
         <h3 class="mb-4">Employee Asset History</h3>
 
         <div class="card p-3 mb-4 border-0 shadow-sm">
-            <input type="text" id="searchInput" class="form-control" placeholder="Search Employee Name, ID, Dept..." onkeyup="filterTable()">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label text-muted small">Search Employee</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Type Name, ID, or Department..." onkeyup="filterTable()">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted small fw-bold">Filter by Asset Quantity</label>
+                    <input type="number" id="countFilter" class="form-control" placeholder="e.g. 4 (Show who has 4 items)" onkeyup="filterTable()" onchange="filterTable()">
+                </div>
+            </div>
         </div>
 
         <div class="card border-0 shadow-sm">
@@ -55,7 +64,8 @@
                         <th>Name</th>
                         <th>Department</th>
                         <th>Location</th>
-                        <th class="text-center">Assets Held</th> <th>Status</th>
+                        <th class="text-center">Assets Held</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -95,7 +105,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // *** PASTE YOUR GAS WEB APP URL HERE ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
 
         let globalEmps = [];
         let globalAssets = [];
@@ -119,21 +129,44 @@
             });
         }
 
-        function renderTable(data) {
-            const tbody = document.getElementById("tableBody");
-            tbody.innerHTML = "";
-            
-            // Emp Cols: 0=ID, 1=Name, 3=Dept, 4=Location, 5=Status
-            data.forEach(row => {
-                
-                // --- LOGIC TO COUNT ASSETS ---
-                // Asset Master: Col 11 (Index 11) is AssignedTo, Col 12 (Index 12) is Status
-                // We check if AssignedTo contains Employee Name AND Status is "In-Use"
+        // --- UPDATED FILTER LOGIC ---
+        function filterTable() {
+            const searchText = document.getElementById("searchInput").value.toLowerCase();
+            const countFilter = document.getElementById("countFilter").value; // Gets the number
+
+            const filtered = globalEmps.filter(row => {
+                // 1. Check Name/ID Match
+                const textMatch = (row[0]+row[1]+row[3]).toLowerCase().includes(searchText);
+
+                // 2. Check Asset Count Match
+                // Calculate count for this specific employee row
                 const assetCount = globalAssets.filter(a => 
                     a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
                 ).length;
 
-                // Badge Color based on count
+                // If input is empty, ignore count filter. Else, match exact number.
+                const countMatch = countFilter === "" ? true : assetCount == countFilter;
+
+                return textMatch && countMatch;
+            });
+
+            renderTable(filtered);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+            
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">No matching employees found</td></tr>';
+                return;
+            }
+
+            data.forEach(row => {
+                const assetCount = globalAssets.filter(a => 
+                    a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
+                ).length;
+
                 let countBadge = assetCount > 0 
                     ? `<span class="badge bg-primary rounded-pill px-3">${assetCount}</span>` 
                     : `<span class="badge bg-secondary rounded-pill px-3">0</span>`;
@@ -144,19 +177,12 @@
                     <td class="fw-bold">${row[1]}</td>
                     <td>${row[3]}</td>
                     <td>${row[4]}</td>
-                    <td class="text-center h5 mb-0">${countBadge}</td> <td><span class="badge ${row[5]=='Active'?'bg-success':'bg-danger'}">${row[5]}</span></td>
+                    <td class="text-center h5 mb-0">${countBadge}</td>
+                    <td><span class="badge ${row[5]=='Active'?'bg-success':'bg-danger'}">${row[5]}</span></td>
                 `;
                 tr.onclick = () => showEmpDetails(row);
                 tbody.appendChild(tr);
             });
-        }
-
-        function filterTable() {
-            const search = document.getElementById("searchInput").value.toLowerCase();
-            const filtered = globalEmps.filter(row => 
-                (row[0]+row[1]+row[3]).toLowerCase().includes(search)
-            );
-            renderTable(filtered);
         }
 
         function showEmpDetails(emp) {
