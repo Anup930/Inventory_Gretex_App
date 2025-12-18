@@ -1,4 +1,4 @@
-<!-- V.5.7.0 -->
+<!-- V 5.1.7 -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -24,32 +24,46 @@
         /* CONTENT */
         .main-content { margin-left: 250px; padding: 30px; }
         
-        /* CARDS */
-        .stat-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; border-left: 5px solid #ccc; }
-        .stat-card:hover { transform: translateY(-5px); }
+        /* KPI CARDS WITH HOVER EFFECT */
+        .stat-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 25px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            transition: all 0.3s; 
+            border-left: 5px solid #ccc; 
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
         .stat-card h2 { font-weight: bold; margin: 10px 0 0 0; color: #333; }
         .icon-box { float: right; opacity: 0.2; font-size: 2.5rem; margin-top: -10px; }
 
-        /* CHART & TABLE CONTAINERS */
-        .chart-box { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-            margin-bottom: 20px;
+        /* CHART POPUP (Hidden by default) */
+        #hoverChartCard {
+            display: none;
+            position: absolute;
+            z-index: 9999;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            pointer-events: none; /* Allows mouse to move smoothly without flickering */
+            border: 1px solid rgba(0,0,0,0.1);
         }
 
-        /* FIXED HEIGHT WRAPPER */
-        .chart-wrapper {
-            position: relative;
-            height: 300px; /* Thoda chota kiya taaki fit aaye */
-            width: 100%;
-        }
+        /* CONTAINERS */
+        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .chart-wrapper { position: relative; height: 300px; width: 100%; }
         
         .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 0; }
         .pivot-table th { background-color: #e2e6ea; font-size: 0.85rem; text-transform: uppercase; border: 1px solid #dee2e6; }
         .pivot-table td { font-size: 0.9rem; border: 1px solid #dee2e6; }
-        .pivot-table .row-header { font-weight: bold; background-color: #f8f9fa; text-align: left; }
         .fw-bold-total { font-weight: 700; background-color: #d1d3e2 !important; }
     </style>
     
@@ -91,31 +105,40 @@
 
         <div class="row g-4 mb-4">
             <div class="col-md-3">
-                <div class="stat-card" style="border-left-color: #4e73df;">
+                <div class="stat-card" style="border-left-color: #4e73df;" onmouseenter="showBreakdown(this, 'total')" onmouseleave="hideBreakdown()">
                     <div class="icon-box text-primary"><i class="fas fa-laptop"></i></div>
                     <p class="text-primary">Total Assets</p>
                     <h2 id="totalAssets">0</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card" style="border-left-color: #1cc88a;">
+                <div class="stat-card" style="border-left-color: #1cc88a;" onmouseenter="showBreakdown(this, 'available')" onmouseleave="hideBreakdown()">
                     <div class="icon-box text-success"><i class="fas fa-check-circle"></i></div>
                     <p class="text-success">Available</p>
                     <h2 id="totalAvailable">0</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card" style="border-left-color: #f6c23e;">
+                <div class="stat-card" style="border-left-color: #f6c23e;" onmouseenter="showBreakdown(this, 'allocated')" onmouseleave="hideBreakdown()">
                     <div class="icon-box text-warning"><i class="fas fa-user-check"></i></div>
                     <p class="text-warning">Allocated</p>
                     <h2 id="totalAllocated">0</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card" style="border-left-color: #e74a3b;">
+                <div class="stat-card" style="border-left-color: #e74a3b;" onmouseenter="showBreakdown(this, 'repair')" onmouseleave="hideBreakdown()">
                     <div class="icon-box text-danger"><i class="fas fa-tools"></i></div>
                     <p class="text-danger">Repair / Scrap</p>
                     <h2 id="totalRepair">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div id="hoverChartCard" class="card">
+            <div class="card-body p-2">
+                <h6 class="text-center small fw-bold text-muted mb-2 border-bottom pb-1" id="hoverChartTitle">Asset Breakdown</h6>
+                <div style="height: 180px;">
+                    <canvas id="hoverChartCanvas"></canvas>
                 </div>
             </div>
         </div>
@@ -142,7 +165,7 @@
         <div class="row g-4 mb-4">
             <div class="col-md-6">
                 <div class="chart-box">
-                    <h6 class="text-muted mb-3 fw-bold">Category Distribution (Hover for Status)</h6>
+                    <h6 class="text-muted mb-3 fw-bold">Category Distribution</h6>
                     <div class="chart-wrapper">
                         <canvas id="categoryChart"></canvas>
                     </div>
@@ -150,7 +173,7 @@
             </div>
             <div class="col-md-6">
                 <div class="chart-box">
-                    <h6 class="text-muted mb-3 fw-bold">Brand Distribution (Hover for Status)</h6>
+                    <h6 class="text-muted mb-3 fw-bold">Brand Distribution</h6>
                     <div class="chart-wrapper">
                         <canvas id="brandChart"></canvas>
                     </div>
@@ -164,9 +187,7 @@
                     <h5 class="text-dark mb-3 fw-bold"><i class="fas fa-table me-2"></i>Location vs Status Summary</h5>
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover pivot-table text-center align-middle" id="pivotTable">
-                            <thead class="table-light">
-                                <tr><th>Loading Data...</th></tr>
-                            </thead>
+                            <thead class="table-light"><tr><th>Loading Data...</th></tr></thead>
                             <tbody></tbody>
                         </table>
                     </div>
@@ -179,16 +200,27 @@
     <script>
         // ********************************************
         // PASTE YOUR GAS WEB APP URL HERE
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         // ********************************************
         
         document.getElementById("userNameDisplay").innerText = user.name;
 
-        // Global Chart Instances
+        // Global Instances
         let locChartInstance = null;
         let ownChartInstance = null;
         let catChartInstance = null;
         let brandChartInstance = null;
+        
+        // HOVER CHART INSTANCE
+        let hoverChartInstance = null;
+        
+        // Data for Hover Charts
+        let breakdownData = {
+            total: {},
+            available: {},
+            allocated: {},
+            repair: {}
+        };
 
         // --- FETCH DATA ---
         async function loadData() {
@@ -201,49 +233,29 @@
 
                 if (result.status === "success" && result.data.length > 0) {
                     processDashboard(result.data);
-                } else {
-                    console.warn("No data found");
                 }
-            } catch (error) {
-                console.error("Error:", error);
-            }
+            } catch (error) { console.error("Error:", error); }
         }
 
         function processDashboard(data) {
             const headers = data[0]; 
             const rows = data.slice(1);
 
-            // --- SMART COLUMN DETECTION ---
             const getIdx = (name) => headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
-
             const IDX_LOC = getIdx("Location");
             const IDX_USER = getIdx("Assigned"); 
             const IDX_STATUS = getIdx("Status");
             const IDX_CAT = getIdx("Category");
             const IDX_BRAND = getIdx("Brand");
 
-            if(IDX_LOC === -1 || IDX_STATUS === -1) {
-                alert("Error: Key columns missing in Sheet");
-                return;
-            }
+            if(IDX_LOC === -1 || IDX_STATUS === -1) { alert("Column Error"); return; }
 
-            // 1. KPI COUNTERS
-            const total = rows.length;
-            const available = rows.filter(r => r[IDX_STATUS] === 'Available').length;
-            const allocated = rows.filter(r => r[IDX_STATUS] === 'In-Use').length;
-            const repair = rows.filter(r => ['Repair', 'Damaged', 'Scrap'].includes(r[IDX_STATUS])).length;
-
-            document.getElementById("totalAssets").innerText = total;
-            document.getElementById("totalAvailable").innerText = available;
-            document.getElementById("totalAllocated").innerText = allocated;
-            document.getElementById("totalRepair").innerText = repair;
-
-            // 2. PREPARE DATA MAPS
-            const locationMap = {}; 
-            const categoryMap = {}; // New
-            const brandMap = {};    // New
+            // Counters
+            let total = 0, available = 0, allocated = 0, repair = 0;
+            
+            // Maps for Main Charts
+            const locationMap = {}, categoryMap = {}, brandMap = {}, userAssetCounts = {};
             const allStatuses = new Set();
-            const userAssetCounts = {};
 
             rows.forEach(r => {
                 const loc = (r[IDX_LOC] || "Unknown").toString().trim();
@@ -252,31 +264,52 @@
                 const cat = (r[IDX_CAT] || "Unknown").toString().trim();
                 const brand = (r[IDX_BRAND] || "Unknown").toString().trim();
 
-                if(loc === "") return; 
+                if(loc === "") return;
 
-                // Populate Maps
+                // 1. KPI & HOVER DATA CALCULATION
+                total++;
+                if(!breakdownData.total[cat]) breakdownData.total[cat] = 0;
+                breakdownData.total[cat]++;
+
+                if(status === 'Available') {
+                    available++;
+                    if(!breakdownData.available[cat]) breakdownData.available[cat] = 0;
+                    breakdownData.available[cat]++;
+                } else if(status === 'In-Use') {
+                    allocated++;
+                    if(!breakdownData.allocated[cat]) breakdownData.allocated[cat] = 0;
+                    breakdownData.allocated[cat]++;
+                } else if(['Repair', 'Damaged', 'Scrap'].includes(status)) {
+                    repair++;
+                    if(!breakdownData.repair[cat]) breakdownData.repair[cat] = 0;
+                    breakdownData.repair[cat]++;
+                }
+
+                // 2. MAIN CHARTS DATA
                 allStatuses.add(status);
 
-                // Location Map
                 if (!locationMap[loc]) locationMap[loc] = {};
                 if (!locationMap[loc][status]) locationMap[loc][status] = 0;
                 locationMap[loc][status]++;
 
-                // Category Map
                 if (!categoryMap[cat]) categoryMap[cat] = {};
                 if (!categoryMap[cat][status]) categoryMap[cat][status] = 0;
                 categoryMap[cat][status]++;
 
-                // Brand Map
                 if (!brandMap[brand]) brandMap[brand] = {};
                 if (!brandMap[brand][status]) brandMap[brand][status] = 0;
                 brandMap[brand][status]++;
 
-                // Ownership Map
                 if(status === 'In-Use' && user !== "Unassigned" && user !== "") {
                     userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
                 }
             });
+
+            // Update UI
+            document.getElementById("totalAssets").innerText = total;
+            document.getElementById("totalAvailable").innerText = available;
+            document.getElementById("totalAllocated").innerText = allocated;
+            document.getElementById("totalRepair").innerText = repair;
 
             const ownershipDist = {};
             Object.values(userAssetCounts).forEach(count => {
@@ -284,116 +317,133 @@
                 ownershipDist[key] = (ownershipDist[key] || 0) + 1;
             });
 
-            // 3. RENDER ALL CHARTS
+            // Render Main Charts
             const statusArray = Array.from(allStatuses).sort();
-            
             renderPivotTable(locationMap, statusArray);
-            
-            // Existing Charts
             renderStackedChart('locationChart', locationMap, statusArray, locChartInstance, (i) => locChartInstance = i);
             renderOwnershipChart(ownershipDist);
-            
-            // New Charts
             renderStackedChart('categoryChart', categoryMap, statusArray, catChartInstance, (i) => catChartInstance = i);
             renderStackedChart('brandChart', brandMap, statusArray, brandChartInstance, (i) => brandChartInstance = i);
         }
 
-        // --- GENERIC STACKED CHART RENDERER ---
-        function renderStackedChart(canvasId, dataMap, statuses, instance, setInstance) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            const labels = Object.keys(dataMap).sort();
+        // --- HOVER CHART LOGIC ---
+        function showBreakdown(element, type) {
+            const popup = document.getElementById("hoverChartCard");
+            const titleEl = document.getElementById("hoverChartTitle");
             
-            if(instance) instance.destroy(); 
+            // 1. Position Popup
+            const rect = element.getBoundingClientRect();
+            popup.style.display = "block";
+            // Position slightly to the right and down from the card top
+            popup.style.top = (rect.top + window.scrollY + 10) + "px";
+            popup.style.left = (rect.left + rect.width - 20) + "px";
 
-            const datasets = statuses.map((status, index) => {
-                const data = labels.map(label => dataMap[label][status] || 0);
-                const colors = ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#6610f2', '#fd7e14']; 
-                return {
-                    label: status,
-                    data: data,
-                    backgroundColor: colors[index % colors.length]
-                };
-            });
+            // 2. Set Title
+            const titles = {
+                'total': 'Total Assets by Type',
+                'available': 'Available Stock by Type',
+                'allocated': 'Allocated Assets by Type',
+                'repair': 'Repair/Scrap by Type'
+            };
+            titleEl.innerText = titles[type] || "Breakdown";
 
-            const newChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
-                    plugins: { 
-                        legend: { position: 'top' },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    }
-                }
-            });
-            setInstance(newChart);
-        }
+            // 3. Prepare Data
+            const dataObj = breakdownData[type];
+            const labels = Object.keys(dataObj);
+            const data = Object.values(dataObj);
 
-        // --- RENDER OWNERSHIP CHART ---
-        function renderOwnershipChart(distMap) {
-            const ctx = document.getElementById('ownershipChart').getContext('2d');
-            if(ownChartInstance) ownChartInstance.destroy(); 
+            // Handle Empty Data
+            if(labels.length === 0) {
+                labels.push("No Data");
+                data.push(1);
+            }
 
-            const labels = Object.keys(distMap).sort((a,b) => parseInt(a) - parseInt(b));
-            const data = labels.map(k => distMap[k]);
+            // 4. Render Chart
+            const ctx = document.getElementById("hoverChartCanvas").getContext("2d");
+            if(hoverChartInstance) hoverChartInstance.destroy();
 
-            if(labels.length === 0) { labels.push("No Allocations"); data.push(1); }
-
-            ownChartInstance = new Chart(ctx, {
+            hoverChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: data,
-                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
+                    animation: { duration: 0 }, // Disable animation for instant hover effect
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } }
+                    }
                 }
             });
         }
 
-        // --- RENDER PIVOT TABLE ---
+        function hideBreakdown() {
+            const popup = document.getElementById("hoverChartCard");
+            popup.style.display = "none";
+        }
+
+        // --- CHART RENDERERS (Main Dashboard) ---
+        function renderStackedChart(canvasId, dataMap, statuses, instance, setInstance) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const labels = Object.keys(dataMap).sort();
+            if(instance) instance.destroy();
+            const datasets = statuses.map((status, index) => {
+                const colors = ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc'];
+                return {
+                    label: status,
+                    data: labels.map(label => dataMap[label][status] || 0),
+                    backgroundColor: colors[index % colors.length]
+                };
+            });
+            const newChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+                    plugins: { legend: { position: 'top' } }
+                }
+            });
+            setInstance(newChart);
+        }
+
+        function renderOwnershipChart(distMap) {
+            const ctx = document.getElementById('ownershipChart').getContext('2d');
+            if(ownChartInstance) ownChartInstance.destroy();
+            const labels = Object.keys(distMap).sort((a,b) => parseInt(a) - parseInt(b));
+            ownChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{ data: labels.map(k => distMap[k]), backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
         function renderPivotTable(locMap, statuses) {
             const table = document.getElementById("pivotTable");
             const locations = Object.keys(locMap).sort();
-
-            let thead = `<thead class="table-light"><tr><th class="row-header">Location</th>`;
-            statuses.forEach(s => thead += `<th>${s}</th>`);
-            thead += `<th class="fw-bold-total">Grand Total</th></tr></thead>`;
-
-            let tbody = `<tbody>`;
-            let colTotals = new Array(statuses.length).fill(0);
-            let grandTotalAll = 0;
-
+            let html = `<thead class="table-light"><tr><th class="row-header">Location</th>` + 
+                       statuses.map(s => `<th>${s}</th>`).join('') + `<th class="fw-bold-total">Total</th></tr></thead><tbody>`;
+            
             locations.forEach(loc => {
-                let rowHtml = `<tr><td class="row-header">${loc}</td>`;
                 let rowTotal = 0;
-                statuses.forEach((s, idx) => {
+                html += `<tr><td class="row-header">${loc}</td>`;
+                statuses.forEach(s => {
                     const count = locMap[loc][s] || 0;
-                    rowHtml += `<td>${count > 0 ? count : '-'}</td>`;
                     rowTotal += count;
-                    colTotals[idx] += count;
+                    html += `<td>${count || '-'}</td>`;
                 });
-                grandTotalAll += rowTotal;
-                rowHtml += `<td class="fw-bold-total">${rowTotal}</td></tr>`;
-                tbody += rowHtml;
+                html += `<td class="fw-bold-total">${rowTotal}</td></tr>`;
             });
-
-            let tfoot = `<tr class="fw-bold-total"><td>Grand Total</td>`;
-            colTotals.forEach(t => tfoot += `<td>${t}</td>`);
-            tfoot += `<td>${grandTotalAll}</td></tr>`;
-            tbody += tfoot + `</tbody>`;
-
-            table.innerHTML = thead + tbody;
+            table.innerHTML = html + "</tbody>";
         }
 
         loadData();
