@@ -22,19 +22,20 @@
         /* CONTENT */
         .main-content { margin-left: 250px; padding: 30px; }
         
-        /* CARDS & CONTAINERS */
+        /* CARDS */
         .stat-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; border-left: 5px solid #ccc; }
         .stat-card:hover { transform: translateY(-5px); }
         .stat-card h2 { font-weight: bold; margin: 10px 0 0 0; color: #333; }
         .icon-box { float: right; opacity: 0.2; font-size: 2.5rem; margin-top: -10px; }
 
-        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 100%; min-height: 350px; }
+        /* CHARTS & TABLES */
+        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 100%; min-height: 400px; }
         
-        /* PIVOT TABLE STYLES */
-        .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
-        .pivot-table th { background-color: #f8f9fa; font-size: 0.85rem; text-transform: uppercase; }
-        .pivot-table td { font-size: 0.9rem; }
-        .fw-bold-total { font-weight: 700; background-color: #eef2ff !important; }
+        .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 25px; }
+        .pivot-table th { background-color: #e2e6ea; font-size: 0.85rem; text-transform: uppercase; border: 1px solid #dee2e6; }
+        .pivot-table td { font-size: 0.9rem; border: 1px solid #dee2e6; }
+        .pivot-table .row-header { font-weight: bold; background-color: #f8f9fa; text-align: left; }
+        .fw-bold-total { font-weight: 700; background-color: #d1d3e2 !important; }
     </style>
     
     <script>
@@ -65,7 +66,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3 class="fw-bold text-dark m-0">Analytics Dashboard</h3>
-                <small class="text-muted">Real-time Inventory Intelligence</small>
+                <small class="text-muted">Live Inventory Status</small>
             </div>
             <div class="bg-white px-3 py-2 rounded shadow-sm">
                 <i class="fas fa-user-circle text-primary me-2"></i>
@@ -78,33 +79,33 @@
                 <div class="stat-card" style="border-left-color: #4e73df;">
                     <div class="icon-box text-primary"><i class="fas fa-laptop"></i></div>
                     <p class="text-primary">Total Assets</p>
-                    <h2 id="totalAssets">...</h2>
+                    <h2 id="totalAssets">0</h2>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card" style="border-left-color: #1cc88a;">
                     <div class="icon-box text-success"><i class="fas fa-check-circle"></i></div>
                     <p class="text-success">Available</p>
-                    <h2 id="totalAvailable">...</h2>
+                    <h2 id="totalAvailable">0</h2>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card" style="border-left-color: #f6c23e;">
                     <div class="icon-box text-warning"><i class="fas fa-user-check"></i></div>
                     <p class="text-warning">Allocated</p>
-                    <h2 id="totalAllocated">...</h2>
+                    <h2 id="totalAllocated">0</h2>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card" style="border-left-color: #e74a3b;">
                     <div class="icon-box text-danger"><i class="fas fa-tools"></i></div>
                     <p class="text-danger">Repair / Scrap</p>
-                    <h2 id="totalRepair">...</h2>
+                    <h2 id="totalRepair">0</h2>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4 mb-4">
+        <div class="row g-4">
             <div class="col-md-8">
                 <div class="chart-box">
                     <h6 class="text-muted mb-3 fw-bold">Location-wise Asset Status</h6>
@@ -113,7 +114,7 @@
             </div>
             <div class="col-md-4">
                 <div class="chart-box">
-                    <h6 class="text-muted mb-3 fw-bold">Asset Ownership (Count per User)</h6>
+                    <h6 class="text-muted mb-3 fw-bold">Assets per Employee</h6>
                     <canvas id="ownershipChart"></canvas>
                 </div>
             </div>
@@ -122,12 +123,13 @@
         <div class="row">
             <div class="col-12">
                 <div class="table-container">
-                    <h6 class="text-muted mb-3 fw-bold">Detailed Location vs Status Matrix</h6>
+                    <h5 class="text-dark mb-3 fw-bold"><i class="fas fa-table me-2"></i>Location vs Status Summary</h5>
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover pivot-table text-center align-middle" id="pivotTable">
                             <thead class="table-light">
                                 <tr><th>Loading Data...</th></tr>
                             </thead>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
@@ -139,12 +141,16 @@
     <script>
         // ********************************************
         // PASTE YOUR GAS WEB APP URL HERE
-        const API_URL =  "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         // ********************************************
         
         document.getElementById("userNameDisplay").innerText = user.name;
 
-        // --- FETCH & PROCESS DATA ---
+        // Global Chart Instances
+        let locChartInstance = null;
+        let ownChartInstance = null;
+
+        // --- FETCH DATA ---
         async function loadData() {
             try {
                 const response = await fetch(API_URL, {
@@ -153,23 +159,32 @@
                 });
                 const result = await response.json();
 
-                if (result.status === "success" && result.data.length > 1) {
-                    const rows = result.data.slice(1); // Remove Header
-                    processDashboard(rows);
+                if (result.status === "success" && result.data.length > 0) {
+                    processDashboard(result.data);
                 } else {
-                    alert("No Data Found");
+                    console.warn("No data found");
                 }
             } catch (error) {
                 console.error("Error:", error);
             }
         }
 
-        function processDashboard(rows) {
-            // Data Indices based on your Sheet:
-            // 10: Location, 11: AssignedTo, 12: Status
-            const IDX_LOC = 10;
-            const IDX_USER = 11;
-            const IDX_STATUS = 12;
+        function processDashboard(data) {
+            const headers = data[0]; // First Row is Header
+            const rows = data.slice(1); // Data rows
+
+            // --- SMART COLUMN DETECTION ---
+            // Finds the exact column number by Name (Case Insensitive)
+            const getIdx = (name) => headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
+
+            const IDX_LOC = getIdx("Location");
+            const IDX_USER = getIdx("Assigned"); // Matches "AssignedTo"
+            const IDX_STATUS = getIdx("Status");
+
+            if(IDX_LOC === -1 || IDX_STATUS === -1) {
+                alert("Critical Error: 'Location' or 'Status' column not found in Google Sheet. Please check headers.");
+                return;
+            }
 
             // 1. KPI COUNTERS
             const total = rows.length;
@@ -182,38 +197,43 @@
             document.getElementById("totalAllocated").innerText = allocated;
             document.getElementById("totalRepair").innerText = repair;
 
-            // 2. LOCATION vs STATUS DATA (Pivot)
-            const locationMap = {}; // { 'Mumbai': { 'Available': 5, 'In-Use': 2 } }
+            // 2. PREPARE DATA FOR PIVOT & CHARTS
+            const locationMap = {}; 
             const allStatuses = new Set();
+            const userAssetCounts = {};
 
             rows.forEach(r => {
-                const loc = r[IDX_LOC] || "Unknown";
-                const status = r[IDX_STATUS] || "Unknown";
-                
+                // Handle Empty or undefined values
+                const loc = (r[IDX_LOC] || "Unknown").toString().trim();
+                const status = (r[IDX_STATUS] || "Unknown").toString().trim();
+                const user = (r[IDX_USER] || "Unassigned").toString().trim();
+
+                if(loc === "") return; // Skip empty rows
+
+                // Populate Location Map
                 if (!locationMap[loc]) locationMap[loc] = {};
                 if (!locationMap[loc][status]) locationMap[loc][status] = 0;
                 
                 locationMap[loc][status]++;
                 allStatuses.add(status);
-            });
 
-            // 3. OWNERSHIP DATA (How many users have 1, 2, 3 assets)
-            const userAssetCounts = {};
-            rows.forEach(r => {
-                if(r[IDX_STATUS] === 'In-Use' && r[IDX_USER] && r[IDX_USER] !== "Unassigned") {
-                    userAssetCounts[r[IDX_USER]] = (userAssetCounts[r[IDX_USER]] || 0) + 1;
+                // Populate Ownership Map
+                if(status === 'In-Use' && user !== "Unassigned" && user !== "") {
+                    userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
                 }
             });
 
-            const ownershipDist = {}; // { '1 Asset': 10 users, '2 Assets': 5 users }
+            // Ownership Distribution
+            const ownershipDist = {};
             Object.values(userAssetCounts).forEach(count => {
-                const key = count + (count === 1 ? " Asset" : " Assets");
+                const key = count + (count === 1 ? " Device" : " Devices");
                 ownershipDist[key] = (ownershipDist[key] || 0) + 1;
             });
 
-            // --- RENDER UI ---
-            renderPivotTable(locationMap, Array.from(allStatuses));
-            renderLocationChart(locationMap, Array.from(allStatuses));
+            // 3. RENDER EVERYTHING
+            const statusArray = Array.from(allStatuses).sort();
+            renderPivotTable(locationMap, statusArray);
+            renderLocationChart(locationMap, statusArray);
             renderOwnershipChart(ownershipDist);
         }
 
@@ -221,43 +241,52 @@
         function renderPivotTable(locMap, statuses) {
             const table = document.getElementById("pivotTable");
             const locations = Object.keys(locMap).sort();
-            statuses.sort(); // Sort statuses alphabetically
 
-            // Header Row
-            let thead = `<thead class="table-light"><tr><th class="text-start">Location</th>`;
+            // Header
+            let thead = `<thead class="table-light"><tr><th class="row-header">Location</th>`;
             statuses.forEach(s => thead += `<th>${s}</th>`);
             thead += `<th class="fw-bold-total">Grand Total</th></tr></thead>`;
 
-            // Body Rows
+            // Body
             let tbody = `<tbody>`;
+            let colTotals = new Array(statuses.length).fill(0);
+            let grandTotalAll = 0;
+
             locations.forEach(loc => {
-                let rowHtml = `<tr><td class="text-start fw-bold">${loc}</td>`;
+                let rowHtml = `<tr><td class="row-header">${loc}</td>`;
                 let rowTotal = 0;
                 
-                statuses.forEach(s => {
+                statuses.forEach((s, idx) => {
                     const count = locMap[loc][s] || 0;
                     rowHtml += `<td>${count > 0 ? count : '-'}</td>`;
                     rowTotal += count;
+                    colTotals[idx] += count;
                 });
                 
+                grandTotalAll += rowTotal;
                 rowHtml += `<td class="fw-bold-total">${rowTotal}</td></tr>`;
                 tbody += rowHtml;
             });
-            tbody += `</tbody>`;
+
+            // Footer Row (Totals)
+            let tfoot = `<tr class="fw-bold-total"><td>Grand Total</td>`;
+            colTotals.forEach(t => tfoot += `<td>${t}</td>`);
+            tfoot += `<td>${grandTotalAll}</td></tr>`;
+            tbody += tfoot + `</tbody>`;
 
             table.innerHTML = thead + tbody;
         }
 
-        // --- RENDER LOCATION CHART (Stacked Bar) ---
+        // --- RENDER LOCATION CHART ---
         function renderLocationChart(locMap, statuses) {
             const ctx = document.getElementById('locationChart').getContext('2d');
             const locations = Object.keys(locMap).sort();
             
-            // Prepare Datasets for Stacking
+            if(locChartInstance) locChartInstance.destroy(); // Fix for canvas reuse
+
             const datasets = statuses.map((status, index) => {
                 const data = locations.map(loc => locMap[loc][status] || 0);
-                // Generate distinct colors
-                const colors = ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc']; 
+                const colors = ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#6610f2', '#fd7e14']; 
                 return {
                     label: status,
                     data: data,
@@ -265,35 +294,34 @@
                 };
             });
 
-            new Chart(ctx, {
+            locChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: locations,
-                    datasets: datasets
-                },
+                data: { labels: locations, datasets: datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: true },
-                        y: { stacked: true, beginAtZero: true }
-                    },
-                    plugins: {
-                        legend: { position: 'top' }
-                    }
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+                    plugins: { legend: { position: 'top' } }
                 }
             });
         }
 
-        // --- RENDER OWNERSHIP CHART (Pie/Doughnut) ---
+        // --- RENDER OWNERSHIP CHART ---
         function renderOwnershipChart(distMap) {
             const ctx = document.getElementById('ownershipChart').getContext('2d');
             
-            // Sort keys numerically (1 Asset, 2 Assets...)
+            if(ownChartInstance) ownChartInstance.destroy(); // Fix for canvas reuse
+
             const labels = Object.keys(distMap).sort((a,b) => parseInt(a) - parseInt(b));
             const data = labels.map(k => distMap[k]);
 
-            new Chart(ctx, {
+            // Handle Empty Data
+            if(labels.length === 0) {
+                labels.push("No Allocations");
+                data.push(1);
+            }
+
+            ownChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
@@ -305,9 +333,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
+                    plugins: { legend: { position: 'bottom' } }
                 }
             });
         }
