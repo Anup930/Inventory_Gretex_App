@@ -1,5 +1,3 @@
-<!-- V2.7.4 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,6 +29,7 @@
         .icon-box { float: right; opacity: 0.2; font-size: 2.5rem; margin-top: -10px; }
 
         .chart-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 400px; }
+        .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 400px; overflow-y: auto; }
     </style>
     
     <script>
@@ -63,7 +62,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3 class="fw-bold text-dark m-0">Dashboard</h3>
-                <small class="text-muted">Overview of your inventory</small>
+                <small class="text-muted">Real-time Asset Overview</small>
             </div>
             <div class="bg-white px-3 py-2 rounded shadow-sm">
                 <i class="fas fa-user-circle text-primary me-2"></i>
@@ -81,18 +80,18 @@
             </div>
             
             <div class="col-md-4">
-                <div class="stat-card" style="border-left-color: #1cc88a;">
-                    <div class="icon-box text-success"><i class="fas fa-boxes"></i></div>
-                    <p class="text-success">Stock Items</p>
-                    <h2 id="totalStock">...</h2>
+                <div class="stat-card" style="border-left-color: #f6c23e;">
+                    <div class="icon-box text-warning"><i class="fas fa-user-check"></i></div>
+                    <p class="text-warning">In Use (Assigned)</p>
+                    <h2 id="totalInUse">...</h2>
                 </div>
             </div>
 
             <div class="col-md-4">
-                <div class="stat-card" style="border-left-color: #f6c23e;">
-                    <div class="icon-box text-warning"><i class="fas fa-history"></i></div>
-                    <p class="text-warning">Recent Txns</p>
-                    <h2 id="totalTxns">...</h2>
+                <div class="stat-card" style="border-left-color: #1cc88a;">
+                    <div class="icon-box text-success"><i class="fas fa-check-circle"></i></div>
+                    <p class="text-success">Available (In Stock)</p>
+                    <h2 id="totalAvailable">...</h2>
                 </div>
             </div>
         </div>
@@ -100,18 +99,25 @@
         <div class="row g-4">
             <div class="col-md-8">
                 <div class="chart-container">
-                    <h6 class="text-muted mb-3">Asset Distribution</h6>
+                    <h6 class="text-muted mb-3">Asset Distribution (By Category)</h6>
                     <canvas id="assetChart"></canvas>
                 </div>
             </div>
+            
             <div class="col-md-4">
-                <div class="bg-white p-4 rounded shadow-sm h-100">
-                    <h6 class="text-muted mb-3">Quick Actions</h6>
-                    <div class="d-grid gap-3">
-                        <a href="asset.html" class="btn btn-outline-primary"><i class="fas fa-plus me-2"></i> Add New Asset</a>
-                        <a href="stock.html" class="btn btn-outline-success"><i class="fas fa-exchange-alt me-2"></i> Issue Stock</a>
-                        <a href="data.html" class="btn btn-outline-dark"><i class="fas fa-file-download me-2"></i> Download Report</a>
-                    </div>
+                <div class="table-container">
+                    <h6 class="text-muted mb-3">Status Breakdown</h6>
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Status</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statusTableBody">
+                            <tr><td colspan="2" class="text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -120,7 +126,7 @@
 
     <script>
         // *** PASTE YOUR GAS WEB APP URL HERE ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         
         // Set User Name
         document.getElementById("userNameDisplay").innerText = user.name;
@@ -128,59 +134,51 @@
         // --- FETCH DASHBOARD DATA ---
         async function loadDashboardData() {
             try {
-                // Fetch Asset Master Data
-                const assetReq = fetch(API_URL, {
+                // Fetch Asset Master Data Only (Single Call sufficient for these metrics)
+                const response = await fetch(API_URL, {
                     method: "POST",
                     body: JSON.stringify({ action: "exportData", sheetName: "Asset_Master" })
-                }).then(res => res.json());
+                });
+                const result = await response.json();
 
-                // Fetch Stock Master Data
-                const stockReq = fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify({ action: "exportData", sheetName: "Stock_Master" })
-                }).then(res => res.json());
-
-                // Fetch Transactions Data
-                const txnReq = fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify({ action: "exportData", sheetName: "Transactions" })
-                }).then(res => res.json());
-
-                // Wait for all
-                const [assetRes, stockRes, txnRes] = await Promise.all([assetReq, stockReq, txnReq]);
-
-                // 1. UPDATE ASSET COUNT
-                let assetCount = 0;
-                let assetCategories = {};
-                
-                if (assetRes.status === "success" && assetRes.data.length > 1) {
-                    const rows = assetRes.data.slice(1); // Remove header
-                    assetCount = rows.length;
+                if (result.status === "success" && result.data.length > 1) {
+                    const rows = result.data.slice(1); // Remove header
                     
-                    // Count categories for Chart
+                    // 1. Calculate KPI Metrics
+                    const totalAssets = rows.length;
+                    // Assuming Status is Column M (Index 12)
+                    const inUseCount = rows.filter(r => r[12] === "In-Use").length;
+                    const availableCount = rows.filter(r => r[12] === "Available").length;
+
+                    // Update UI
+                    document.getElementById("totalAssets").innerText = totalAssets;
+                    document.getElementById("totalInUse").innerText = inUseCount;
+                    document.getElementById("totalAvailable").innerText = availableCount;
+
+                    // 2. Prepare Data for Status Table & Chart
+                    const assetCategories = {};
+                    const assetStatuses = {};
+
                     rows.forEach(row => {
-                        const cat = row[1]; // Column B is Category
+                        // Category Count (Col B / Index 1)
+                        const cat = row[1]; 
                         assetCategories[cat] = (assetCategories[cat] || 0) + 1;
+
+                        // Status Count (Col M / Index 12)
+                        const status = row[12] || "Unknown";
+                        assetStatuses[status] = (assetStatuses[status] || 0) + 1;
                     });
-                }
-                document.getElementById("totalAssets").innerText = assetCount;
 
-                // 2. UPDATE STOCK COUNT
-                let stockCount = 0;
-                if (stockRes.status === "success" && stockRes.data.length > 1) {
-                    stockCount = stockRes.data.length - 1; // Minus header
-                }
-                document.getElementById("totalStock").innerText = stockCount;
+                    // Render Chart
+                    renderChart(assetCategories);
+                    
+                    // Render Status Table
+                    renderStatusTable(assetStatuses);
 
-                // 3. UPDATE TXN COUNT
-                let txnCount = 0;
-                if (txnRes.status === "success" && txnRes.data.length > 1) {
-                    txnCount = txnRes.data.length - 1;
+                } else {
+                    document.getElementById("totalAssets").innerText = "0";
+                    document.getElementById("statusTableBody").innerHTML = "<tr><td colspan='2'>No Data Found</td></tr>";
                 }
-                document.getElementById("totalTxns").innerText = txnCount;
-
-                // 4. RENDER CHART
-                renderChart(assetCategories);
 
             } catch (error) {
                 console.error("Error loading dashboard:", error);
@@ -188,14 +186,41 @@
             }
         }
 
+        function renderStatusTable(statusObj) {
+            const tbody = document.getElementById("statusTableBody");
+            tbody.innerHTML = "";
+            
+            // Define colors for known statuses
+            const statusColors = {
+                'Available': 'text-success',
+                'In-Use': 'text-warning',
+                'Repair': 'text-danger',
+                'Damaged': 'text-danger',
+                'Scrap': 'text-secondary'
+            };
+
+            for (const [status, count] of Object.entries(statusObj)) {
+                const colorClass = statusColors[status] || 'text-dark';
+                const row = `
+                    <tr>
+                        <td class="fw-bold ${colorClass}">${status}</td>
+                        <td class="text-end fw-bold">${count}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            }
+        }
+
         function renderChart(dataObj) {
             const ctx = document.getElementById('assetChart').getContext('2d');
-            
-            // Prepare Data
             const labels = Object.keys(dataObj);
             const data = Object.values(dataObj);
 
-            new Chart(ctx, {
+            if(window.myChart instanceof Chart) {
+                window.myChart.destroy();
+            }
+
+            window.myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -209,12 +234,8 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
         }
