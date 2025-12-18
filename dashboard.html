@@ -117,7 +117,7 @@
         <div class="row g-4 mb-4">
             <div class="col-12">
                 <div class="chart-box">
-                    <h6 class="text-muted mb-3 fw-bold">Overall Asset Status Distribution</h6>
+                    <h6 class="text-muted mb-3 fw-bold">Overall Asset Status Distribution <span class="badge bg-info text-dark ms-2">Click Bars to View Data</span></h6>
                     <div class="chart-wrapper" style="height: 250px;">
                         <canvas id="statusChart"></canvas>
                     </div>
@@ -139,6 +139,30 @@
         </div>
     </div>
 
+    <div class="modal fade" id="statusDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="statusModalTitle">Asset Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-8"><input type="text" id="statusSearch" class="form-control" placeholder="Search..." onkeyup="filterStatusTable()"></div>
+                        <div class="col-md-4 text-end"><button onclick="downloadStatusReport()" class="btn btn-dark w-100"><i class="fas fa-download me-2"></i>Download List</button></div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-bordered table-hover text-center align-middle">
+                            <thead class="table-light sticky-top" id="statusTableHead">
+                                </thead>
+                            <tbody id="statusTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="inactiveModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -150,9 +174,7 @@
                     <div class="d-flex justify-content-end mb-2">
                         <button onclick="downloadInactiveReport()" class="btn btn-sm btn-success"><i class="fas fa-download me-2"></i>Download CSV</button>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Asset ID</th><th>Serial No</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr></thead><tbody id="inactiveTableBody"></tbody></table>
-                    </div>
+                    <div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Asset ID</th><th>Serial No</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr></thead><tbody id="inactiveTableBody"></tbody></table></div>
                 </div>
             </div>
         </div>
@@ -167,7 +189,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="row g-2 mb-3">
-                        <div class="col-md-8"><input type="text" id="availableSearch" class="form-control" placeholder="Search by Asset ID, Serial, Category, Brand or Location..." onkeyup="filterAvailableTable()"></div>
+                        <div class="col-md-8"><input type="text" id="availableSearch" class="form-control" placeholder="Search..." onkeyup="filterAvailableTable()"></div>
                         <div class="col-md-4 text-end"><button onclick="downloadAvailableReport()" class="btn btn-primary w-100"><i class="fas fa-download me-2"></i>Export Stock List</button></div>
                     </div>
                     <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
@@ -184,19 +206,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ********************************************
-        // PASTE YOUR GAS WEB APP URL HERE
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
-        // ********************************************
-        
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         document.getElementById("userNameDisplay").innerText = user.name;
 
-        // Global Chart Instances
         let locChartInstance = null, ownChartInstance = null, catChartInstance = null, brandChartInstance = null, hoverChartInstance = null, statusChartInstance = null;
         let breakdownData = { total: {}, available: {}, allocated: {}, repair: {} };
         
         let inactiveAssetsList = []; 
         let availableAssetsList = []; 
+        let allAssetRows = []; // For filtering on chart click
+        let currentStatusList = []; // Currently viewing in modal
 
         async function loadData() {
             try {
@@ -211,7 +230,6 @@
         }
 
         function processDashboard(assetData, empData) {
-            // 1. Employee Processing (For Inactive Check)
             const empHeaders = empData[0];
             const empRows = empData.slice(1);
             const getEmpIdx = (name) => empHeaders.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
@@ -222,27 +240,34 @@
             const inactiveEmpMap = {};
             empRows.forEach(row => {
                 const status = (row[EMP_STATUS] || "").toString().trim();
-                if(status === 'Inactive') {
-                    inactiveEmpMap[row[EMP_NAME].toString().toLowerCase()] = row[EMP_ID] || "N/A";
-                }
+                if(status === 'Inactive') inactiveEmpMap[row[EMP_NAME].toString().toLowerCase()] = row[EMP_ID] || "N/A";
             });
 
-            // 2. Asset Processing
             const headers = assetData[0]; 
             const rows = assetData.slice(1);
-            const getIdx = (name) => headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
-            const IDX_ID = getIdx("AssetID");
-            const IDX_LOC = getIdx("Location");
-            const IDX_USER = getIdx("Assigned"); 
-            const IDX_STATUS = getIdx("Status");
-            const IDX_CAT = getIdx("Category");
-            const IDX_BRAND = getIdx("Brand");
-            const IDX_SERIAL = getIdx("Serial");
+            
+            // SAVE RAW ROWS FOR MODAL FILTERING
+            allAssetRows = rows.map(r => {
+                return {
+                    id: r[getIdx(headers, "AssetID")],
+                    serial: r[getIdx(headers, "Serial")],
+                    loc: r[getIdx(headers, "Location")],
+                    user: r[getIdx(headers, "Assigned")],
+                    status: r[getIdx(headers, "Status")],
+                    cat: r[getIdx(headers, "Category")],
+                    brand: r[getIdx(headers, "Brand")]
+                };
+            });
+
+            const IDX_LOC = getIdx(headers, "Location");
+            const IDX_CAT = getIdx(headers, "Category");
+            const IDX_BRAND = getIdx(headers, "Brand");
+            const IDX_STATUS = getIdx(headers, "Status");
+            const IDX_USER = getIdx(headers, "Assigned");
 
             let total = 0, available = 0, allocated = 0, repair = 0;
             const locationMap = {}, categoryMap = {}, brandMap = {}, userAssetCounts = {}, statusMap = {};
             const allStatuses = new Set();
-            
             inactiveAssetsList = [];
             availableAssetsList = [];
 
@@ -252,29 +277,24 @@
                 const user = (r[IDX_USER] || "Unassigned").toString().trim();
                 const cat = (r[IDX_CAT] || "Unknown").toString().trim();
                 const brand = (r[IDX_BRAND] || "Unknown").toString().trim();
-                const assetId = r[IDX_ID];
-                const serial = r[IDX_SERIAL];
 
                 if(loc === "") return;
 
                 total++;
                 breakdownData.total[cat] = (breakdownData.total[cat] || 0) + 1;
-                
-                // Aggregating Status Counts for New Chart
                 statusMap[status] = (statusMap[status] || 0) + 1;
 
                 if(status === 'Available') {
                     available++;
                     breakdownData.available[cat] = (breakdownData.available[cat] || 0) + 1;
-                    availableAssetsList.push({ id: assetId, serial: serial, cat: cat, brand: brand, loc: loc });
+                    availableAssetsList.push({ id: r[getIdx(headers, "AssetID")], serial: r[getIdx(headers, "Serial")], cat: cat, brand: brand, loc: loc });
                 } else if(status === 'In-Use') {
                     allocated++;
                     breakdownData.allocated[cat] = (breakdownData.allocated[cat] || 0) + 1;
-                    
                     const userLower = user.toLowerCase();
                     for (const [inactiveName, empId] of Object.entries(inactiveEmpMap)) {
                         if (userLower.includes(inactiveName)) {
-                            inactiveAssetsList.push({ assetId: assetId, serial: serial, type: cat, user: user, empId: empId });
+                            inactiveAssetsList.push({ assetId: r[getIdx(headers, "AssetID")], serial: r[getIdx(headers, "Serial")], type: cat, user: user, empId: empId });
                             break;
                         }
                     }
@@ -296,126 +316,115 @@
             document.getElementById("totalRepair").innerText = repair;
             document.getElementById("totalInactiveAssets").innerText = inactiveAssetsList.length;
 
-            const statusArray = Array.from(allStatuses).sort();
-            const ownershipDist = {};
-            Object.values(userAssetCounts).forEach(c => ownershipDist[c + (c===1?" Device":" Devices")] = (ownershipDist[c + (c===1?" Device":" Devices")] || 0) + 1);
-
-            renderPivotTable(locationMap, statusArray);
-            renderStackedChart('locationChart', locationMap, statusArray, locChartInstance, (i) => locChartInstance = i);
-            renderOwnershipChart(ownershipDist);
-            renderStackedChart('categoryChart', categoryMap, statusArray, catChartInstance, (i) => catChartInstance = i);
-            renderStackedChart('brandChart', brandMap, statusArray, brandChartInstance, (i) => brandChartInstance = i);
-            
-            // Render New Status Chart
+            renderPivotTable(locationMap, Array.from(allStatuses).sort());
+            renderStackedChart('locationChart', locationMap, Array.from(allStatuses).sort(), locChartInstance, (i) => locChartInstance = i);
+            renderOwnershipChart(Object.values(userAssetCounts).reduce((acc, c) => { acc[c+(c===1?" Device":" Devices")] = (acc[c+(c===1?" Device":" Devices")]||0)+1; return acc; }, {}));
+            renderStackedChart('categoryChart', categoryMap, Array.from(allStatuses).sort(), catChartInstance, (i) => catChartInstance = i);
+            renderStackedChart('brandChart', brandMap, Array.from(allStatuses).sort(), brandChartInstance, (i) => brandChartInstance = i);
             renderStatusChart(statusMap);
         }
 
-        // --- NEW: RENDER STATUS CHART ---
+        // --- HELPER: GET COLUMN INDEX BY NAME ---
+        function getIdx(headers, name) {
+            return headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
+        }
+
+        // --- STATUS CHART WITH CLICK EVENT ---
         function renderStatusChart(map) {
             const ctx = document.getElementById("statusChart").getContext("2d");
             if(statusChartInstance) statusChartInstance.destroy();
-            
             const labels = Object.keys(map);
             const data = Object.values(map);
             const colors = ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#20c9a6', '#6610f2'];
 
             statusChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Count',
-                        data: data,
-                        backgroundColor: colors,
-                        borderRadius: 5
-                    }]
-                },
+                data: { labels: labels, datasets: [{ label: 'Count', data: data, backgroundColor: colors, borderRadius: 5 }] },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
+                    scales: { y: { beginAtZero: true } },
+                    onClick: (evt, activeEls) => {
+                        if (activeEls.length > 0) {
+                            const index = activeEls[0].index;
+                            const status = labels[index];
+                            openStatusModal(status);
+                        }
+                    }
                 }
             });
         }
 
-        // --- AVAILABLE MODAL LOGIC ---
-        function showAvailableModal() {
-            renderAvailableTable(availableAssetsList); 
-            new bootstrap.Modal(document.getElementById('availableModal')).show();
+        // --- OPEN STATUS DETAIL MODAL ---
+        function openStatusModal(status) {
+            document.getElementById("statusModalTitle").innerText = `Details: ${status} Assets`;
+            
+            // Filter Data
+            currentStatusList = allAssetRows.filter(r => r.status === status);
+            
+            // Define Headers
+            const thead = document.getElementById("statusTableHead");
+            if(status === 'In-Use') {
+                thead.innerHTML = `<tr><th>Asset ID</th><th>Serial No</th><th>Location</th><th>Assigned To</th><th>Category</th></tr>`;
+            } else {
+                thead.innerHTML = `<tr><th>Asset ID</th><th>Serial No</th><th>Location</th><th>Category</th><th>Asset Type / Brand</th></tr>`;
+            }
+
+            renderStatusTable(currentStatusList, status);
+            new bootstrap.Modal(document.getElementById('statusDetailModal')).show();
         }
 
-        function filterAvailableTable() {
-            const input = document.getElementById("availableSearch").value.toLowerCase();
-            const filtered = availableAssetsList.filter(item => (item.id + item.serial + item.cat + item.brand + item.loc).toLowerCase().includes(input));
-            renderAvailableTable(filtered);
-        }
-
-        function renderAvailableTable(data) {
-            const tbody = document.getElementById("availableTableBody");
+        function renderStatusTable(data, status) {
+            const tbody = document.getElementById("statusTableBody");
             tbody.innerHTML = "";
-            if(data.length === 0) { tbody.innerHTML = "<tr><td colspan='5' class='text-muted'>No assets found.</td></tr>"; return; }
+            if(data.length === 0) { tbody.innerHTML = "<tr><td colspan='5'>No Data</td></tr>"; return; }
+
             data.forEach(item => {
-                tbody.innerHTML += `<tr><td class="fw-bold text-primary">${item.id}</td><td>${item.serial}</td><td><span class="badge bg-info text-dark">${item.cat}</span></td><td>${item.brand}</td><td>${item.loc}</td></tr>`;
+                if(status === 'In-Use') {
+                    tbody.innerHTML += `<tr><td class="fw-bold">${item.id}</td><td>${item.serial}</td><td>${item.loc}</td><td class="text-primary fw-bold">${item.user}</td><td>${item.cat}</td></tr>`;
+                } else {
+                    tbody.innerHTML += `<tr><td class="fw-bold">${item.id}</td><td>${item.serial}</td><td>${item.loc}</td><td>${item.cat}</td><td>${item.brand}</td></tr>`;
+                }
             });
         }
 
-        function downloadAvailableReport() {
-            if(availableAssetsList.length === 0) return;
-            const csv = Papa.unparse(availableAssetsList);
+        function filterStatusTable() {
+            const input = document.getElementById("statusSearch").value.toLowerCase();
+            const filtered = currentStatusList.filter(item => 
+                Object.values(item).some(val => val.toString().toLowerCase().includes(input))
+            );
+            // Get current title to determine layout (In-Use vs Others)
+            const title = document.getElementById("statusModalTitle").innerText;
+            const isInUse = title.includes("In-Use");
+            renderStatusTable(filtered, isInUse ? 'In-Use' : 'Other');
+        }
+
+        function downloadStatusReport() {
+            if(currentStatusList.length === 0) return;
+            const csv = Papa.unparse(currentStatusList);
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Available_Stock_${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `Status_Report.csv`; link.click();
         }
 
-        // --- OTHER FUNCTIONS ---
-        function showInactiveModal() {
-            const tbody = document.getElementById("inactiveTableBody"); tbody.innerHTML = "";
-            if(inactiveAssetsList.length === 0) { tbody.innerHTML = "<tr><td colspan='5' class='text-center text-success fw-bold'>No Risky Assets Found! All clear.</td></tr>"; } 
-            else { inactiveAssetsList.forEach(item => { tbody.innerHTML += `<tr><td class="fw-bold text-danger">${item.assetId}</td><td>${item.serial}</td><td>${item.type}</td><td>${item.user}</td><td>${item.empId}</td></tr>`; }); }
-            new bootstrap.Modal(document.getElementById('inactiveModal')).show();
-        }
+        // --- OTHER MODALS & CHARTS (Keeping Existing Logic) ---
+        function showAvailableModal() { renderAvailableTable(availableAssetsList); new bootstrap.Modal(document.getElementById('availableModal')).show(); }
+        function filterAvailableTable() { const input = document.getElementById("availableSearch").value.toLowerCase(); renderAvailableTable(availableAssetsList.filter(i => (i.id+i.serial+i.cat+i.brand+i.loc).toLowerCase().includes(input))); }
+        function renderAvailableTable(data) { document.getElementById("availableTableBody").innerHTML = data.map(i => `<tr><td class="fw-bold text-primary">${i.id}</td><td>${i.serial}</td><td><span class="badge bg-info text-dark">${i.cat}</span></td><td>${i.brand}</td><td>${i.loc}</td></tr>`).join('') || "<tr><td colspan='5'>No Data</td></tr>"; }
+        function downloadAvailableReport() { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(availableAssetsList)], { type: 'text/csv' })); link.download = "Available_Stock.csv"; link.click(); }
 
-        function downloadInactiveReport() {
-            if(inactiveAssetsList.length === 0) return;
-            const csv = Papa.unparse(inactiveAssetsList);
-            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `Inactive_Emp_Assets.csv`; link.click();
+        function showInactiveModal() { 
+            const b = document.getElementById("inactiveTableBody"); b.innerHTML = inactiveAssetsList.length ? inactiveAssetsList.map(i => `<tr><td class="fw-bold text-danger">${i.assetId}</td><td>${i.serial}</td><td>${i.type}</td><td>${i.user}</td><td>${i.empId}</td></tr>`).join('') : "<tr><td colspan='5' class='text-center text-success fw-bold'>All Clear!</td></tr>"; 
+            new bootstrap.Modal(document.getElementById('inactiveModal')).show(); 
         }
+        function downloadInactiveReport() { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(inactiveAssetsList)], { type: 'text/csv' })); link.download = "Inactive_Risk.csv"; link.click(); }
 
-        function showBreakdown(el, type) {
-            const popup = document.getElementById("hoverChartCard"); const rect = el.getBoundingClientRect();
-            popup.style.display = "block"; popup.style.top = (rect.top + window.scrollY + 10) + "px"; popup.style.left = (rect.left + rect.width - 20) + "px";
-            document.getElementById("hoverChartTitle").innerText = type.toUpperCase() + " Breakdown";
-            const dataObj = breakdownData[type]; const labels = Object.keys(dataObj); const vals = Object.values(dataObj);
-            if(labels.length===0) { labels.push("No Data"); vals.push(1); }
-            const ctx = document.getElementById("hoverChartCanvas").getContext("2d");
-            if(hoverChartInstance) hoverChartInstance.destroy();
-            hoverChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: labels, datasets: [{ data: vals, backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'] }] }, options: { responsive: true, maintainAspectRatio: false, animation: { duration: 0 }, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } } });
-        }
-        function hideBreakdown() { document.getElementById("hoverChartCard").style.display = "none"; }
-
-        function renderStackedChart(id, map, stats, inst, setInst) {
-            const ctx = document.getElementById(id).getContext('2d'); const labs = Object.keys(map).sort();
-            if(inst) inst.destroy();
-            const dsets = stats.map((s, i) => ({ label: s, data: labs.map(l => map[l][s]||0), backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc'][i%6] }));
-            setInst(new Chart(ctx, { type: 'bar', data: { labels: labs, datasets: dsets }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } }));
-        }
-
-        function renderOwnershipChart(dist) {
-            const ctx = document.getElementById('ownershipChart').getContext('2d');
-            if(ownChartInstance) ownChartInstance.destroy();
-            const l = Object.keys(dist).sort((a,b)=>parseInt(a)-parseInt(b));
-            ownChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: l, datasets: [{ data: l.map(k=>dist[k]), backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-        }
-
-        function renderPivotTable(map, stats) {
-            const t = document.getElementById("pivotTable"); const locs = Object.keys(map).sort();
-            let h = `<thead class="table-light"><tr><th class="row-header">Location</th>` + stats.map(s=>`<th>${s}</th>`).join('') + `<th class="fw-bold-total">Total</th></tr></thead><tbody>`;
-            locs.forEach(l => { let tot = 0; h += `<tr><td class="row-header">${l}</td>`; stats.forEach(s => { const c = map[l][s]||0; tot+=c; h+=`<td>${c||'-'}</td>`; }); h += `<td class="fw-bold-total">${tot}</td></tr>`; });
-            t.innerHTML = h + "</tbody>";
-        }
+        // Renderers
+        function showBreakdown(el, type) { /* Standard hover logic */ const p=document.getElementById("hoverChartCard"); const r=el.getBoundingClientRect(); p.style.display="block"; p.style.top=(r.top+window.scrollY+10)+"px"; p.style.left=(r.left+r.width-20)+"px"; document.getElementById("hoverChartTitle").innerText=type.toUpperCase()+" Breakdown"; const d=breakdownData[type], l=Object.keys(d), v=Object.values(d); if(!l.length){l.push("No Data");v.push(1);} const c=document.getElementById("hoverChartCanvas").getContext("2d"); if(hoverChartInstance)hoverChartInstance.destroy(); hoverChartInstance=new Chart(c,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:['#4e73df','#1cc88a','#36b9cc','#f6c23e']}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}}); }
+        function hideBreakdown() { document.getElementById("hoverChartCard").style.display="none"; }
+        
+        function renderStackedChart(id, map, stats, inst, setInst) { const c=document.getElementById(id).getContext('2d'), l=Object.keys(map).sort(); if(inst) inst.destroy(); setInst(new Chart(c, { type: 'bar', data: { labels: l, datasets: stats.map((s,i)=>({label:s,data:l.map(k=>map[k][s]||0),backgroundColor:['#1cc88a','#f6c23e','#e74a3b','#4e73df','#858796','#36b9cc'][i%6]})) }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } })); }
+        function renderOwnershipChart(dist) { const c=document.getElementById('ownershipChart').getContext('2d'), l=Object.keys(dist).sort((a,b)=>parseInt(a)-parseInt(b)); if(ownChartInstance) ownChartInstance.destroy(); ownChartInstance = new Chart(c, { type: 'doughnut', data: { labels: l, datasets: [{ data: l.map(k=>dist[k]), backgroundColor: ['#4e73df','#1cc88a','#36b9cc'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } }); }
+        function renderPivotTable(map, stats) { document.getElementById("pivotTable").innerHTML = `<thead class="table-light"><tr><th class="row-header">Location</th>${stats.map(s=>`<th>${s}</th>`).join('')}<th class="fw-bold-total">Total</th></tr></thead><tbody>${Object.keys(map).sort().map(l=>{let t=0; return `<tr><td class="row-header">${l}</td>${stats.map(s=>{const c=map[l][s]||0;t+=c;return `<td>${c||'-'}</td>`}).join('')}<td class="fw-bold-total">${t}</td></tr>`}).join('')}</tbody>`; }
 
         loadData();
         function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
