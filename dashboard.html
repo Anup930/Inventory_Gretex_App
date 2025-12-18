@@ -1,4 +1,4 @@
-<!-- V 4.3.7 -->
+<!-- V.5.7.0 -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -39,10 +39,10 @@
             margin-bottom: 20px;
         }
 
-        /* --- FIXED: CHART WRAPPER TO PREVENT STRETCHING --- */
+        /* FIXED HEIGHT WRAPPER */
         .chart-wrapper {
             position: relative;
-            height: 350px; /* Fixed Height */
+            height: 300px; /* Thoda chota kiya taaki fit aaye */
             width: 100%;
         }
         
@@ -139,6 +139,25 @@
             </div>
         </div>
 
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="chart-box">
+                    <h6 class="text-muted mb-3 fw-bold">Category Distribution (Hover for Status)</h6>
+                    <div class="chart-wrapper">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-box">
+                    <h6 class="text-muted mb-3 fw-bold">Brand Distribution (Hover for Status)</h6>
+                    <div class="chart-wrapper">
+                        <canvas id="brandChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-12">
                 <div class="table-container">
@@ -160,7 +179,7 @@
     <script>
         // ********************************************
         // PASTE YOUR GAS WEB APP URL HERE
-        const API_URL =  "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         // ********************************************
         
         document.getElementById("userNameDisplay").innerText = user.name;
@@ -168,6 +187,8 @@
         // Global Chart Instances
         let locChartInstance = null;
         let ownChartInstance = null;
+        let catChartInstance = null;
+        let brandChartInstance = null;
 
         // --- FETCH DATA ---
         async function loadData() {
@@ -189,8 +210,8 @@
         }
 
         function processDashboard(data) {
-            const headers = data[0]; // First Row is Header
-            const rows = data.slice(1); // Data rows
+            const headers = data[0]; 
+            const rows = data.slice(1);
 
             // --- SMART COLUMN DETECTION ---
             const getIdx = (name) => headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
@@ -198,9 +219,11 @@
             const IDX_LOC = getIdx("Location");
             const IDX_USER = getIdx("Assigned"); 
             const IDX_STATUS = getIdx("Status");
+            const IDX_CAT = getIdx("Category");
+            const IDX_BRAND = getIdx("Brand");
 
             if(IDX_LOC === -1 || IDX_STATUS === -1) {
-                alert("Critical Error: 'Location' or 'Status' column not found in Google Sheet. Please check headers.");
+                alert("Error: Key columns missing in Sheet");
                 return;
             }
 
@@ -215,8 +238,10 @@
             document.getElementById("totalAllocated").innerText = allocated;
             document.getElementById("totalRepair").innerText = repair;
 
-            // 2. PREPARE DATA
+            // 2. PREPARE DATA MAPS
             const locationMap = {}; 
+            const categoryMap = {}; // New
+            const brandMap = {};    // New
             const allStatuses = new Set();
             const userAssetCounts = {};
 
@@ -224,16 +249,30 @@
                 const loc = (r[IDX_LOC] || "Unknown").toString().trim();
                 const status = (r[IDX_STATUS] || "Unknown").toString().trim();
                 const user = (r[IDX_USER] || "Unassigned").toString().trim();
+                const cat = (r[IDX_CAT] || "Unknown").toString().trim();
+                const brand = (r[IDX_BRAND] || "Unknown").toString().trim();
 
                 if(loc === "") return; 
 
-                // Pivot Data
+                // Populate Maps
+                allStatuses.add(status);
+
+                // Location Map
                 if (!locationMap[loc]) locationMap[loc] = {};
                 if (!locationMap[loc][status]) locationMap[loc][status] = 0;
                 locationMap[loc][status]++;
-                allStatuses.add(status);
 
-                // Ownership Data
+                // Category Map
+                if (!categoryMap[cat]) categoryMap[cat] = {};
+                if (!categoryMap[cat][status]) categoryMap[cat][status] = 0;
+                categoryMap[cat][status]++;
+
+                // Brand Map
+                if (!brandMap[brand]) brandMap[brand] = {};
+                if (!brandMap[brand][status]) brandMap[brand][status] = 0;
+                brandMap[brand][status]++;
+
+                // Ownership Map
                 if(status === 'In-Use' && user !== "Unassigned" && user !== "") {
                     userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
                 }
@@ -245,59 +284,29 @@
                 ownershipDist[key] = (ownershipDist[key] || 0) + 1;
             });
 
-            // 3. RENDER
+            // 3. RENDER ALL CHARTS
             const statusArray = Array.from(allStatuses).sort();
-            renderPivotTable(locationMap, statusArray);
-            renderLocationChart(locationMap, statusArray);
-            renderOwnershipChart(ownershipDist);
-        }
-
-        // --- RENDER PIVOT TABLE ---
-        function renderPivotTable(locMap, statuses) {
-            const table = document.getElementById("pivotTable");
-            const locations = Object.keys(locMap).sort();
-
-            let thead = `<thead class="table-light"><tr><th class="row-header">Location</th>`;
-            statuses.forEach(s => thead += `<th>${s}</th>`);
-            thead += `<th class="fw-bold-total">Grand Total</th></tr></thead>`;
-
-            let tbody = `<tbody>`;
-            let colTotals = new Array(statuses.length).fill(0);
-            let grandTotalAll = 0;
-
-            locations.forEach(loc => {
-                let rowHtml = `<tr><td class="row-header">${loc}</td>`;
-                let rowTotal = 0;
-                
-                statuses.forEach((s, idx) => {
-                    const count = locMap[loc][s] || 0;
-                    rowHtml += `<td>${count > 0 ? count : '-'}</td>`;
-                    rowTotal += count;
-                    colTotals[idx] += count;
-                });
-                
-                grandTotalAll += rowTotal;
-                rowHtml += `<td class="fw-bold-total">${rowTotal}</td></tr>`;
-                tbody += rowHtml;
-            });
-
-            let tfoot = `<tr class="fw-bold-total"><td>Grand Total</td>`;
-            colTotals.forEach(t => tfoot += `<td>${t}</td>`);
-            tfoot += `<td>${grandTotalAll}</td></tr>`;
-            tbody += tfoot + `</tbody>`;
-
-            table.innerHTML = thead + tbody;
-        }
-
-        // --- RENDER LOCATION CHART (FIXED STRETCH ISSUE) ---
-        function renderLocationChart(locMap, statuses) {
-            const ctx = document.getElementById('locationChart').getContext('2d');
-            const locations = Object.keys(locMap).sort();
             
-            if(locChartInstance) locChartInstance.destroy(); 
+            renderPivotTable(locationMap, statusArray);
+            
+            // Existing Charts
+            renderStackedChart('locationChart', locationMap, statusArray, locChartInstance, (i) => locChartInstance = i);
+            renderOwnershipChart(ownershipDist);
+            
+            // New Charts
+            renderStackedChart('categoryChart', categoryMap, statusArray, catChartInstance, (i) => catChartInstance = i);
+            renderStackedChart('brandChart', brandMap, statusArray, brandChartInstance, (i) => brandChartInstance = i);
+        }
+
+        // --- GENERIC STACKED CHART RENDERER ---
+        function renderStackedChart(canvasId, dataMap, statuses, instance, setInstance) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const labels = Object.keys(dataMap).sort();
+            
+            if(instance) instance.destroy(); 
 
             const datasets = statuses.map((status, index) => {
-                const data = locations.map(loc => locMap[loc][status] || 0);
+                const data = labels.map(label => dataMap[label][status] || 0);
                 const colors = ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#6610f2', '#fd7e14']; 
                 return {
                     label: status,
@@ -306,22 +315,28 @@
                 };
             });
 
-            locChartInstance = new Chart(ctx, {
+            const newChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: locations, datasets: datasets },
+                data: { labels: labels, datasets: datasets },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Critical setting
+                    maintainAspectRatio: false,
                     scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
-                    plugins: { legend: { position: 'top' } }
+                    plugins: { 
+                        legend: { position: 'top' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
                 }
             });
+            setInstance(newChart);
         }
 
         // --- RENDER OWNERSHIP CHART ---
         function renderOwnershipChart(distMap) {
             const ctx = document.getElementById('ownershipChart').getContext('2d');
-            
             if(ownChartInstance) ownChartInstance.destroy(); 
 
             const labels = Object.keys(distMap).sort((a,b) => parseInt(a) - parseInt(b));
@@ -340,10 +355,45 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Critical setting
+                    maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom' } }
                 }
             });
+        }
+
+        // --- RENDER PIVOT TABLE ---
+        function renderPivotTable(locMap, statuses) {
+            const table = document.getElementById("pivotTable");
+            const locations = Object.keys(locMap).sort();
+
+            let thead = `<thead class="table-light"><tr><th class="row-header">Location</th>`;
+            statuses.forEach(s => thead += `<th>${s}</th>`);
+            thead += `<th class="fw-bold-total">Grand Total</th></tr></thead>`;
+
+            let tbody = `<tbody>`;
+            let colTotals = new Array(statuses.length).fill(0);
+            let grandTotalAll = 0;
+
+            locations.forEach(loc => {
+                let rowHtml = `<tr><td class="row-header">${loc}</td>`;
+                let rowTotal = 0;
+                statuses.forEach((s, idx) => {
+                    const count = locMap[loc][s] || 0;
+                    rowHtml += `<td>${count > 0 ? count : '-'}</td>`;
+                    rowTotal += count;
+                    colTotals[idx] += count;
+                });
+                grandTotalAll += rowTotal;
+                rowHtml += `<td class="fw-bold-total">${rowTotal}</td></tr>`;
+                tbody += rowHtml;
+            });
+
+            let tfoot = `<tr class="fw-bold-total"><td>Grand Total</td>`;
+            colTotals.forEach(t => tfoot += `<td>${t}</td>`);
+            tfoot += `<td>${grandTotalAll}</td></tr>`;
+            tbody += tfoot + `</tbody>`;
+
+            table.innerHTML = thead + tbody;
         }
 
         loadData();
