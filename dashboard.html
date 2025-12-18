@@ -28,10 +28,23 @@
         .stat-card h2 { font-weight: bold; margin: 10px 0 0 0; color: #333; }
         .icon-box { float: right; opacity: 0.2; font-size: 2.5rem; margin-top: -10px; }
 
-        /* CHARTS & TABLES */
-        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 100%; min-height: 400px; }
+        /* CHART & TABLE CONTAINERS */
+        .chart-box { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            margin-bottom: 20px;
+        }
+
+        /* --- FIXED: CHART WRAPPER TO PREVENT STRETCHING --- */
+        .chart-wrapper {
+            position: relative;
+            height: 350px; /* Fixed Height */
+            width: 100%;
+        }
         
-        .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 25px; }
+        .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 0; }
         .pivot-table th { background-color: #e2e6ea; font-size: 0.85rem; text-transform: uppercase; border: 1px solid #dee2e6; }
         .pivot-table td { font-size: 0.9rem; border: 1px solid #dee2e6; }
         .pivot-table .row-header { font-weight: bold; background-color: #f8f9fa; text-align: left; }
@@ -105,17 +118,21 @@
             </div>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 mb-4">
             <div class="col-md-8">
                 <div class="chart-box">
                     <h6 class="text-muted mb-3 fw-bold">Location-wise Asset Status</h6>
-                    <canvas id="locationChart"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="locationChart"></canvas>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="chart-box">
                     <h6 class="text-muted mb-3 fw-bold">Assets per Employee</h6>
-                    <canvas id="ownershipChart"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="ownershipChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,7 +158,7 @@
     <script>
         // ********************************************
         // PASTE YOUR GAS WEB APP URL HERE
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         // ********************************************
         
         document.getElementById("userNameDisplay").innerText = user.name;
@@ -174,11 +191,10 @@
             const rows = data.slice(1); // Data rows
 
             // --- SMART COLUMN DETECTION ---
-            // Finds the exact column number by Name (Case Insensitive)
             const getIdx = (name) => headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
 
             const IDX_LOC = getIdx("Location");
-            const IDX_USER = getIdx("Assigned"); // Matches "AssignedTo"
+            const IDX_USER = getIdx("Assigned"); 
             const IDX_STATUS = getIdx("Status");
 
             if(IDX_LOC === -1 || IDX_STATUS === -1) {
@@ -197,40 +213,37 @@
             document.getElementById("totalAllocated").innerText = allocated;
             document.getElementById("totalRepair").innerText = repair;
 
-            // 2. PREPARE DATA FOR PIVOT & CHARTS
+            // 2. PREPARE DATA
             const locationMap = {}; 
             const allStatuses = new Set();
             const userAssetCounts = {};
 
             rows.forEach(r => {
-                // Handle Empty or undefined values
                 const loc = (r[IDX_LOC] || "Unknown").toString().trim();
                 const status = (r[IDX_STATUS] || "Unknown").toString().trim();
                 const user = (r[IDX_USER] || "Unassigned").toString().trim();
 
-                if(loc === "") return; // Skip empty rows
+                if(loc === "") return; 
 
-                // Populate Location Map
+                // Pivot Data
                 if (!locationMap[loc]) locationMap[loc] = {};
                 if (!locationMap[loc][status]) locationMap[loc][status] = 0;
-                
                 locationMap[loc][status]++;
                 allStatuses.add(status);
 
-                // Populate Ownership Map
+                // Ownership Data
                 if(status === 'In-Use' && user !== "Unassigned" && user !== "") {
                     userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
                 }
             });
 
-            // Ownership Distribution
             const ownershipDist = {};
             Object.values(userAssetCounts).forEach(count => {
                 const key = count + (count === 1 ? " Device" : " Devices");
                 ownershipDist[key] = (ownershipDist[key] || 0) + 1;
             });
 
-            // 3. RENDER EVERYTHING
+            // 3. RENDER
             const statusArray = Array.from(allStatuses).sort();
             renderPivotTable(locationMap, statusArray);
             renderLocationChart(locationMap, statusArray);
@@ -242,12 +255,10 @@
             const table = document.getElementById("pivotTable");
             const locations = Object.keys(locMap).sort();
 
-            // Header
             let thead = `<thead class="table-light"><tr><th class="row-header">Location</th>`;
             statuses.forEach(s => thead += `<th>${s}</th>`);
             thead += `<th class="fw-bold-total">Grand Total</th></tr></thead>`;
 
-            // Body
             let tbody = `<tbody>`;
             let colTotals = new Array(statuses.length).fill(0);
             let grandTotalAll = 0;
@@ -268,7 +279,6 @@
                 tbody += rowHtml;
             });
 
-            // Footer Row (Totals)
             let tfoot = `<tr class="fw-bold-total"><td>Grand Total</td>`;
             colTotals.forEach(t => tfoot += `<td>${t}</td>`);
             tfoot += `<td>${grandTotalAll}</td></tr>`;
@@ -277,12 +287,12 @@
             table.innerHTML = thead + tbody;
         }
 
-        // --- RENDER LOCATION CHART ---
+        // --- RENDER LOCATION CHART (FIXED STRETCH ISSUE) ---
         function renderLocationChart(locMap, statuses) {
             const ctx = document.getElementById('locationChart').getContext('2d');
             const locations = Object.keys(locMap).sort();
             
-            if(locChartInstance) locChartInstance.destroy(); // Fix for canvas reuse
+            if(locChartInstance) locChartInstance.destroy(); 
 
             const datasets = statuses.map((status, index) => {
                 const data = locations.map(loc => locMap[loc][status] || 0);
@@ -299,7 +309,7 @@
                 data: { labels: locations, datasets: datasets },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: false, // Critical setting
                     scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
                     plugins: { legend: { position: 'top' } }
                 }
@@ -310,16 +320,12 @@
         function renderOwnershipChart(distMap) {
             const ctx = document.getElementById('ownershipChart').getContext('2d');
             
-            if(ownChartInstance) ownChartInstance.destroy(); // Fix for canvas reuse
+            if(ownChartInstance) ownChartInstance.destroy(); 
 
             const labels = Object.keys(distMap).sort((a,b) => parseInt(a) - parseInt(b));
             const data = labels.map(k => distMap[k]);
 
-            // Handle Empty Data
-            if(labels.length === 0) {
-                labels.push("No Allocations");
-                data.push(1);
-            }
+            if(labels.length === 0) { labels.push("No Allocations"); data.push(1); }
 
             ownChartInstance = new Chart(ctx, {
                 type: 'doughnut',
@@ -332,15 +338,13 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: false, // Critical setting
                     plugins: { legend: { position: 'bottom' } }
                 }
             });
         }
 
-        // Init
         loadData();
-
         function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
     </script>
 </body>
