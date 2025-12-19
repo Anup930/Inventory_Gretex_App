@@ -1,3 +1,5 @@
+<!-- V 8.7.9 -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +21,7 @@
         .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
         .main-content { margin-left: 250px; padding: 30px; }
         
-        /* CLICKABLE CARDS */
+        /* CARDS */
         .stat-card { 
             background: white; border-radius: 12px; padding: 25px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; 
@@ -28,10 +30,10 @@
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .stat-card h2 { font-weight: bold; margin: 10px 0 0 0; color: #333; }
         
-        /* ALERT CARD STYLES */
-        .alert-card { border-left: 5px solid #e74a3b !important; background: #fff5f5; } /* Red */
-        .warning-card { border-left: 5px solid #f6c23e !important; background: #fffdf5; } /* Yellow */
-        .violation-card { border-left: 5px solid #6610f2 !important; background: #f3f0ff; } /* Purple */
+        /* ALERT COLORS */
+        .alert-card { border-left: 5px solid #e74a3b !important; background: #fff5f5; }
+        .warning-card { border-left: 5px solid #f6c23e !important; background: #fffdf5; }
+        .violation-card { border-left: 5px solid #6610f2 !important; background: #f3f0ff; }
 
         #hoverChartCard { display: none; position: absolute; z-index: 9999; width: 280px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: none; border: 1px solid rgba(0,0,0,0.1); }
         
@@ -96,24 +98,18 @@
 
         <div class="row g-3 mb-4">
             <div class="col-md-4">
-                <div class="stat-card alert-card" onclick="showInactiveModal()" title="Click to View Details">
-                    <div class="icon-box text-danger"><i class="fas fa-exclamation-triangle"></i></div>
-                    <p class="text-danger fw-bold small text-uppercase">Inactive Emp With Asset</p>
-                    <h2 id="totalInactiveAssets">0</h2>
+                <div class="stat-card alert-card" onclick="showInactiveModal()" title="View Details">
+                    <div class="icon-box text-danger"><i class="fas fa-exclamation-triangle"></i></div><p class="text-danger fw-bold small text-uppercase">Inactive Emp With Asset</p><h2 id="totalInactiveAssets">0</h2>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card warning-card" onclick="showPendingAllocationModal()" title="Click to View Employees needing Assets">
-                    <div class="icon-box text-warning"><i class="fas fa-user-clock"></i></div>
-                    <p class="text-warning fw-bold text-dark small text-uppercase">Pending Allocation (Req=Yes)</p>
-                    <h2 id="totalPendingAlloc">0</h2>
+                <div class="stat-card warning-card" onclick="showPendingAllocationModal()" title="View Details">
+                    <div class="icon-box text-warning"><i class="fas fa-user-clock"></i></div><p class="text-warning fw-bold text-dark small text-uppercase">Pending Allocation (Req=Yes)</p><h2 id="totalPendingAlloc">0</h2>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card violation-card" onclick="showUnnecessaryModal()" title="Click to View Unexpected Allocations">
-                    <div class="icon-box" style="color: #6610f2;"><i class="fas fa-user-tag"></i></div>
-                    <p style="color: #6610f2;" class="fw-bold small text-uppercase">Unexpected (Req=No but Has Asset)</p>
-                    <h2 id="totalUnnecessaryAlloc">0</h2>
+                <div class="stat-card violation-card" onclick="showUnnecessaryModal()" title="View Details">
+                    <div class="icon-box" style="color: #6610f2;"><i class="fas fa-user-tag"></i></div><p style="color: #6610f2;" class="fw-bold small text-uppercase">Unexpected (Req=No but Has)</p><h2 id="totalUnnecessaryAlloc">0</h2>
                 </div>
             </div>
         </div>
@@ -139,9 +135,7 @@
             <div class="col-12">
                 <div class="chart-box">
                     <h6 class="text-muted mb-3 fw-bold">Overall Asset Status Distribution <span class="badge bg-info text-dark ms-2">Click Bars to View Data</span></h6>
-                    <div class="chart-wrapper" style="height: 250px;">
-                        <canvas id="statusChart"></canvas>
-                    </div>
+                    <div class="chart-wrapper" style="height: 250px;"><canvas id="statusChart"></canvas></div>
                 </div>
             </div>
         </div>
@@ -160,107 +154,29 @@
         </div>
     </div>
 
-    <div class="modal fade" id="pendingAllocModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title"><i class="fas fa-user-clock me-2"></i>Pending Allocation (Asset Required = Yes)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted small">These active employees need assets but currently hold <b>0 assets</b>.</p>
-                    <div class="d-flex justify-content-end mb-2">
-                        <button onclick="downloadReport('pending')" class="btn btn-sm btn-dark"><i class="fas fa-download me-2"></i>Download CSV</button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light"><tr><th>Emp ID</th><th>Name</th><th>Email</th><th>Location</th></tr></thead>
-                            <tbody id="pendingAllocBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="pendingAllocModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h5 class="modal-title">Pending Allocation (Asset Req = Yes)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p class="text-muted small">Active Employees who need assets but hold 0.</p><div class="d-flex justify-content-end mb-2"><button onclick="downloadReport('pending')" class="btn btn-sm btn-dark">Download CSV</button></div><div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Emp ID</th><th>Name</th><th>Email</th><th>Location</th></tr></thead><tbody id="pendingAllocBody"></tbody></table></div></div></div></div></div>
+    
+    <div class="modal fade" id="unnecessaryModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-white text-primary" style="border-bottom: 3px solid #6610f2;"><h5 class="modal-title" style="color: #6610f2;">Unexpected Allocation (Asset Req = No)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p class="text-muted small">Employees marked "Asset Req: No" but holding assets.</p><div class="d-flex justify-content-end mb-2"><button onclick="downloadReport('unnecessary')" class="btn btn-sm btn-dark">Download CSV</button></div><div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Emp ID</th><th>Name</th><th>Asset Count</th><th>Asset Req Status</th></tr></thead><tbody id="unnecessaryBody"></tbody></table></div></div></div></div></div>
 
-    <div class="modal fade" id="unnecessaryModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-white text-primary" style="border-bottom: 3px solid #6610f2;">
-                    <h5 class="modal-title" style="color: #6610f2;"><i class="fas fa-user-tag me-2"></i>Unexpected Allocation (Asset Req = No)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted small">These employees are marked as <b>"Asset Required: No"</b> but currently hold assets. Please review.</p>
-                    <div class="d-flex justify-content-end mb-2">
-                        <button onclick="downloadReport('unnecessary')" class="btn btn-sm btn-dark"><i class="fas fa-download me-2"></i>Download CSV</button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light"><tr><th>Emp ID</th><th>Name</th><th>Asset Count</th><th>Asset Req Status</th></tr></thead>
-                            <tbody id="unnecessaryBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="inactiveModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5 class="modal-title">Assets with Inactive Employees</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="d-flex justify-content-end mb-2"><button onclick="downloadReport('inactive')" class="btn btn-sm btn-success">Download CSV</button></div><div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Asset ID</th><th>Serial No</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr></thead><tbody id="inactiveTableBody"></tbody></table></div></div></div></div></div>
 
-    <div class="modal fade" id="inactiveModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Assets with Inactive Employees</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="d-flex justify-content-end mb-2">
-                        <button onclick="downloadReport('inactive')" class="btn btn-sm btn-success"><i class="fas fa-download me-2"></i>Download CSV</button>
-                    </div>
-                    <div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Asset ID</th><th>Serial No</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr></thead><tbody id="inactiveTableBody"></tbody></table></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="commonDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="commonModalTitle">Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-8"><input type="text" id="commonSearch" class="form-control" placeholder="Search..." onkeyup="filterCommonTable()"></div>
-                        <div class="col-md-4 text-end"><button onclick="downloadCommonReport()" class="btn btn-dark w-100"><i class="fas fa-download me-2"></i>Download</button></div>
-                    </div>
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-bordered table-hover text-center align-middle">
-                            <thead class="table-light sticky-top" id="commonTableHead"></thead>
-                            <tbody id="commonTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="commonDetailModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="commonModalTitle">Details</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-2 mb-3"><div class="col-md-8"><input type="text" id="commonSearch" class="form-control" placeholder="Search..." onkeyup="filterCommonTable()"></div><div class="col-md-4 text-end"><button onclick="downloadCommonReport()" class="btn btn-dark w-100">Download</button></div></div><div class="table-responsive" style="max-height: 500px; overflow-y: auto;"><table class="table table-bordered table-hover text-center align-middle"><thead class="table-light sticky-top" id="commonTableHead"></thead><tbody id="commonTableBody"></tbody></table></div></div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        // ********************************************
+        // PASTE YOUR GAS WEB APP URL HERE
+        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+ 
+        // ********************************************
+        
         document.getElementById("userNameDisplay").innerText = user.name;
 
         let locChartInstance = null, ownChartInstance = null, catChartInstance = null, brandChartInstance = null, hoverChartInstance = null, statusChartInstance = null;
         let breakdownData = { total: {}, available: {}, allocated: {}, repair: {} };
         
-        let inactiveAssetsList = []; 
-        let availableAssetsList = []; 
-        let pendingAllocationList = [];
-        let unnecessaryAllocList = []; // NEW LIST
-        let allAssetRows = []; 
-        let currentDetailList = [];
+        let inactiveAssetsList = [], availableAssetsList = [], pendingAllocationList = [], unnecessaryAllocList = [], allAssetRows = [], currentDetailList = [];
 
         async function loadData() {
             try {
@@ -275,7 +191,7 @@
         }
 
         function processDashboard(assetData, empData) {
-            // --- 1. PROCESS EMPLOYEES ---
+            // 1. Process Employees
             const empHeaders = empData[0];
             const empRows = empData.slice(1);
             const getEmpIdx = (name) => empHeaders.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
@@ -289,8 +205,8 @@
 
             const inactiveEmpMap = {};
             const empAssetCountMap = {}; 
-            const activeEmpReqList = []; // Asset Req = Yes
-            const noAssetReqList = []; // Asset Req = No
+            const activeEmpReqList = [];
+            const noAssetReqList = [];
 
             empRows.forEach(row => {
                 const id = row[EMP_ID];
@@ -303,29 +219,29 @@
                 if(status === 'Inactive') {
                     inactiveEmpMap[name.toLowerCase()] = id || "N/A";
                 } else if(status === 'Active') {
-                    if(req === 'Yes') {
-                        activeEmpReqList.push({ id: id, name: name, email: row[EMP_EMAIL], loc: row[EMP_LOC] });
-                    } else {
-                        noAssetReqList.push({ id: id, name: name, req: req }); // Potential Unnecessary
-                    }
+                    if(req === 'Yes') activeEmpReqList.push({ id: id, name: name, email: row[EMP_EMAIL], loc: row[EMP_LOC] });
+                    else noAssetReqList.push({ id: id, name: name, req: req });
                 }
             });
 
-            // --- 2. PROCESS ASSETS ---
+            // 2. Process Assets
             const headers = assetData[0]; 
             const rows = assetData.slice(1);
-            
-            allAssetRows = rows.map(r => ({
-                id: r[getIdx(headers, "AssetID")], serial: r[getIdx(headers, "Serial")],
-                loc: r[getIdx(headers, "Location")], user: r[getIdx(headers, "Assigned")],
-                status: r[getIdx(headers, "Status")], cat: r[getIdx(headers, "Category")], brand: r[getIdx(headers, "Brand")]
-            }));
+            const getIdx = (head, name) => head.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
 
+            // FIXED: DEFINE THESE VARIABLES BEFORE USE
             const IDX_ID = getIdx(headers, "AssetID");
             const IDX_LOC = getIdx(headers, "Location");
             const IDX_CAT = getIdx(headers, "Category");
             const IDX_BRAND = getIdx(headers, "Brand");
             const IDX_SERIAL = getIdx(headers, "Serial");
+            const IDX_STATUS = getIdx(headers, "Status");  // <--- FIXED HERE
+            const IDX_USER = getIdx(headers, "Assigned");  // <--- FIXED HERE
+
+            allAssetRows = rows.map(r => ({
+                id: r[IDX_ID], serial: r[IDX_SERIAL], loc: r[IDX_LOC], user: r[IDX_USER],
+                status: r[IDX_STATUS], cat: r[IDX_CAT], brand: r[IDX_BRAND]
+            }));
 
             let total = 0, available = 0, allocated = 0, repair = 0;
             const locationMap = {}, categoryMap = {}, brandMap = {}, userAssetCounts = {}, statusMap = {};
@@ -337,7 +253,7 @@
             rows.forEach(r => {
                 const loc = (r[IDX_LOC] || "Unknown").toString().trim();
                 const status = (r[IDX_STATUS] || "Unknown").toString().trim();
-                const user = (r[getIdx(headers, "Assigned")] || "Unassigned").toString().trim();
+                const user = (r[IDX_USER] || "Unassigned").toString().trim();
                 const cat = (r[IDX_CAT] || "Unknown").toString().trim();
                 const brand = (r[IDX_BRAND] || "Unknown").toString().trim();
                 const assetId = r[IDX_ID];
@@ -358,14 +274,12 @@
                     breakdownData.allocated[cat] = (breakdownData.allocated[cat] || 0) + 1;
                     
                     const userLower = user.toLowerCase();
-                    // Count Assets per Emp
                     for(const empName in empAssetCountMap) {
                         if(userLower.includes(empName)) {
                             empAssetCountMap[empName]++;
                             break; 
                         }
                     }
-                    // Check Inactive
                     for (const [inactiveName, empId] of Object.entries(inactiveEmpMap)) {
                         if (userLower.includes(inactiveName)) {
                             inactiveAssetsList.push({ assetId: assetId, serial: serial, type: cat, user: user, empId: empId });
@@ -384,20 +298,14 @@
                 if(status === 'In-Use' && user !== "Unassigned") userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
             });
 
-            // --- 3. AUDIT CALCULATIONS ---
+            // 3. Audits
             pendingAllocationList = [];
-            activeEmpReqList.forEach(emp => {
-                const count = empAssetCountMap[emp.name.toLowerCase()] || 0;
-                if(count === 0) pendingAllocationList.push(emp);
-            });
+            activeEmpReqList.forEach(emp => { if((empAssetCountMap[emp.name.toLowerCase()] || 0) === 0) pendingAllocationList.push(emp); });
 
-            unnecessaryAllocList = []; // NEW LOGIC
-            noAssetReqList.forEach(emp => {
-                const count = empAssetCountMap[emp.name.toLowerCase()] || 0;
-                if(count > 0) unnecessaryAllocList.push({ id: emp.id, name: emp.name, count: count, req: emp.req });
-            });
+            unnecessaryAllocList = [];
+            noAssetReqList.forEach(emp => { const c = empAssetCountMap[emp.name.toLowerCase()] || 0; if(c > 0) unnecessaryAllocList.push({ id: emp.id, name: emp.name, count: c, req: emp.req }); });
 
-            // UPDATE UI
+            // Update UI
             document.getElementById("totalAssets").innerText = total;
             document.getElementById("totalAvailable").innerText = available;
             document.getElementById("totalAllocated").innerText = allocated;
@@ -406,58 +314,16 @@
             document.getElementById("totalPendingAlloc").innerText = pendingAllocationList.length;
             document.getElementById("totalUnnecessaryAlloc").innerText = unnecessaryAllocList.length;
 
-            const statusArray = Array.from(allStatuses).sort();
-            const ownershipDist = {};
-            Object.values(userAssetCounts).forEach(c => ownershipDist[c + (c===1?" Device":" Devices")] = (ownershipDist[c + (c===1?" Device":" Devices")] || 0) + 1);
-
-            renderPivotTable(locationMap, statusArray);
-            renderStackedChart('locationChart', locationMap, statusArray, locChartInstance, (i) => locChartInstance = i);
-            renderOwnershipChart(ownershipDist);
-            renderStackedChart('categoryChart', categoryMap, statusArray, catChartInstance, (i) => catChartInstance = i);
-            renderStackedChart('brandChart', brandMap, statusArray, brandChartInstance, (i) => brandChartInstance = i);
+            renderPivotTable(locationMap, Array.from(allStatuses).sort());
+            renderStackedChart('locationChart', locationMap, Array.from(allStatuses).sort(), locChartInstance, (i) => locChartInstance = i);
+            renderOwnershipChart(Object.values(userAssetCounts).reduce((acc, c) => { acc[c+(c===1?" Device":" Devices")] = (acc[c+(c===1?" Device":" Devices")]||0)+1; return acc; }, {}));
+            renderStackedChart('categoryChart', categoryMap, Array.from(allStatuses).sort(), catChartInstance, (i) => catChartInstance = i);
+            renderStackedChart('brandChart', brandMap, Array.from(allStatuses).sort(), brandChartInstance, (i) => brandChartInstance = i);
             renderStatusChart(statusMap);
         }
 
-        function getIdx(headers, name) { return headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase())); }
-
-        // --- ALERT MODALS ---
-        function showPendingAllocationModal() {
-            const tbody = document.getElementById("pendingAllocBody"); tbody.innerHTML = "";
-            if(pendingAllocationList.length === 0) tbody.innerHTML = "<tr><td colspan='4' class='text-center'>No Pending Allocations</td></tr>";
-            else pendingAllocationList.forEach(emp => tbody.innerHTML += `<tr><td class="fw-bold">${emp.id}</td><td>${emp.name}</td><td>${emp.email}</td><td>${emp.loc}</td></tr>`);
-            new bootstrap.Modal(document.getElementById('pendingAllocModal')).show();
-        }
-
-        function showUnnecessaryModal() {
-            const tbody = document.getElementById("unnecessaryBody"); tbody.innerHTML = "";
-            if(unnecessaryAllocList.length === 0) tbody.innerHTML = "<tr><td colspan='4' class='text-center'>No Unexpected Allocations</td></tr>";
-            else unnecessaryAllocList.forEach(emp => tbody.innerHTML += `<tr><td class="fw-bold">${emp.id}</td><td>${emp.name}</td><td class="text-danger fw-bold">${emp.count} Assets</td><td>${emp.req || 'No'}</td></tr>`);
-            new bootstrap.Modal(document.getElementById('unnecessaryModal')).show();
-        }
-
-        function showInactiveModal() {
-            const tbody = document.getElementById("inactiveTableBody"); tbody.innerHTML = "";
-            if(inactiveAssetsList.length === 0) tbody.innerHTML = "<tr><td colspan='5' class='text-center'>All Clear</td></tr>";
-            else inactiveAssetsList.forEach(i => tbody.innerHTML += `<tr><td class="fw-bold text-danger">${i.assetId}</td><td>${i.serial}</td><td>${i.type}</td><td>${i.user}</td><td>${i.empId}</td></tr>`);
-            new bootstrap.Modal(document.getElementById('inactiveModal')).show();
-        }
-
-        // --- COMMON LIST MODAL (Available, Status Details) ---
-        function showAvailableModal() {
-            openCommonModal("Available Stock", availableAssetsList, ['Asset ID','Serial No','Category','Brand','Location'], item => `<tr><td class="fw-bold text-primary">${item.id}</td><td>${item.serial}</td><td>${item.cat}</td><td>${item.brand}</td><td>${item.loc}</td></tr>`);
-        }
-
-        function openStatusModal(status) {
-            currentDetailList = allAssetRows.filter(r => r.status === status);
-            const headers = status === 'In-Use' ? ['Asset ID','Serial','Location','Assigned To','Category'] : ['Asset ID','Serial','Location','Category','Brand'];
-            const rowBuilder = status === 'In-Use' 
-                ? i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td class="text-primary fw-bold">${i.user}</td><td>${i.cat}</td></tr>`
-                : i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td>${i.cat}</td><td>${i.brand}</td></tr>`;
-            
-            openCommonModal(`Details: ${status}`, currentDetailList, headers, rowBuilder);
-        }
-
-        let commonRowBuilder = null; // Store function for filtering
+        // --- COMMON MODAL LOGIC ---
+        let commonRowBuilder = null;
         function openCommonModal(title, data, headers, rowFunc) {
             document.getElementById("commonModalTitle").innerText = title;
             document.getElementById("commonTableHead").innerHTML = `<tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr>`;
@@ -466,41 +332,28 @@
             renderCommonTable(data);
             new bootstrap.Modal(document.getElementById('commonDetailModal')).show();
         }
+        function renderCommonTable(data) { document.getElementById("commonTableBody").innerHTML = data.map(commonRowBuilder).join('') || "<tr><td colspan='5'>No Data</td></tr>"; }
+        function filterCommonTable() { const input = document.getElementById("commonSearch").value.toLowerCase(); renderCommonTable(currentDetailList.filter(item => Object.values(item).some(val => val.toString().toLowerCase().includes(input)))); }
+        function downloadCommonReport() { if(currentDetailList.length) { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(currentDetailList)], { type: 'text/csv' })); link.download = "List_Report.csv"; link.click(); } }
 
-        function renderCommonTable(data) {
-            document.getElementById("commonTableBody").innerHTML = data.map(commonRowBuilder).join('') || "<tr><td colspan='5'>No Data</td></tr>";
-        }
-
-        function filterCommonTable() {
-            const input = document.getElementById("commonSearch").value.toLowerCase();
-            const filtered = currentDetailList.filter(item => Object.values(item).some(val => val.toString().toLowerCase().includes(input)));
-            renderCommonTable(filtered);
-        }
-
-        // --- DOWNLOADERS ---
-        function downloadReport(type) {
-            let data = [];
-            let name = "";
-            if(type === 'pending') { data = pendingAllocationList; name = "Pending_Allocations.csv"; }
-            else if(type === 'unnecessary') { data = unnecessaryAllocList; name = "Unexpected_Allocations.csv"; }
-            else if(type === 'inactive') { data = inactiveAssetsList; name = "Inactive_Risk.csv"; }
-            
-            if(data.length) {
-                const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(data)], { type: 'text/csv' })); link.download = name; link.click();
-            }
-        }
-        function downloadCommonReport() {
-            if(currentDetailList.length) {
-                const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(currentDetailList)], { type: 'text/csv' })); link.download = "List_Report.csv"; link.click();
-            }
+        function showAvailableModal() { openCommonModal("Available Stock", availableAssetsList, ['Asset ID','Serial','Category','Brand','Location'], i => `<tr><td class="fw-bold text-primary">${i.id}</td><td>${i.serial}</td><td>${i.cat}</td><td>${i.brand}</td><td>${i.loc}</td></tr>`); }
+        function openStatusModal(status) {
+            const list = allAssetRows.filter(r => r.status === status);
+            if(status === 'In-Use') openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location','Assigned To','Category'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td class="text-primary fw-bold">${i.user}</td><td>${i.cat}</td></tr>`);
+            else openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location','Category','Brand'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td>${i.cat}</td><td>${i.brand}</td></tr>`);
         }
 
-        // --- RENDERERS ---
-        function renderStatusChart(map) {
-            const ctx = document.getElementById("statusChart").getContext("2d"); if(statusChartInstance) statusChartInstance.destroy();
-            const labels = Object.keys(map), data = Object.values(map);
-            statusChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Count', data: data, backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#20c9a6', '#6610f2'], borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, onClick: (evt, activeEls) => { if (activeEls.length > 0) openStatusModal(labels[activeEls[0].index]); } } });
+        // --- SPECIFIC MODALS ---
+        function showPendingAllocationModal() { const b = document.getElementById("pendingAllocBody"); b.innerHTML = pendingAllocationList.length ? pendingAllocationList.map(e => `<tr><td class="fw-bold">${e.id}</td><td>${e.name}</td><td>${e.email}</td><td>${e.loc}</td></tr>`).join('') : "<tr><td colspan='4'>No Pending</td></tr>"; new bootstrap.Modal(document.getElementById('pendingAllocModal')).show(); }
+        function showUnnecessaryModal() { const b = document.getElementById("unnecessaryBody"); b.innerHTML = unnecessaryAllocList.length ? unnecessaryAllocList.map(e => `<tr><td class="fw-bold">${e.id}</td><td>${e.name}</td><td class="text-danger fw-bold">${e.count} Assets</td><td>${e.req}</td></tr>`).join('') : "<tr><td colspan='4'>No Unexpected Allocations</td></tr>"; new bootstrap.Modal(document.getElementById('unnecessaryModal')).show(); }
+        function showInactiveModal() { const b = document.getElementById("inactiveTableBody"); b.innerHTML = inactiveAssetsList.length ? inactiveAssetsList.map(i => `<tr><td class="fw-bold text-danger">${i.assetId}</td><td>${i.serial}</td><td>${i.type}</td><td>${i.user}</td><td>${i.empId}</td></tr>`).join('') : "<tr><td colspan='5'>All Clear</td></tr>"; new bootstrap.Modal(document.getElementById('inactiveModal')).show(); }
+        function downloadReport(type) { 
+            let d = []; if(type==='pending') d=pendingAllocationList; else if(type==='unnecessary') d=unnecessaryAllocList; else if(type==='inactive') d=inactiveAssetsList;
+            if(d.length) { const l = document.createElement("a"); l.href = URL.createObjectURL(new Blob([Papa.unparse(d)], { type: 'text/csv' })); l.download = `${type}_report.csv`; l.click(); }
         }
+
+        // --- CHARTS & RENDERERS ---
+        function renderStatusChart(map) { const ctx=document.getElementById("statusChart").getContext("2d"); if(statusChartInstance) statusChartInstance.destroy(); statusChartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(map), datasets: [{ label: 'Count', data: Object.values(map), backgroundColor: ['#1cc88a','#f6c23e','#e74a3b','#4e73df','#858796','#36b9cc'], borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, onClick: (e, el) => { if(el.length) openStatusModal(Object.keys(map)[el[0].index]); } } }); }
         function showBreakdown(el, type) { const p=document.getElementById("hoverChartCard"); const r=el.getBoundingClientRect(); p.style.display="block"; p.style.top=(r.top+window.scrollY+10)+"px"; p.style.left=(r.left+r.width-20)+"px"; document.getElementById("hoverChartTitle").innerText=type.toUpperCase()+" Breakdown"; const d=breakdownData[type], l=Object.keys(d), v=Object.values(d); if(!l.length){l.push("No Data");v.push(1);} const c=document.getElementById("hoverChartCanvas").getContext("2d"); if(hoverChartInstance)hoverChartInstance.destroy(); hoverChartInstance=new Chart(c,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:['#4e73df','#1cc88a','#36b9cc','#f6c23e']}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}}); }
         function hideBreakdown() { document.getElementById("hoverChartCard").style.display="none"; }
         function renderStackedChart(id, map, stats, inst, setInst) { const c=document.getElementById(id).getContext('2d'), l=Object.keys(map).sort(); if(inst) inst.destroy(); setInst(new Chart(c, { type: 'bar', data: { labels: l, datasets: stats.map((s,i)=>({label:s,data:l.map(k=>map[k][s]||0),backgroundColor:['#1cc88a','#f6c23e','#e74a3b','#4e73df','#858796','#36b9cc'][i%6]})) }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } })); }
