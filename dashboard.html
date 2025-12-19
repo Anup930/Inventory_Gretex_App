@@ -31,6 +31,9 @@
         .alert-card { border-left: 5px solid #e74a3b !important; background: #fff5f5; }
         .alert-card:hover { background: #fee2e2; }
 
+        .warning-card { border-left: 5px solid #f6c23e !important; background: #fffdf5; }
+        .warning-card:hover { background: #fef9e7; }
+
         #hoverChartCard { display: none; position: absolute; z-index: 9999; width: 280px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: none; border: 1px solid rgba(0,0,0,0.1); }
         
         .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -90,9 +93,17 @@
                     <div class="icon-box text-secondary"><i class="fas fa-tools"></i></div><p class="text-secondary">Maintenance</p><h2 id="totalRepair">0</h2>
                 </div>
             </div>
-            <div class="col">
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
                 <div class="stat-card alert-card" onclick="showInactiveModal()" title="Click to View Details">
                     <div class="icon-box text-danger"><i class="fas fa-exclamation-triangle"></i></div><p class="text-danger fw-bold">Assets with Inactive Emp</p><h2 id="totalInactiveAssets">0</h2>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card warning-card" onclick="showPendingAllocationModal()" title="Click to View Employees needing Assets">
+                    <div class="icon-box text-warning"><i class="fas fa-user-clock"></i></div><p class="text-warning fw-bold text-dark">Pending Allocation (Asset Req=Yes)</p><h2 id="totalPendingAlloc">0</h2>
                 </div>
             </div>
         </div>
@@ -139,23 +150,22 @@
         </div>
     </div>
 
-    <div class="modal fade" id="statusDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade" id="pendingAllocModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="statusModalTitle">Asset Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-user-clock me-2"></i>Employees Needing Assets (Pending)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-8"><input type="text" id="statusSearch" class="form-control" placeholder="Search..." onkeyup="filterStatusTable()"></div>
-                        <div class="col-md-4 text-end"><button onclick="downloadStatusReport()" class="btn btn-dark w-100"><i class="fas fa-download me-2"></i>Download List</button></div>
+                    <p class="text-muted small">List of Active Employees where <b>Asset Required = Yes</b> but currently holding <b>0 Assets</b>.</p>
+                    <div class="d-flex justify-content-end mb-2">
+                        <button onclick="downloadPendingReport()" class="btn btn-sm btn-dark"><i class="fas fa-download me-2"></i>Download CSV</button>
                     </div>
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-bordered table-hover text-center align-middle">
-                            <thead class="table-light sticky-top" id="statusTableHead">
-                                </thead>
-                            <tbody id="statusTableBody"></tbody>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light"><tr><th>Emp ID</th><th>Name</th><th>Email</th><th>Location</th></tr></thead>
+                            <tbody id="pendingAllocBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -203,10 +213,33 @@
         </div>
     </div>
 
+    <div class="modal fade" id="statusDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="statusModalTitle">Asset Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-8"><input type="text" id="statusSearch" class="form-control" placeholder="Search..." onkeyup="filterStatusTable()"></div>
+                        <div class="col-md-4 text-end"><button onclick="downloadStatusReport()" class="btn btn-dark w-100"><i class="fas fa-download me-2"></i>Download List</button></div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-bordered table-hover text-center align-middle">
+                            <thead class="table-light sticky-top" id="statusTableHead"></thead>
+                            <tbody id="statusTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         document.getElementById("userNameDisplay").innerText = user.name;
 
         let locChartInstance = null, ownChartInstance = null, catChartInstance = null, brandChartInstance = null, hoverChartInstance = null, statusChartInstance = null;
@@ -214,8 +247,9 @@
         
         let inactiveAssetsList = []; 
         let availableAssetsList = []; 
-        let allAssetRows = []; // For filtering on chart click
-        let currentStatusList = []; // Currently viewing in modal
+        let pendingAllocationList = []; // NEW
+        let allAssetRows = []; 
+        let currentStatusList = [];
 
         async function loadData() {
             try {
@@ -230,23 +264,43 @@
         }
 
         function processDashboard(assetData, empData) {
+            // --- 1. PROCESS EMPLOYEES ---
             const empHeaders = empData[0];
             const empRows = empData.slice(1);
             const getEmpIdx = (name) => empHeaders.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
-            const EMP_NAME = getEmpIdx("Name");
-            const EMP_STATUS = getEmpIdx("Status");
+            
             const EMP_ID = getEmpIdx("ID"); 
+            const EMP_NAME = getEmpIdx("Name");
+            const EMP_EMAIL = getEmpIdx("Email");
+            const EMP_LOC = getEmpIdx("Location");
+            const EMP_STATUS = getEmpIdx("Status");
+            const EMP_REQ = getEmpIdx("Asset Requi"); // "Asset Required" col
 
             const inactiveEmpMap = {};
+            const empAssetCountMap = {}; // To track how many assets each emp has
+            const activeEmpReqList = []; // List of active emps who NEED assets
+
             empRows.forEach(row => {
+                const id = row[EMP_ID];
+                const name = row[EMP_NAME];
                 const status = (row[EMP_STATUS] || "").toString().trim();
-                if(status === 'Inactive') inactiveEmpMap[row[EMP_NAME].toString().toLowerCase()] = row[EMP_ID] || "N/A";
+                const req = (row[EMP_REQ] || "").toString().trim();
+
+                // Build Map for counts
+                empAssetCountMap[name.toLowerCase()] = 0; // Initialize 0
+
+                if(status === 'Inactive') {
+                    inactiveEmpMap[name.toLowerCase()] = id || "N/A";
+                } else if(status === 'Active' && req === 'Yes') {
+                    // Save details for pending check later
+                    activeEmpReqList.push({ id: id, name: name, email: row[EMP_EMAIL], loc: row[EMP_LOC] });
+                }
             });
 
+            // --- 2. PROCESS ASSETS ---
             const headers = assetData[0]; 
             const rows = assetData.slice(1);
             
-            // SAVE RAW ROWS FOR MODAL FILTERING
             allAssetRows = rows.map(r => {
                 return {
                     id: r[getIdx(headers, "AssetID")],
@@ -259,15 +313,18 @@
                 };
             });
 
+            const IDX_ID = getIdx(headers, "AssetID");
             const IDX_LOC = getIdx(headers, "Location");
+            const IDX_USER = getIdx(headers, "Assigned"); 
+            const IDX_STATUS = getIdx(headers, "Status");
             const IDX_CAT = getIdx(headers, "Category");
             const IDX_BRAND = getIdx(headers, "Brand");
-            const IDX_STATUS = getIdx(headers, "Status");
-            const IDX_USER = getIdx(headers, "Assigned");
+            const IDX_SERIAL = getIdx(headers, "Serial");
 
             let total = 0, available = 0, allocated = 0, repair = 0;
             const locationMap = {}, categoryMap = {}, brandMap = {}, userAssetCounts = {}, statusMap = {};
             const allStatuses = new Set();
+            
             inactiveAssetsList = [];
             availableAssetsList = [];
 
@@ -277,6 +334,8 @@
                 const user = (r[IDX_USER] || "Unassigned").toString().trim();
                 const cat = (r[IDX_CAT] || "Unknown").toString().trim();
                 const brand = (r[IDX_BRAND] || "Unknown").toString().trim();
+                const assetId = r[IDX_ID];
+                const serial = r[IDX_SERIAL];
 
                 if(loc === "") return;
 
@@ -287,14 +346,26 @@
                 if(status === 'Available') {
                     available++;
                     breakdownData.available[cat] = (breakdownData.available[cat] || 0) + 1;
-                    availableAssetsList.push({ id: r[getIdx(headers, "AssetID")], serial: r[getIdx(headers, "Serial")], cat: cat, brand: brand, loc: loc });
+                    availableAssetsList.push({ id: assetId, serial: serial, cat: cat, brand: brand, loc: loc });
                 } else if(status === 'In-Use') {
                     allocated++;
                     breakdownData.allocated[cat] = (breakdownData.allocated[cat] || 0) + 1;
+                    
                     const userLower = user.toLowerCase();
+                    
+                    // Increment Asset Count for Employee
+                    // We partial match user string with employee name keys
+                    for(const empName in empAssetCountMap) {
+                        if(userLower.includes(empName)) {
+                            empAssetCountMap[empName]++;
+                            break; // Counted once per asset
+                        }
+                    }
+
+                    // Check Inactive
                     for (const [inactiveName, empId] of Object.entries(inactiveEmpMap)) {
                         if (userLower.includes(inactiveName)) {
-                            inactiveAssetsList.push({ assetId: r[getIdx(headers, "AssetID")], serial: r[getIdx(headers, "Serial")], type: cat, user: user, empId: empId });
+                            inactiveAssetsList.push({ assetId: assetId, serial: serial, type: cat, user: user, empId: empId });
                             break;
                         }
                     }
@@ -310,118 +381,87 @@
                 if(status === 'In-Use' && user !== "Unassigned") userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
             });
 
+            // --- 3. CALCULATE PENDING ALLOCATION ---
+            pendingAllocationList = [];
+            activeEmpReqList.forEach(emp => {
+                const count = empAssetCountMap[emp.name.toLowerCase()] || 0;
+                if(count === 0) {
+                    pendingAllocationList.push(emp);
+                }
+            });
+
             document.getElementById("totalAssets").innerText = total;
             document.getElementById("totalAvailable").innerText = available;
             document.getElementById("totalAllocated").innerText = allocated;
             document.getElementById("totalRepair").innerText = repair;
             document.getElementById("totalInactiveAssets").innerText = inactiveAssetsList.length;
+            document.getElementById("totalPendingAlloc").innerText = pendingAllocationList.length; // UPDATE CARD
 
-            renderPivotTable(locationMap, Array.from(allStatuses).sort());
-            renderStackedChart('locationChart', locationMap, Array.from(allStatuses).sort(), locChartInstance, (i) => locChartInstance = i);
-            renderOwnershipChart(Object.values(userAssetCounts).reduce((acc, c) => { acc[c+(c===1?" Device":" Devices")] = (acc[c+(c===1?" Device":" Devices")]||0)+1; return acc; }, {}));
-            renderStackedChart('categoryChart', categoryMap, Array.from(allStatuses).sort(), catChartInstance, (i) => catChartInstance = i);
-            renderStackedChart('brandChart', brandMap, Array.from(allStatuses).sort(), brandChartInstance, (i) => brandChartInstance = i);
+            const statusArray = Array.from(allStatuses).sort();
+            const ownershipDist = {};
+            Object.values(userAssetCounts).forEach(c => ownershipDist[c + (c===1?" Device":" Devices")] = (ownershipDist[c + (c===1?" Device":" Devices")] || 0) + 1);
+
+            renderPivotTable(locationMap, statusArray);
+            renderStackedChart('locationChart', locationMap, statusArray, locChartInstance, (i) => locChartInstance = i);
+            renderOwnershipChart(ownershipDist);
+            renderStackedChart('categoryChart', categoryMap, statusArray, catChartInstance, (i) => catChartInstance = i);
+            renderStackedChart('brandChart', brandMap, statusArray, brandChartInstance, (i) => brandChartInstance = i);
             renderStatusChart(statusMap);
         }
 
-        // --- HELPER: GET COLUMN INDEX BY NAME ---
-        function getIdx(headers, name) {
-            return headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
-        }
+        function getIdx(headers, name) { return headers.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase())); }
 
-        // --- STATUS CHART WITH CLICK EVENT ---
-        function renderStatusChart(map) {
-            const ctx = document.getElementById("statusChart").getContext("2d");
-            if(statusChartInstance) statusChartInstance.destroy();
-            const labels = Object.keys(map);
-            const data = Object.values(map);
-            const colors = ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#20c9a6', '#6610f2'];
-
-            statusChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Count', data: data, backgroundColor: colors, borderRadius: 5 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } },
-                    onClick: (evt, activeEls) => {
-                        if (activeEls.length > 0) {
-                            const index = activeEls[0].index;
-                            const status = labels[index];
-                            openStatusModal(status);
-                        }
-                    }
-                }
-            });
-        }
-
-        // --- OPEN STATUS DETAIL MODAL ---
-        function openStatusModal(status) {
-            document.getElementById("statusModalTitle").innerText = `Details: ${status} Assets`;
-            
-            // Filter Data
-            currentStatusList = allAssetRows.filter(r => r.status === status);
-            
-            // Define Headers
-            const thead = document.getElementById("statusTableHead");
-            if(status === 'In-Use') {
-                thead.innerHTML = `<tr><th>Asset ID</th><th>Serial No</th><th>Location</th><th>Assigned To</th><th>Category</th></tr>`;
-            } else {
-                thead.innerHTML = `<tr><th>Asset ID</th><th>Serial No</th><th>Location</th><th>Category</th><th>Asset Type / Brand</th></tr>`;
-            }
-
-            renderStatusTable(currentStatusList, status);
-            new bootstrap.Modal(document.getElementById('statusDetailModal')).show();
-        }
-
-        function renderStatusTable(data, status) {
-            const tbody = document.getElementById("statusTableBody");
+        // --- PENDING ALLOCATION MODAL ---
+        function showPendingAllocationModal() {
+            const tbody = document.getElementById("pendingAllocBody");
             tbody.innerHTML = "";
-            if(data.length === 0) { tbody.innerHTML = "<tr><td colspan='5'>No Data</td></tr>"; return; }
-
-            data.forEach(item => {
-                if(status === 'In-Use') {
-                    tbody.innerHTML += `<tr><td class="fw-bold">${item.id}</td><td>${item.serial}</td><td>${item.loc}</td><td class="text-primary fw-bold">${item.user}</td><td>${item.cat}</td></tr>`;
-                } else {
-                    tbody.innerHTML += `<tr><td class="fw-bold">${item.id}</td><td>${item.serial}</td><td>${item.loc}</td><td>${item.cat}</td><td>${item.brand}</td></tr>`;
-                }
-            });
+            if(pendingAllocationList.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' class='text-success text-center fw-bold'>No Pending Allocations!</td></tr>";
+            } else {
+                pendingAllocationList.forEach(emp => {
+                    tbody.innerHTML += `<tr><td class="fw-bold">${emp.id}</td><td>${emp.name}</td><td>${emp.email}</td><td>${emp.loc}</td></tr>`;
+                });
+            }
+            new bootstrap.Modal(document.getElementById('pendingAllocModal')).show();
         }
 
-        function filterStatusTable() {
-            const input = document.getElementById("statusSearch").value.toLowerCase();
-            const filtered = currentStatusList.filter(item => 
-                Object.values(item).some(val => val.toString().toLowerCase().includes(input))
-            );
-            // Get current title to determine layout (In-Use vs Others)
-            const title = document.getElementById("statusModalTitle").innerText;
-            const isInUse = title.includes("In-Use");
-            renderStatusTable(filtered, isInUse ? 'In-Use' : 'Other');
+        function downloadPendingReport() {
+            if(pendingAllocationList.length === 0) return;
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([Papa.unparse(pendingAllocationList)], { type: 'text/csv' }));
+            link.download = "Pending_Allocation_List.csv";
+            link.click();
         }
 
-        function downloadStatusReport() {
-            if(currentStatusList.length === 0) return;
-            const csv = Papa.unparse(currentStatusList);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `Status_Report.csv`; link.click();
-        }
-
-        // --- OTHER MODALS & CHARTS (Keeping Existing Logic) ---
+        // --- EXISTING MODALS ---
         function showAvailableModal() { renderAvailableTable(availableAssetsList); new bootstrap.Modal(document.getElementById('availableModal')).show(); }
         function filterAvailableTable() { const input = document.getElementById("availableSearch").value.toLowerCase(); renderAvailableTable(availableAssetsList.filter(i => (i.id+i.serial+i.cat+i.brand+i.loc).toLowerCase().includes(input))); }
         function renderAvailableTable(data) { document.getElementById("availableTableBody").innerHTML = data.map(i => `<tr><td class="fw-bold text-primary">${i.id}</td><td>${i.serial}</td><td><span class="badge bg-info text-dark">${i.cat}</span></td><td>${i.brand}</td><td>${i.loc}</td></tr>`).join('') || "<tr><td colspan='5'>No Data</td></tr>"; }
         function downloadAvailableReport() { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(availableAssetsList)], { type: 'text/csv' })); link.download = "Available_Stock.csv"; link.click(); }
 
-        function showInactiveModal() { 
-            const b = document.getElementById("inactiveTableBody"); b.innerHTML = inactiveAssetsList.length ? inactiveAssetsList.map(i => `<tr><td class="fw-bold text-danger">${i.assetId}</td><td>${i.serial}</td><td>${i.type}</td><td>${i.user}</td><td>${i.empId}</td></tr>`).join('') : "<tr><td colspan='5' class='text-center text-success fw-bold'>All Clear!</td></tr>"; 
-            new bootstrap.Modal(document.getElementById('inactiveModal')).show(); 
-        }
+        function showInactiveModal() { const b = document.getElementById("inactiveTableBody"); b.innerHTML = inactiveAssetsList.length ? inactiveAssetsList.map(i => `<tr><td class="fw-bold text-danger">${i.assetId}</td><td>${i.serial}</td><td>${i.type}</td><td>${i.user}</td><td>${i.empId}</td></tr>`).join('') : "<tr><td colspan='5' class='text-center text-success fw-bold'>All Clear!</td></tr>"; new bootstrap.Modal(document.getElementById('inactiveModal')).show(); }
         function downloadInactiveReport() { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(inactiveAssetsList)], { type: 'text/csv' })); link.download = "Inactive_Risk.csv"; link.click(); }
 
-        // Renderers
-        function showBreakdown(el, type) { /* Standard hover logic */ const p=document.getElementById("hoverChartCard"); const r=el.getBoundingClientRect(); p.style.display="block"; p.style.top=(r.top+window.scrollY+10)+"px"; p.style.left=(r.left+r.width-20)+"px"; document.getElementById("hoverChartTitle").innerText=type.toUpperCase()+" Breakdown"; const d=breakdownData[type], l=Object.keys(d), v=Object.values(d); if(!l.length){l.push("No Data");v.push(1);} const c=document.getElementById("hoverChartCanvas").getContext("2d"); if(hoverChartInstance)hoverChartInstance.destroy(); hoverChartInstance=new Chart(c,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:['#4e73df','#1cc88a','#36b9cc','#f6c23e']}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}}); }
+        function renderStatusChart(map) {
+            const ctx = document.getElementById("statusChart").getContext("2d"); if(statusChartInstance) statusChartInstance.destroy();
+            const labels = Object.keys(map), data = Object.values(map);
+            statusChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Count', data: data, backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#20c9a6', '#6610f2'], borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, onClick: (evt, activeEls) => { if (activeEls.length > 0) openStatusModal(labels[activeEls[0].index]); } } });
+        }
+        function openStatusModal(status) {
+            document.getElementById("statusModalTitle").innerText = `Details: ${status} Assets`;
+            currentStatusList = allAssetRows.filter(r => r.status === status);
+            const thead = document.getElementById("statusTableHead");
+            thead.innerHTML = status === 'In-Use' ? `<tr><th>Asset ID</th><th>Serial No</th><th>Location</th><th>Assigned To</th><th>Category</th></tr>` : `<tr><th>Asset ID</th><th>Serial No</th><th>Location</th><th>Category</th><th>Asset Type / Brand</th></tr>`;
+            renderStatusTable(currentStatusList, status); new bootstrap.Modal(document.getElementById('statusDetailModal')).show();
+        }
+        function renderStatusTable(data, status) {
+            document.getElementById("statusTableBody").innerHTML = data.map(item => status === 'In-Use' ? `<tr><td class="fw-bold">${item.id}</td><td>${item.serial}</td><td>${item.loc}</td><td class="text-primary fw-bold">${item.user}</td><td>${item.cat}</td></tr>` : `<tr><td class="fw-bold">${item.id}</td><td>${item.serial}</td><td>${item.loc}</td><td>${item.cat}</td><td>${item.brand}</td></tr>`).join('') || "<tr><td colspan='5'>No Data</td></tr>";
+        }
+        function filterStatusTable() { const input = document.getElementById("statusSearch").value.toLowerCase(); const filtered = currentStatusList.filter(item => Object.values(item).some(val => val.toString().toLowerCase().includes(input))); renderStatusTable(filtered, document.getElementById("statusModalTitle").innerText.includes("In-Use") ? 'In-Use' : 'Other'); }
+        function downloadStatusReport() { if(currentStatusList.length === 0) return; const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(currentStatusList)], { type: 'text/csv' })); link.download = `Status_Report.csv`; link.click(); }
+
+        function showBreakdown(el, type) { const p=document.getElementById("hoverChartCard"); const r=el.getBoundingClientRect(); p.style.display="block"; p.style.top=(r.top+window.scrollY+10)+"px"; p.style.left=(r.left+r.width-20)+"px"; document.getElementById("hoverChartTitle").innerText=type.toUpperCase()+" Breakdown"; const d=breakdownData[type], l=Object.keys(d), v=Object.values(d); if(!l.length){l.push("No Data");v.push(1);} const c=document.getElementById("hoverChartCanvas").getContext("2d"); if(hoverChartInstance)hoverChartInstance.destroy(); hoverChartInstance=new Chart(c,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:['#4e73df','#1cc88a','#36b9cc','#f6c23e']}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}}); }
         function hideBreakdown() { document.getElementById("hoverChartCard").style.display="none"; }
-        
         function renderStackedChart(id, map, stats, inst, setInst) { const c=document.getElementById(id).getContext('2d'), l=Object.keys(map).sort(); if(inst) inst.destroy(); setInst(new Chart(c, { type: 'bar', data: { labels: l, datasets: stats.map((s,i)=>({label:s,data:l.map(k=>map[k][s]||0),backgroundColor:['#1cc88a','#f6c23e','#e74a3b','#4e73df','#858796','#36b9cc'][i%6]})) }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } })); }
         function renderOwnershipChart(dist) { const c=document.getElementById('ownershipChart').getContext('2d'), l=Object.keys(dist).sort((a,b)=>parseInt(a)-parseInt(b)); if(ownChartInstance) ownChartInstance.destroy(); ownChartInstance = new Chart(c, { type: 'doughnut', data: { labels: l, datasets: [{ data: l.map(k=>dist[k]), backgroundColor: ['#4e73df','#1cc88a','#36b9cc'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } }); }
         function renderPivotTable(map, stats) { document.getElementById("pivotTable").innerHTML = `<thead class="table-light"><tr><th class="row-header">Location</th>${stats.map(s=>`<th>${s}</th>`).join('')}<th class="fw-bold-total">Total</th></tr></thead><tbody>${Object.keys(map).sort().map(l=>{let t=0; return `<tr><td class="row-header">${l}</td>${stats.map(s=>{const c=map[l][s]||0;t+=c;return `<td>${c||'-'}</td>`}).join('')}<td class="fw-bold-total">${t}</td></tr>`}).join('')}</tbody>`; }
