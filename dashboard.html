@@ -1,5 +1,3 @@
-<!-- V 8.7.9 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,15 +20,10 @@
         .main-content { margin-left: 250px; padding: 30px; }
         
         /* CARDS */
-        .stat-card { 
-            background: white; border-radius: 12px; padding: 25px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; 
-            border-left: 5px solid #ccc; cursor: pointer; position: relative; overflow: hidden;
-        }
+        .stat-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; border-left: 5px solid #ccc; cursor: pointer; position: relative; overflow: hidden; }
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .stat-card h2 { font-weight: bold; margin: 10px 0 0 0; color: #333; }
         
-        /* ALERT COLORS */
         .alert-card { border-left: 5px solid #e74a3b !important; background: #fff5f5; }
         .warning-card { border-left: 5px solid #f6c23e !important; background: #fffdf5; }
         .violation-card { border-left: 5px solid #6610f2 !important; background: #f3f0ff; }
@@ -165,12 +158,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ********************************************
-        // PASTE YOUR GAS WEB APP URL HERE
         const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
- 
-        // ********************************************
-        
         document.getElementById("userNameDisplay").innerText = user.name;
 
         let locChartInstance = null, ownChartInstance = null, catChartInstance = null, brandChartInstance = null, hoverChartInstance = null, statusChartInstance = null;
@@ -224,19 +212,22 @@
                 }
             });
 
+            // --- KEY FIX: SORT KEYS BY LENGTH DESCENDING ---
+            // This prevents "Prashant" matching before "Prashant Nath"
+            const sortedEmpNames = Object.keys(empAssetCountMap).sort((a, b) => b.length - a.length);
+
             // 2. Process Assets
             const headers = assetData[0]; 
             const rows = assetData.slice(1);
             const getIdx = (head, name) => head.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
 
-            // FIXED: DEFINE THESE VARIABLES BEFORE USE
             const IDX_ID = getIdx(headers, "AssetID");
             const IDX_LOC = getIdx(headers, "Location");
             const IDX_CAT = getIdx(headers, "Category");
             const IDX_BRAND = getIdx(headers, "Brand");
             const IDX_SERIAL = getIdx(headers, "Serial");
-            const IDX_STATUS = getIdx(headers, "Status");  // <--- FIXED HERE
-            const IDX_USER = getIdx(headers, "Assigned");  // <--- FIXED HERE
+            const IDX_STATUS = getIdx(headers, "Status"); 
+            const IDX_USER = getIdx(headers, "Assigned");
 
             allAssetRows = rows.map(r => ({
                 id: r[IDX_ID], serial: r[IDX_SERIAL], loc: r[IDX_LOC], user: r[IDX_USER],
@@ -274,12 +265,15 @@
                     breakdownData.allocated[cat] = (breakdownData.allocated[cat] || 0) + 1;
                     
                     const userLower = user.toLowerCase();
-                    for(const empName in empAssetCountMap) {
+                    
+                    // --- IMPROVED NAME MATCHING LOGIC ---
+                    for(const empName of sortedEmpNames) {
                         if(userLower.includes(empName)) {
                             empAssetCountMap[empName]++;
-                            break; 
+                            break; // Stop after finding longest match
                         }
                     }
+
                     for (const [inactiveName, empId] of Object.entries(inactiveEmpMap)) {
                         if (userLower.includes(inactiveName)) {
                             inactiveAssetsList.push({ assetId: assetId, serial: serial, type: cat, user: user, empId: empId });
@@ -343,7 +337,6 @@
             else openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location','Category','Brand'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td>${i.cat}</td><td>${i.brand}</td></tr>`);
         }
 
-        // --- SPECIFIC MODALS ---
         function showPendingAllocationModal() { const b = document.getElementById("pendingAllocBody"); b.innerHTML = pendingAllocationList.length ? pendingAllocationList.map(e => `<tr><td class="fw-bold">${e.id}</td><td>${e.name}</td><td>${e.email}</td><td>${e.loc}</td></tr>`).join('') : "<tr><td colspan='4'>No Pending</td></tr>"; new bootstrap.Modal(document.getElementById('pendingAllocModal')).show(); }
         function showUnnecessaryModal() { const b = document.getElementById("unnecessaryBody"); b.innerHTML = unnecessaryAllocList.length ? unnecessaryAllocList.map(e => `<tr><td class="fw-bold">${e.id}</td><td>${e.name}</td><td class="text-danger fw-bold">${e.count} Assets</td><td>${e.req}</td></tr>`).join('') : "<tr><td colspan='4'>No Unexpected Allocations</td></tr>"; new bootstrap.Modal(document.getElementById('unnecessaryModal')).show(); }
         function showInactiveModal() { const b = document.getElementById("inactiveTableBody"); b.innerHTML = inactiveAssetsList.length ? inactiveAssetsList.map(i => `<tr><td class="fw-bold text-danger">${i.assetId}</td><td>${i.serial}</td><td>${i.type}</td><td>${i.user}</td><td>${i.empId}</td></tr>`).join('') : "<tr><td colspan='5'>All Clear</td></tr>"; new bootstrap.Modal(document.getElementById('inactiveModal')).show(); }
@@ -352,7 +345,6 @@
             if(d.length) { const l = document.createElement("a"); l.href = URL.createObjectURL(new Blob([Papa.unparse(d)], { type: 'text/csv' })); l.download = `${type}_report.csv`; l.click(); }
         }
 
-        // --- CHARTS & RENDERERS ---
         function renderStatusChart(map) { const ctx=document.getElementById("statusChart").getContext("2d"); if(statusChartInstance) statusChartInstance.destroy(); statusChartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(map), datasets: [{ label: 'Count', data: Object.values(map), backgroundColor: ['#1cc88a','#f6c23e','#e74a3b','#4e73df','#858796','#36b9cc'], borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, onClick: (e, el) => { if(el.length) openStatusModal(Object.keys(map)[el[0].index]); } } }); }
         function showBreakdown(el, type) { const p=document.getElementById("hoverChartCard"); const r=el.getBoundingClientRect(); p.style.display="block"; p.style.top=(r.top+window.scrollY+10)+"px"; p.style.left=(r.left+r.width-20)+"px"; document.getElementById("hoverChartTitle").innerText=type.toUpperCase()+" Breakdown"; const d=breakdownData[type], l=Object.keys(d), v=Object.values(d); if(!l.length){l.push("No Data");v.push(1);} const c=document.getElementById("hoverChartCanvas").getContext("2d"); if(hoverChartInstance)hoverChartInstance.destroy(); hoverChartInstance=new Chart(c,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:['#4e73df','#1cc88a','#36b9cc','#f6c23e']}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}}); }
         function hideBreakdown() { document.getElementById("hoverChartCard").style.display="none"; }
