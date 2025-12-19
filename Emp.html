@@ -15,7 +15,6 @@
         .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
         .main-content { margin-left: 250px; padding: 30px; }
         .form-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .select2-container .select2-selection--single { height: 38px; line-height: 38px; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -47,10 +46,10 @@
             
             <div class="mb-4 p-3 bg-light rounded border">
                 <label class="form-label fw-bold text-primary"><i class="fas fa-search me-2"></i>Search Employee to Edit</label>
-                <select class="form-select select2" id="searchEmp" onchange="fillForm()">
+                <select class="form-select select2" id="searchEmp" style="width: 100%;" onchange="fillForm()">
                     <option value="">-- Select to Edit (Or Leave Empty to Add New) --</option>
                 </select>
-                <div class="form-text">Select an employee to update details or mark as Inactive.</div>
+                <div class="form-text">Select to update details or mark status. Leave empty to add new.</div>
             </div>
 
             <h5 class="mb-4 text-secondary border-bottom pb-2" id="formTitle">Add New Employee</h5>
@@ -135,71 +134,69 @@
 
     <script>
         // *** PASTE YOUR GAS WEB APP URL HERE ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
 
         let allEmployees = [];
 
         $(document).ready(function() {
-            $('.select2').select2();
+            $('#searchEmp').select2({ placeholder: "Search Employee...", allowClear: true });
             loadEmployees();
         });
 
-        // 1. LOAD EMPLOYEES FOR SEARCH
+        // 1. FETCH DATA FOR DROPDOWN
         function loadEmployees() {
             fetch(API_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "getHistoryData" }) // Reuse history data to get full list
+                body: JSON.stringify({ action: "getEmployeeData" }) // Make sure action matches backend
             })
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
-                    allEmployees = result.employees; // Store globally
+                    allEmployees = result.employees;
                     const select = document.getElementById("searchEmp");
                     
-                    // Clear existing (keep first option)
-                    while (select.options.length > 1) { select.remove(1); }
-
+                    // Clear and Re-populate
+                    select.innerHTML = '<option value="">-- Select to Edit --</option>';
+                    
                     allEmployees.forEach(emp => {
-                        // Emp Array Structure based on previous code: 
-                        // 0:ID, 1:Name, 2:Email, 3:Dept, 4:Loc, 5:Status, 6:Date, 7:Type, 8:AssetReq
                         let opt = document.createElement("option");
-                        opt.value = emp[0]; // ID
-                        opt.text = `${emp[1]} (${emp[0]}) - ${emp[5]}`;
+                        // emp[0] = ID, emp[1] = Name
+                        opt.value = emp[0]; 
+                        opt.text = `${emp[1]} (${emp[0]})`;
                         select.appendChild(opt);
                     });
+                } else {
+                    console.error("Failed to load employees");
                 }
             });
         }
 
-        // 2. FILL FORM ON SELECTION
+        // 2. FILL FORM ON EDIT
         function fillForm() {
             const empId = $('#searchEmp').val();
-            
-            if(!empId) {
-                resetForm();
-                return;
-            }
+            if(!empId) { resetForm(); return; }
 
-            const emp = allEmployees.find(e => e[0] == empId);
+            // Find Employee Row (Convert to string for safe comparison)
+            const emp = allEmployees.find(e => String(e[0]) === String(empId));
+            
             if(emp) {
-                // Switch to Edit Mode
                 document.getElementById("mode").value = "update";
                 document.getElementById("formTitle").innerText = "Edit Employee Details";
-                document.getElementById("submitBtn").innerHTML = '<i class="fas fa-edit me-2"></i> Update Employee';
-                document.getElementById("submitBtn").classList.remove("btn-primary");
-                document.getElementById("submitBtn").classList.add("btn-warning");
+                const btn = document.getElementById("submitBtn");
+                btn.innerHTML = '<i class="fas fa-edit me-2"></i> Update Employee';
+                btn.className = "btn btn-warning px-5 fw-bold";
 
-                // Fill Fields
                 document.getElementById("empId").value = emp[0];
-                document.getElementById("empId").readOnly = true; // Cannot change ID in edit mode
+                document.getElementById("empId").readOnly = true; // Lock ID
                 document.getElementById("empName").value = emp[1];
                 document.getElementById("email").value = emp[2];
                 document.getElementById("company").value = emp[3];
                 document.getElementById("location").value = emp[4];
                 document.getElementById("status").value = emp[5];
                 
-                // Handle New Columns (Check if index exists, else default)
-                document.getElementById("empType").value = emp[7] || "Employee";
+                // New Columns mapping (Index 7 = Type, Index 8 = Asset Req)
+                // Using '||' fallback in case column is empty
+                document.getElementById("empType").value = emp[7] || "Employee"; 
                 document.getElementById("assetReq").value = emp[8] || "Yes";
             }
         }
@@ -208,31 +205,34 @@
         function resetForm() {
             document.getElementById("empForm").reset();
             $('#searchEmp').val(null).trigger('change');
-            
-            // Switch to Add Mode
             document.getElementById("mode").value = "add";
             document.getElementById("formTitle").innerText = "Add New Employee";
-            document.getElementById("submitBtn").innerHTML = '<i class="fas fa-save me-2"></i> Save Employee';
-            document.getElementById("submitBtn").classList.add("btn-primary");
-            document.getElementById("submitBtn").classList.remove("btn-warning");
+            
+            const btn = document.getElementById("submitBtn");
+            btn.innerHTML = '<i class="fas fa-save me-2"></i> Save Employee';
+            btn.className = "btn btn-primary px-5 fw-bold";
+            
             document.getElementById("empId").readOnly = false;
         }
 
-        // 4. SUBMIT FORM (ADD or UPDATE)
+        // 4. SUBMIT (ADD / UPDATE)
         document.getElementById("empForm").addEventListener("submit", function(e) {
             e.preventDefault();
             
+            // --- FIX FOR MULTIPLE SUBMITS ---
+            const btn = document.getElementById("submitBtn");
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+            // --------------------------------
+
             const mode = document.getElementById("mode").value;
+            // Map 'update' to 'updateEmployee' action in backend
             const action = mode === "update" ? "updateEmployee" : "addEmployee";
-            
-            Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading() });
 
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
             data.action = action;
-
-            // In addEmployee, we need to map action correctly in Code.gs
-            // Ensure you update Code.gs doPost to handle 'updateEmployee'
 
             fetch(API_URL, {
                 method: "POST",
@@ -243,7 +243,7 @@
                 if(result.status === "success") {
                     Swal.fire('Success', result.message, 'success').then(() => {
                         resetForm();
-                        loadEmployees(); // Reload list to show updates
+                        loadEmployees(); // Reload list
                     });
                 } else {
                     Swal.fire('Error', result.message, 'error');
@@ -252,6 +252,11 @@
             .catch(err => {
                 console.error(err);
                 Swal.fire('Error', 'Connection Failed', 'error');
+            })
+            .finally(() => {
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             });
         });
 
