@@ -120,7 +120,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <button class="btn btn-primary w-100" onclick="loadData()">Refresh Data</button>
+                    <button class="btn btn-primary w-100" onclick="refreshSystem()">Refresh Data</button>
                 </div>
             </div>
         </div>
@@ -142,6 +142,32 @@
                         <tr><td colspan="6" class="text-center p-4">Loading Data...</td></tr>
                     </tbody>
                 </table>
+            </div>
+            
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center">
+                    <span class="text-muted small me-2">Rows per page:</span>
+                    <select id="rowsPerPage" class="form-select form-select-sm" style="width: 70px;" onchange="changeRowsPerPage()">
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+                
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" id="btnPrev">
+                            <button class="page-link" onclick="changePage(-1)">Previous</button>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link text-dark" id="pageInfo">Page 1 of 1</span>
+                        </li>
+                        <li class="page-item" id="btnNext">
+                            <button class="page-link" onclick="changePage(1)">Next</button>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
@@ -170,7 +196,12 @@
         document.getElementById("userNameDisplay").innerText = user.name;
 
         let globalAssets = [];
+        let filteredAssets = []; // Store filtered data
         let globalTxns = [];
+        
+        // Pagination Variables
+        let currentPage = 1;
+        let rowsPerPage = 20;
 
         // --- NEW SYSTEM REFRESH LOGIC ---
         function refreshSystem() {
@@ -179,13 +210,17 @@
             const statusDot = document.getElementById('connectionDot');
             const timeEl = document.getElementById('lastRefreshed');
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
-            btn.disabled = true;
+            if(btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+                btn.disabled = true;
+            }
 
             loadData().then(() => {
                 setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
-                    btn.disabled = false;
+                    if(btn) {
+                        btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
+                        btn.disabled = false;
+                    }
                     statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected';
                     statusText.className = 'fw-bold text-success mb-1';
                     statusDot.className = 'badge bg-success rounded-circle p-1';
@@ -194,8 +229,10 @@
                     toast.fire({ icon: 'success', title: 'Data Updated' });
                 }, 500);
             }).catch(() => {
-                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
-                btn.disabled = false;
+                if(btn) {
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
+                    btn.disabled = false;
+                }
                 statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error';
                 statusText.className = 'fw-bold text-danger mb-1';
                 statusDot.className = 'badge bg-danger rounded-circle p-1';
@@ -212,7 +249,8 @@
                 if(result.status === "success") {
                     globalAssets = result.assets;
                     globalTxns = result.transactions;
-                    renderTable(globalAssets);
+                    filteredAssets = [...globalAssets]; // Initialize filtered list
+                    renderTable(); // Initial Render
                     return Promise.resolve();
                 } else {
                     return Promise.reject();
@@ -220,10 +258,23 @@
             });
         }
 
-        function renderTable(data) {
+        // --- PAGINATION LOGIC ---
+        function renderTable() {
             const tbody = document.getElementById("tableBody");
             tbody.innerHTML = "";
-            data.forEach(row => {
+            
+            // Calculate slice range
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedData = filteredAssets.slice(start, end);
+
+            if(paginatedData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">No Data Found</td></tr>';
+                document.getElementById("pageInfo").innerText = "Page 0 of 0";
+                return;
+            }
+
+            paginatedData.forEach(row => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td class="fw-bold text-primary">${row[0]}</td>
@@ -236,13 +287,31 @@
                 tr.onclick = () => showHistory(row[0]);
                 tbody.appendChild(tr);
             });
+
+            updatePaginationControls();
         }
 
-        function getStatusBadge(status) {
-            if(status === 'Available') return 'bg-success';
-            if(status === 'In-Use') return 'bg-warning text-dark';
-            if(status === 'Repair') return 'bg-danger';
-            return 'bg-secondary';
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(filteredAssets.length / rowsPerPage) || 1;
+            document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages}`;
+            
+            document.getElementById("btnPrev").classList.toggle("disabled", currentPage === 1);
+            document.getElementById("btnNext").classList.toggle("disabled", currentPage === totalPages);
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredAssets.length / rowsPerPage) || 1;
+            const newPage = currentPage + direction;
+            if (newPage > 0 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderTable();
+            }
+        }
+
+        function changeRowsPerPage() {
+            rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
+            currentPage = 1; // Reset to page 1
+            renderTable();
         }
 
         function filterTable() {
@@ -250,13 +319,23 @@
             const cat = document.getElementById("catFilter").value;
             const status = document.getElementById("statusFilter").value;
 
-            const filtered = globalAssets.filter(row => {
+            filteredAssets = globalAssets.filter(row => {
                 const textMatch = (row[0]+row[2]+row[3]+row[4]).toLowerCase().includes(search);
                 const catMatch = cat ? row[1] === cat : true;
                 const statusMatch = status ? row[12] === status : true;
                 return textMatch && catMatch && statusMatch;
             });
-            renderTable(filtered);
+            
+            currentPage = 1; // Reset pagination on filter
+            renderTable();
+        }
+
+        // --- UTILS ---
+        function getStatusBadge(status) {
+            if(status === 'Available') return 'bg-success';
+            if(status === 'In-Use') return 'bg-warning text-dark';
+            if(status === 'Repair') return 'bg-danger';
+            return 'bg-secondary';
         }
 
         function showHistory(assetId) {
@@ -281,7 +360,7 @@
                 if(t[2] === "OUT") { title = `Allocated to ${t[7]}`; color = "bg-warning"; }
                 else if(t[2] === "IN") { title = `Returned by ${t[7]}`; color = "bg-success"; }
                 else if(t[2] === "MAINT") { title = `Maintenance Update`; color = "bg-danger"; }
-                else if(t[2] === "TRANSFER") { title = `Shifted to ${t[7]}`; color = "bg-info"; } // New Shift Type
+                else if(t[2] === "TRANSFER") { title = `Shifted to ${t[7]}`; color = "bg-info"; }
                 
                 addTimelineItem(container, t[1], title, t[10], color);
             });
