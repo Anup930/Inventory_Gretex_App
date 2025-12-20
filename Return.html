@@ -21,7 +21,13 @@
         .sidebar-footer { padding: 20px; border-top: 1px solid #3e4b5b; background-color: #1a2530; }
 
         .main-content { margin-left: 250px; padding: 30px; }
-        .form-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* Checklist Styles */
+        .check-group { background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; }
+        .check-label { font-weight: 600; color: #495057; margin-bottom: 0; }
+        .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; }
+        .btn-check:checked + .btn-outline-danger { background-color: #dc3545; color: white; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -74,24 +80,24 @@
     </div>
 
     <div class="main-content">
-        <h3 class="mb-4">Return Asset</h3>
+        <h3 class="mb-4">Return Asset & Health Check</h3>
         
         <div class="form-card">
             <h5 class="mb-4 text-danger"><i class="fas fa-undo-alt"></i> Receive Asset from Employee</h5>
             <form id="returnForm">
-                <div class="row g-3">
+                <div class="row g-4">
                     
                     <div class="col-12">
-                        <label class="form-label">Select Assigned Asset (Search by ID/Name/User)</label>
+                        <label class="form-label fw-bold">Select Assigned Asset</label>
                         <select class="form-select select2" name="assetId" id="assetSelect" required>
                             <option value="">Loading In-Use Assets...</option>
                         </select>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label">Return Condition (Status)</label>
-                        <select class="form-select" name="returnStatus" required>
-                            <option value="Available">In Stock (Good Condition)</option>
+                        <label class="form-label">Return Condition (Overall)</label>
+                        <select class="form-select" name="returnStatus" id="mainStatus" required>
+                            <option value="Available">Available (Good)</option>
                             <option value="Repair">Needs Repair</option>
                             <option value="Damaged">Damaged / Broken</option>
                             <option value="Scrap">Scrap / Retired</option>
@@ -104,13 +110,105 @@
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label">Remarks / Damage Details</label>
-                        <textarea class="form-control" name="remarks" rows="2" placeholder="e.g. Screen cracked, Charger missing..."></textarea>
+                        <div class="card bg-light border-0">
+                            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                                <span class="fw-bold"><i class="fas fa-stethoscope me-2"></i> Laptop Health Checklist</span>
+                                <button type="button" class="btn btn-sm btn-light fw-bold text-dark" onclick="markAllGood()">
+                                    <i class="fas fa-check-double me-1"></i> Mark All Good
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="check-group">
+                                            <label class="check-label"><i class="fab fa-windows me-2"></i>OS / Booting</label>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check chk" name="chk_os" id="os1" value="Pass" checked>
+                                                <label class="btn btn-sm btn-outline-success" for="os1">Pass</label>
+                                                <input type="radio" class="btn-check chk" name="chk_os" id="os2" value="Fail">
+                                                <label class="btn btn-sm btn-outline-danger" for="os2">Fail</label>
+                                            </div>
+                                        </div>
+                                        <div class="check-group">
+                                            <label class="check-label"><i class="fas fa-desktop me-2"></i>Display / Screen</label>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check chk" name="chk_screen" id="scr1" value="Pass" checked>
+                                                <label class="btn btn-sm btn-outline-success" for="scr1">Pass</label>
+                                                <input type="radio" class="btn-check chk" name="chk_screen" id="scr2" value="Fail">
+                                                <label class="btn btn-sm btn-outline-danger" for="scr2">Fail</label>
+                                            </div>
+                                        </div>
+                                        <div class="check-group">
+                                            <label class="check-label"><i class="fas fa-keyboard me-2"></i>Keyboard / Keys</label>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check chk" name="chk_kb" id="kb1" value="Pass" checked>
+                                                <label class="btn btn-sm btn-outline-success" for="kb1">Pass</label>
+                                                <input type="radio" class="btn-check chk" name="chk_kb" id="kb2" value="Fail">
+                                                <label class="btn btn-sm btn-outline-danger" for="kb2">Fail</label>
+                                            </div>
+                                        </div>
+                                        <div class="check-group">
+                                            <label class="check-label"><i class="fas fa-camera me-2"></i>Camera / WebCam</label>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check chk" name="chk_cam" id="cam1" value="Pass" checked>
+                                                <label class="btn btn-sm btn-outline-success" for="cam1">Pass</label>
+                                                <input type="radio" class="btn-check chk" name="chk_cam" id="cam2" value="Fail">
+                                                <label class="btn btn-sm btn-outline-danger" for="cam2">Fail</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="check-group">
+                                            <label class="check-label"><i class="fas fa-laptop me-2"></i>Front Body</label>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check chk" name="chk_front" id="fb1" value="Pass" checked>
+                                                <label class="btn btn-sm btn-outline-success" for="fb1">Good</label>
+                                                <input type="radio" class="btn-check chk" name="chk_front" id="fb2" value="Damaged">
+                                                <label class="btn btn-sm btn-outline-danger" for="fb2">Dented</label>
+                                            </div>
+                                        </div>
+                                        <div class="check-group">
+                                            <label class="check-label"><i class="fas fa-hdd me-2"></i>Back Body</label>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check chk" name="chk_back" id="bb1" value="Pass" checked>
+                                                <label class="btn btn-sm btn-outline-success" for="bb1">Good</label>
+                                                <input type="radio" class="btn-check chk" name="chk_back" id="bb2" value="Damaged">
+                                                <label class="btn btn-sm btn-outline-danger" for="bb2">Dented</label>
+                                            </div>
+                                        </div>
+                                        <div class="check-group">
+                                            <label class="check-label"><i class="fas fa-plug me-2"></i>Original Charger</label>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check chk" name="chk_chg" id="ch1" value="Returned" checked>
+                                                <label class="btn btn-sm btn-outline-success" for="ch1">Yes</label>
+                                                <input type="radio" class="btn-check chk" name="chk_chg" id="ch2" value="Missing">
+                                                <label class="btn btn-sm btn-outline-danger" for="ch2">No</label>
+                                            </div>
+                                        </div>
+                                        <div class="check-group">
+                                            <label class="check-label"><i class="fas fa-briefcase me-2"></i>Laptop Bag</label>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check chk" name="chk_bag" id="bg1" value="Returned" checked>
+                                                <label class="btn btn-sm btn-outline-success" for="bg1">Yes</label>
+                                                <input type="radio" class="btn-check chk" name="chk_bag" id="bg2" value="Missing">
+                                                <label class="btn btn-sm btn-outline-danger" for="bg2">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="col-12 mt-4">
+                    <div class="col-12">
+                        <label class="form-label">Additional Remarks / Issues</label>
+                        <textarea class="form-control" name="remarks" id="remarksInput" rows="2" placeholder="e.g. Screen has minor scratch on left corner..."></textarea>
+                    </div>
+
+                    <div class="col-12">
                         <button type="submit" class="btn btn-danger px-5 w-100 fw-bold">
-                            Process Return
+                            <i class="fas fa-check-circle me-2"></i> Submit Inspection & Return
                         </button>
                     </div>
 
@@ -130,8 +228,6 @@
 
         $(document).ready(function() {
             $('.select2').select2();
-            
-            // --- NEW SYSTEM REFRESH LOGIC ---
             refreshSystem(); // Load data on start
         });
 
@@ -192,6 +288,17 @@
             });
         }
 
+        // --- QC LOGIC ---
+        function markAllGood() {
+            // Select all radio buttons with value 'Pass', 'Returned', or 'Available'
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                if(radio.value === 'Pass' || radio.value === 'Returned') {
+                    radio.checked = true;
+                }
+            });
+            document.getElementById("mainStatus").value = "Available";
+        }
+
         // 2. SUBMIT RETURN
         document.getElementById("returnForm").addEventListener("submit", function(e) {
             e.preventDefault();
@@ -202,28 +309,43 @@
                 return;
             }
 
+            // Generate QC Report String
+            let qcReport = "[QC Check] ";
+            qcReport += "OS: " + document.querySelector('input[name="chk_os"]:checked').value + " | ";
+            qcReport += "Screen: " + document.querySelector('input[name="chk_screen"]:checked').value + " | ";
+            qcReport += "Keys: " + document.querySelector('input[name="chk_kb"]:checked').value + " | ";
+            qcReport += "Cam: " + document.querySelector('input[name="chk_cam"]:checked').value + " | ";
+            qcReport += "Front: " + document.querySelector('input[name="chk_front"]:checked').value + " | ";
+            qcReport += "Back: " + document.querySelector('input[name="chk_back"]:checked').value + " | ";
+            qcReport += "Charger: " + document.querySelector('input[name="chk_chg"]:checked').value + " | ";
+            qcReport += "Bag: " + document.querySelector('input[name="chk_bag"]:checked').value;
+
+            const userRemarks = document.getElementById("remarksInput").value;
+            const finalRemarks = qcReport + (userRemarks ? " || Notes: " + userRemarks : "");
+
             Swal.fire({
-                title: 'Confirm Return?',
-                text: "Status will be updated and asset will be unassigned.",
+                title: 'Confirm Return & QC?',
+                text: "Status will be updated based on inspection.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, Return It'
+                confirmButtonText: 'Yes, Submit'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    submitReturn(assetId, e.target);
+                    submitReturn(assetId, e.target, finalRemarks);
                 }
             });
         });
 
-        function submitReturn(assetId, form) {
+        function submitReturn(assetId, form, remarks) {
             Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading() });
 
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             data.action = "returnAsset";
             data.user = user.name;
-            data.assetId = assetId;
+            data.assetId = assetId; 
+            data.remarks = remarks; // Override remarks with QC report
 
             fetch(API_URL, {
                 method: "POST",
@@ -232,10 +354,12 @@
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
-                    Swal.fire('Success', result.message, 'success').then(() => {
-                        refreshSystem(); // Reload list via refreshSystem
+                    Swal.fire('Success', 'Asset Returned & Inspection Saved!', 'success').then(() => {
+                        refreshSystem(); 
                         form.reset();
                         $('#assetSelect').val(null).trigger('change');
+                        // Reset Radios to default
+                        markAllGood();
                     });
                 } else {
                     Swal.fire('Error', result.message, 'error');
