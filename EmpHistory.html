@@ -8,10 +8,17 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
-        body { background-color: #f3f4f6; }
-        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; }
-        .sidebar a { color: #aab8c5; padding: 15px 25px; display: block; text-decoration: none; }
+        body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; display: flex; flex-direction: column; }
+        .sidebar-header { text-align: center; margin-bottom: 30px; font-weight: bold; font-size: 1.2rem; border-bottom: 1px solid #34495e; padding-bottom: 20px; }
+        .sidebar a { color: #aab8c5; padding: 12px 25px; display: flex; align-items: center; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
+        .sidebar a i { width: 25px; text-align: center; margin-right: 10px; }
         .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
+        
+        /* Push content down to fit sidebar height */
+        .sidebar-menu { flex-grow: 1; overflow-y: auto; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid #3e4b5b; background-color: #1a2530; }
+
         .main-content { margin-left: 250px; padding: 30px; }
         
         .table-hover tbody tr { cursor: pointer; transition: background 0.2s; }
@@ -25,20 +32,46 @@
 <body>
 
     <div class="sidebar">
-        <h4 class="text-center mb-4"><i class="fas fa-warehouse"></i> ERP System</h4>
-        <a href="dashboard.html"><i class="fas fa-home me-2"></i> Dashboard</a>
-        <a href="Emp.html"><i class="fas fa-users me-2"></i> Add Employee</a>
-        <a href="asset.html"><i class="fas fa-laptop-medical me-2"></i> Add Asset</a>
-        <a href="allocate.html"><i class="fas fa-hand-holding me-2"></i> Allocate Asset</a>
-        <a href="Return.html"><i class="fas fa-undo me-2"></i> Return Asset</a>
-        <a href="AssetHistory.html"><i class="fas fa-history me-2"></i> Asset History</a>
-        <a href="EmpHistory.html" class="active"><i class="fas fa-user-clock me-2"></i> Emp History</a>
-        <a href="Repair.html"><i class="fas fa-tools me-2"></i> Maintenance</a>
-        <a href="stock.html"><i class="fas fa-exchange-alt me-2"></i> Stock In/Out</a>
-        <a href="data.html"><i class="fas fa-database me-2"></i> Import / Export</a>
+        <h4 class="text-center mt-4 mb-4"><i class="fas fa-warehouse"></i> Gretex ERP</h4>
         
-        <div style="margin-top: 50px; border-top: 1px solid #34495e;"></div>
-        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <div class="sidebar-menu">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
+            <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
+            <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
+            <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
+            <a href="Shift.html"><i class="fas fa-truck-moving"></i> Shift Asset</a>
+            <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
+            <a href="EmpHistory.html" class="active"><i class="fas fa-user-clock"></i> Emp History</a>
+            <a href="Repair.html"><i class="fas fa-tools"></i> Maintenance</a>
+            <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
+            <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="#" onclick="logout()" class="mb-3 text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            
+            <div class="card border-0 bg-dark text-white shadow-sm" style="background-color: #2c3e50 !important; border: 1px solid #4e5d6c !important;">
+                <div class="card-body p-2 text-center">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-white-50" style="font-size: 0.7rem;">SYSTEM STATUS</small>
+                        <span id="connectionDot" class="badge bg-warning rounded-circle p-1" style="width: 10px; height: 10px;"> </span>
+                    </div>
+                    
+                    <div id="connectionText" class="fw-bold text-warning mb-1" style="font-size: 0.85rem;">
+                        <i class="fas fa-plug me-1"></i> Connecting...
+                    </div>
+                    
+                    <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">
+                        Last Sync: --:--
+                    </p>
+                    
+                    <button onclick="refreshSystem()" class="btn btn-sm btn-outline-light w-100" style="font-size: 0.75rem;">
+                        <i class="fas fa-sync-alt me-1"></i> Force Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="main-content">
@@ -91,8 +124,7 @@
                 <div class="modal-body">
                     
                     <h6 class="text-primary fw-bold"><i class="fas fa-hand-holding"></i> Currently Holding Assets</h6>
-                    <ul class="list-group mb-4" id="currentAssetsList">
-                        </ul>
+                    <ul class="list-group mb-4" id="currentAssetsList"></ul>
 
                     <h6 class="text-secondary fw-bold border-top pt-3"><i class="fas fa-history"></i> Transaction History</h6>
                     <div class="table-responsive">
@@ -117,10 +149,38 @@
         let globalAssets = [];
         let globalTxns = [];
 
-        window.onload = loadData;
+        // --- NEW SYSTEM REFRESH LOGIC ---
+        function refreshSystem() {
+            const btn = document.querySelector('button[onclick="refreshSystem()"]');
+            const statusText = document.getElementById('connectionText');
+            const statusDot = document.getElementById('connectionDot');
+            const timeEl = document.getElementById('lastRefreshed');
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+            btn.disabled = true;
+
+            loadData().then(() => {
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
+                    btn.disabled = false;
+                    statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected';
+                    statusText.className = 'fw-bold text-success mb-1';
+                    statusDot.className = 'badge bg-success rounded-circle p-1';
+                    timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
+                    const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+                    toast.fire({ icon: 'success', title: 'Data Updated' });
+                }, 500);
+            }).catch(() => {
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
+                btn.disabled = false;
+                statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error';
+                statusText.className = 'fw-bold text-danger mb-1';
+                statusDot.className = 'badge bg-danger rounded-circle p-1';
+            });
+        }
 
         function loadData() {
-            fetch(API_URL, {
+            return fetch(API_URL, {
                 method: "POST",
                 body: JSON.stringify({ action: "getHistoryData" })
             })
@@ -131,6 +191,9 @@
                     globalAssets = result.assets;
                     globalTxns = result.transactions;
                     renderTable(globalEmps);
+                    return Promise.resolve();
+                } else {
+                    return Promise.reject();
                 }
             });
         }
@@ -141,15 +204,12 @@
 
             const filtered = globalEmps.filter(row => {
                 const textMatch = (row[0]+row[1]+row[3]).toLowerCase().includes(searchText);
-                
                 const assetCount = globalAssets.filter(a => 
                     a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
                 ).length;
-
                 const countMatch = countFilter === "" ? true : assetCount == countFilter;
                 return textMatch && countMatch;
             });
-
             renderTable(filtered);
         }
 
@@ -185,9 +245,7 @@
             });
         }
 
-        // --- NEW: EXPORT FUNCTION ---
         function downloadFilteredData() {
-            // 1. Re-run filter logic to get current view data
             const searchText = document.getElementById("searchInput").value.toLowerCase();
             const countFilter = document.getElementById("countFilter").value;
 
@@ -205,53 +263,27 @@
                 return;
             }
 
-            // 2. Prepare Data & Calculate Max Columns needed
             let maxAssets = 0;
             const processedRows = filteredEmps.map(emp => {
                 const empAssets = globalAssets.filter(a => 
                     a[11] && a[11].toString().includes(emp[1]) && a[12] === "In-Use"
                 );
                 if (empAssets.length > maxAssets) maxAssets = empAssets.length;
-                
-                return {
-                    id: emp[0],
-                    name: emp[1],
-                    status: emp[5],
-                    count: empAssets.length,
-                    assets: empAssets // Array of asset rows
-                };
+                return { id: emp[0], name: emp[1], status: emp[5], count: empAssets.length, assets: empAssets };
             });
 
-            // 3. Build CSV Header
-            // Required: Emp ID, Name, Status, Count, Asset 1 ID, Asset 1 Serial...
             let csv = "Emp ID,Name,Status,Assets Held";
-            for (let i = 1; i <= maxAssets; i++) {
-                csv += `,Asset ${i} ID,Asset ${i} Serial`;
-            }
+            for (let i = 1; i <= maxAssets; i++) { csv += `,Asset ${i} ID,Asset ${i} Serial`; }
             csv += "\n";
 
-            // 4. Build CSV Rows
             processedRows.forEach(row => {
                 let line = `"${row.id}","${row.name}","${row.status}",${row.count}`;
-                
-                // Loop through assets and add ID/Serial columns
-                row.assets.forEach(asset => {
-                    // Based on Asset Master: Col 0 is ID, Col 4 is Serial
-                    let assetId = asset[0] || "";
-                    let serial = asset[4] || "";
-                    line += `,"${assetId}","${serial}"`;
-                });
-
-                // Fill empty columns for employees with fewer assets
+                row.assets.forEach(asset => { line += `,"${asset[0] || ""}","${asset[4] || ""}"`; });
                 const remaining = maxAssets - row.assets.length;
-                for (let i = 0; i < remaining; i++) {
-                    line += `,"",""`;
-                }
-
+                for (let i = 0; i < remaining; i++) { line += `,"",""`; }
                 csv += line + "\n";
             });
 
-            // 5. Trigger Download
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
@@ -259,7 +291,6 @@
             link.click();
         }
 
-        // --- EXISTING HELPER FUNCTIONS ---
         function showEmpDetails(emp) {
             document.getElementById("empNameTitle").innerText = `${emp[1]} (${emp[0]})`;
             const currentAssets = globalAssets.filter(a => 
@@ -291,6 +322,9 @@
             if(!dateStr) return "-";
             return new Date(dateStr).toLocaleDateString('en-GB');
         }
+
+        // Initial Load
+        refreshSystem();
 
         function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
     </script>
