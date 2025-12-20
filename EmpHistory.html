@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Return Asset - Gretex ERP</title>
+    <title>Employee History - Gretex ERP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
@@ -21,13 +20,9 @@
         .sidebar-footer { padding: 20px; border-top: 1px solid #3e4b5b; background-color: #1a2530; }
 
         .main-content { margin-left: 250px; padding: 30px; }
-        .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
-        /* Checklist Styles */
-        .check-group { background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; }
-        .check-label { font-weight: 600; color: #495057; margin-bottom: 0; }
-        .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; }
-        .btn-check:checked + .btn-outline-danger { background-color: #dc3545; color: white; }
+        .table-hover tbody tr { cursor: pointer; transition: background 0.2s; }
+        .table-hover tbody tr:hover { background-color: #e9ecef; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -44,10 +39,10 @@
             <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
             <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
             <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
-            <a href="Return.html" class="active"><i class="fas fa-undo"></i> Return Asset</a>
+            <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
             <a href="Shift.html"><i class="fas fa-truck-moving"></i> Shift Asset</a>
             <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
-            <a href="EmpHistory.html"><i class="fas fa-user-clock"></i> Emp History</a>
+            <a href="EmpHistory.html" class="active"><i class="fas fa-user-clock"></i> Emp History</a>
             <a href="Repair.html"><i class="fas fa-tools"></i> Maintenance</a>
             <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
             <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
@@ -80,207 +75,166 @@
     </div>
 
     <div class="main-content">
-        <h3 class="mb-4">Return Asset & Health Check</h3>
-        
-        <div class="form-card">
-            <h5 class="mb-4 text-danger"><i class="fas fa-undo-alt"></i> Receive Asset from Employee</h5>
-            <form id="returnForm">
-                <div class="row g-4">
-                    
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Select Assigned Asset</label>
-                        <select class="form-select select2" name="assetId" id="assetSelect" required>
-                            <option value="">Loading In-Use Assets...</option>
-                        </select>
-                    </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">Employee Asset History</h3>
+            <div class="bg-white px-3 py-2 rounded shadow-sm"><i class="fas fa-user-circle text-primary me-2"></i><span class="fw-bold" id="userNameDisplay">User</span></div>
+        </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label">Return Condition (Overall)</label>
-                        <select class="form-select" name="returnStatus" id="mainStatus" required>
-                            <option value="Available">Available (Good)</option>
-                            <option value="Repair">Needs Repair</option>
-                            <option value="Damaged">Damaged / Broken</option>
-                            <option value="Scrap">Scrap / Retired</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Return Date</label>
-                        <input type="date" class="form-control" name="returnDate" id="returnDate" required>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="card bg-light border-0">
-                            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                                <span class="fw-bold"><i class="fas fa-stethoscope me-2"></i> Laptop Health Checklist</span>
-                                <button type="button" class="btn btn-sm btn-light fw-bold text-dark" onclick="markAllGood()">
-                                    <i class="fas fa-check-double me-1"></i> Mark All Good
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fab fa-windows me-2"></i>OS / Booting</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_os" id="os1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="os1">Pass</label>
-                                                <input type="radio" class="btn-check chk" name="chk_os" id="os2" value="Fail">
-                                                <label class="btn btn-sm btn-outline-danger" for="os2">Fail</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-desktop me-2"></i>Display / Screen</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_screen" id="scr1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="scr1">Pass</label>
-                                                <input type="radio" class="btn-check chk" name="chk_screen" id="scr2" value="Fail">
-                                                <label class="btn btn-sm btn-outline-danger" for="scr2">Fail</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-keyboard me-2"></i>Keyboard / Keys</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_kb" id="kb1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="kb1">Pass</label>
-                                                <input type="radio" class="btn-check chk" name="chk_kb" id="kb2" value="Fail">
-                                                <label class="btn btn-sm btn-outline-danger" for="kb2">Fail</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-camera me-2"></i>Camera / WebCam</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_cam" id="cam1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="cam1">Pass</label>
-                                                <input type="radio" class="btn-check chk" name="chk_cam" id="cam2" value="Fail">
-                                                <label class="btn btn-sm btn-outline-danger" for="cam2">Fail</label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-laptop me-2"></i>Front Body</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_front" id="fb1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="fb1">Good</label>
-                                                <input type="radio" class="btn-check chk" name="chk_front" id="fb2" value="Damaged">
-                                                <label class="btn btn-sm btn-outline-danger" for="fb2">Dented</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-hdd me-2"></i>Back Body</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_back" id="bb1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="bb1">Good</label>
-                                                <input type="radio" class="btn-check chk" name="chk_back" id="bb2" value="Damaged">
-                                                <label class="btn btn-sm btn-outline-danger" for="bb2">Dented</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-plug me-2"></i>Original Charger</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_chg" id="ch1" value="Returned" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="ch1">Yes</label>
-                                                <input type="radio" class="btn-check chk" name="chk_chg" id="ch2" value="Missing">
-                                                <label class="btn btn-sm btn-outline-danger" for="ch2">No</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-briefcase me-2"></i>Laptop Bag</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_bag" id="bg1" value="Returned" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="bg1">Yes</label>
-                                                <input type="radio" class="btn-check chk" name="chk_bag" id="bg2" value="Missing">
-                                                <label class="btn btn-sm btn-outline-danger" for="bg2">No</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Additional Remarks / Issues</label>
-                        <textarea class="form-control" name="remarks" id="remarksInput" rows="2" placeholder="e.g. Screen has minor scratch on left corner..."></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-danger px-5 w-100 fw-bold">
-                            <i class="fas fa-check-circle me-2"></i> Submit Inspection & Return
-                        </button>
-                    </div>
-
+        <div class="card p-3 mb-4 border-0 shadow-sm">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label text-muted small">Search Employee</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Type Name, ID, or Department..." onkeyup="filterTable()">
                 </div>
-            </form>
+                <div class="col-md-3">
+                    <label class="form-label text-muted small fw-bold">Filter by Quantity</label>
+                    <input type="number" id="countFilter" class="form-control" placeholder="e.g. 3" onkeyup="filterTable()" onchange="filterTable()">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-success w-100" onclick="downloadFilteredData()">
+                        <i class="fas fa-file-csv me-2"></i> Export Filtered Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Emp ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Location</th>
+                            <th class="text-center">Assets Held</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="6" class="text-center p-3">Loading Employees...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center">
+                    <span class="text-muted small me-2">Rows per page:</span>
+                    <select id="rowsPerPage" class="form-select form-select-sm" style="width: 70px;" onchange="changeRowsPerPage()">
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+                
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" id="btnPrev">
+                            <button class="page-link" onclick="changePage(-1)">Previous</button>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link text-dark" id="pageInfo">Page 1 of 1</span>
+                        </li>
+                        <li class="page-item" id="btnNext">
+                            <button class="page-link" onclick="changePage(1)">Next</button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <div class="modal fade" id="empModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="empNameTitle">Employee Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="text-primary fw-bold"><i class="fas fa-hand-holding"></i> Currently Holding Assets</h6>
+                    <ul class="list-group mb-4" id="currentAssetsList"></ul>
 
+                    <h6 class="text-secondary fw-bold border-top pt-3"><i class="fas fa-history"></i> Transaction History</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr><th>Date</th><th>Type</th><th>Asset ID</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="txnHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // *** PASTE YOUR GAS WEB APP URL HERE ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        
+        document.getElementById("userNameDisplay").innerText = user.name;
 
-        document.getElementById("returnDate").valueAsDate = new Date();
+        let globalEmps = [];
+        let filteredEmps = []; // Stores filtered data
+        let globalAssets = [];
+        let globalTxns = [];
 
-        $(document).ready(function() {
-            $('.select2').select2();
-            refreshSystem(); // Load data on start
-        });
+        // Pagination Variables
+        let currentPage = 1;
+        let rowsPerPage = 20;
 
+        // --- NEW SYSTEM REFRESH LOGIC ---
         function refreshSystem() {
             const btn = document.querySelector('button[onclick="refreshSystem()"]');
             const statusText = document.getElementById('connectionText');
             const statusDot = document.getElementById('connectionDot');
             const timeEl = document.getElementById('lastRefreshed');
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
-            btn.disabled = true;
+            if(btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+                btn.disabled = true;
+            }
 
-            loadReturnableAssets().then(() => {
+            loadData().then(() => {
                 setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
-                    btn.disabled = false;
+                    if(btn) {
+                        btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
+                        btn.disabled = false;
+                    }
                     statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected';
                     statusText.className = 'fw-bold text-success mb-1';
                     statusDot.className = 'badge bg-success rounded-circle p-1';
                     timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
                     const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-                    toast.fire({ icon: 'success', title: 'Return List Updated' });
+                    toast.fire({ icon: 'success', title: 'Data Updated' });
                 }, 500);
             }).catch(() => {
-                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
-                btn.disabled = false;
+                if(btn) {
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
+                    btn.disabled = false;
+                }
                 statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error';
                 statusText.className = 'fw-bold text-danger mb-1';
                 statusDot.className = 'badge bg-danger rounded-circle p-1';
             });
         }
 
-        // 1. FETCH ASSETS
-        function loadReturnableAssets() {
+        function loadData() {
             return fetch(API_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "getReturnData" })
+                body: JSON.stringify({ action: "getHistoryData" })
             })
             .then(res => res.json())
             .then(result => {
-                const select = document.getElementById("assetSelect");
-                select.innerHTML = '<option value="">-- Select Asset --</option>';
-                
                 if(result.status === "success") {
-                    if(result.assets.length === 0) {
-                        select.innerHTML = '<option value="">No Assets currently In-Use</option>';
-                    }
-                    result.assets.forEach(item => {
-                        let opt = document.createElement("option");
-                        opt.value = item.id;
-                        opt.text = item.text;
-                        select.appendChild(opt);
-                    });
+                    globalEmps = result.employees;
+                    globalAssets = result.assets;
+                    globalTxns = result.transactions;
+                    filteredEmps = [...globalEmps]; // Init filtered list
+                    renderTable(); // Initial Render
                     return Promise.resolve();
                 } else {
                     return Promise.reject();
@@ -288,84 +242,159 @@
             });
         }
 
-        // --- QC LOGIC ---
-        function markAllGood() {
-            // Select all radio buttons with value 'Pass', 'Returned', or 'Available'
-            document.querySelectorAll('input[type="radio"]').forEach(radio => {
-                if(radio.value === 'Pass' || radio.value === 'Returned') {
-                    radio.checked = true;
-                }
-            });
-            document.getElementById("mainStatus").value = "Available";
-        }
-
-        // 2. SUBMIT RETURN
-        document.getElementById("returnForm").addEventListener("submit", function(e) {
-            e.preventDefault();
+        // --- PAGINATION & RENDERING ---
+        function renderTable() {
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
             
-            const assetId = $('#assetSelect').val();
-            if(!assetId) {
-                Swal.fire('Error', 'Please select an asset', 'warning');
+            if(filteredEmps.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">No matching employees found</td></tr>';
+                document.getElementById("pageInfo").innerText = "Page 0 of 0";
                 return;
             }
 
-            // Generate QC Report String
-            let qcReport = "[QC Check] ";
-            qcReport += "OS: " + document.querySelector('input[name="chk_os"]:checked').value + " | ";
-            qcReport += "Screen: " + document.querySelector('input[name="chk_screen"]:checked').value + " | ";
-            qcReport += "Keys: " + document.querySelector('input[name="chk_kb"]:checked').value + " | ";
-            qcReport += "Cam: " + document.querySelector('input[name="chk_cam"]:checked').value + " | ";
-            qcReport += "Front: " + document.querySelector('input[name="chk_front"]:checked').value + " | ";
-            qcReport += "Back: " + document.querySelector('input[name="chk_back"]:checked').value + " | ";
-            qcReport += "Charger: " + document.querySelector('input[name="chk_chg"]:checked').value + " | ";
-            qcReport += "Bag: " + document.querySelector('input[name="chk_bag"]:checked').value;
+            // Pagination Logic
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedData = filteredEmps.slice(start, end);
 
-            const userRemarks = document.getElementById("remarksInput").value;
-            const finalRemarks = qcReport + (userRemarks ? " || Notes: " + userRemarks : "");
+            paginatedData.forEach(row => {
+                const assetCount = globalAssets.filter(a => 
+                    a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
+                ).length;
 
-            Swal.fire({
-                title: 'Confirm Return & QC?',
-                text: "Status will be updated based on inspection.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, Submit'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    submitReturn(assetId, e.target, finalRemarks);
-                }
+                let countBadge = assetCount > 0 
+                    ? `<span class="badge bg-primary rounded-pill px-3">${assetCount}</span>` 
+                    : `<span class="badge bg-secondary rounded-pill px-3">0</span>`;
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="fw-bold text-secondary">${row[0]}</td>
+                    <td class="fw-bold">${row[1]}</td>
+                    <td>${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td class="text-center h5 mb-0">${countBadge}</td>
+                    <td><span class="badge ${row[5]=='Active'?'bg-success':'bg-danger'}">${row[5]}</span></td>
+                `;
+                tr.onclick = () => showEmpDetails(row);
+                tbody.appendChild(tr);
             });
-        });
 
-        function submitReturn(assetId, form, remarks) {
-            Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading() });
-
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            data.action = "returnAsset";
-            data.user = user.name;
-            data.assetId = assetId; 
-            data.remarks = remarks; // Override remarks with QC report
-
-            fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify(data)
-            })
-            .then(res => res.json())
-            .then(result => {
-                if(result.status === "success") {
-                    Swal.fire('Success', 'Asset Returned & Inspection Saved!', 'success').then(() => {
-                        refreshSystem(); 
-                        form.reset();
-                        $('#assetSelect').val(null).trigger('change');
-                        // Reset Radios to default
-                        markAllGood();
-                    });
-                } else {
-                    Swal.fire('Error', result.message, 'error');
-                }
-            });
+            updatePaginationControls();
         }
+
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(filteredEmps.length / rowsPerPage) || 1;
+            document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages}`;
+            
+            document.getElementById("btnPrev").classList.toggle("disabled", currentPage === 1);
+            document.getElementById("btnNext").classList.toggle("disabled", currentPage === totalPages);
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredEmps.length / rowsPerPage) || 1;
+            const newPage = currentPage + direction;
+            if (newPage > 0 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderTable();
+            }
+        }
+
+        function changeRowsPerPage() {
+            rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
+            currentPage = 1; // Reset to page 1
+            renderTable();
+        }
+
+        function filterTable() {
+            const searchText = document.getElementById("searchInput").value.toLowerCase();
+            const countFilter = document.getElementById("countFilter").value; 
+
+            filteredEmps = globalEmps.filter(row => {
+                const textMatch = (row[0]+row[1]+row[3]).toLowerCase().includes(searchText);
+                const assetCount = globalAssets.filter(a => 
+                    a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
+                ).length;
+                const countMatch = countFilter === "" ? true : assetCount == countFilter;
+                return textMatch && countMatch;
+            });
+            
+            currentPage = 1; // Reset pagination on filter
+            renderTable();
+        }
+
+        // --- EXPORT & DETAILS ---
+        function downloadFilteredData() {
+            if (filteredEmps.length === 0) {
+                Swal.fire("No Data", "No employees match the current filters.", "warning");
+                return;
+            }
+
+            let maxAssets = 0;
+            const processedRows = filteredEmps.map(emp => {
+                const empAssets = globalAssets.filter(a => 
+                    a[11] && a[11].toString().includes(emp[1]) && a[12] === "In-Use"
+                );
+                if (empAssets.length > maxAssets) maxAssets = empAssets.length;
+                return { id: emp[0], name: emp[1], status: emp[5], count: empAssets.length, assets: empAssets };
+            });
+
+            let csv = "Emp ID,Name,Status,Assets Held";
+            for (let i = 1; i <= maxAssets; i++) { csv += `,Asset ${i} ID,Asset ${i} Serial`; }
+            csv += "\n";
+
+            processedRows.forEach(row => {
+                let line = `"${row.id}","${row.name}","${row.status}",${row.count}`;
+                row.assets.forEach(asset => { line += `,"${asset[0] || ""}","${asset[4] || ""}"`; });
+                const remaining = maxAssets - row.assets.length;
+                for (let i = 0; i < remaining; i++) { line += `,"",""`; }
+                csv += line + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Filtered_Employee_Assets_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
+        function showEmpDetails(emp) {
+            document.getElementById("empNameTitle").innerText = `${emp[1]} (${emp[0]})`;
+            const currentAssets = globalAssets.filter(a => 
+                a[11] && a[11].toString().includes(emp[1]) && a[12] === "In-Use"
+            );
+            const list = document.getElementById("currentAssetsList");
+            list.innerHTML = "";
+            if(currentAssets.length === 0) list.innerHTML = "<li class='list-group-item text-muted'>No assets currently assigned.</li>";
+            
+            currentAssets.forEach(a => {
+                list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div><i class="fas fa-laptop text-muted me-2"></i><strong>${a[2]} ${a[3]}</strong> <small class="text-muted">(${a[0]})</small></div>
+                    <span class="badge bg-primary">In Use</span>
+                </li>`;
+            });
+            const history = globalTxns.filter(t => t[7] && t[7].toString().includes(emp[1]));
+            const tbody = document.getElementById("txnHistoryBody");
+            tbody.innerHTML = "";
+            if(history.length === 0) tbody.innerHTML = "<tr><td colspan='4' class='text-center text-muted'>No history found.</td></tr>";
+
+            history.forEach(t => {
+                let badge = t[2] === "OUT" ? "<span class='badge bg-warning text-dark'>Received</span>" : "<span class='badge bg-success'>Returned</span>";
+                // New logic for Shift history
+                if(t[2] === 'TRANSFER') badge = "<span class='badge bg-info text-dark'>Shifted</span>";
+                
+                tbody.innerHTML += `<tr><td>${formatDate(t[1])}</td><td>${badge}</td><td>${t[4]}</td><td>${t[10]}</td></tr>`;
+            });
+            new bootstrap.Modal(document.getElementById('empModal')).show();
+        }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return "-";
+            return new Date(dateStr).toLocaleDateString('en-GB');
+        }
+
+        // Initial Load
+        refreshSystem();
 
         function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
     </script>
