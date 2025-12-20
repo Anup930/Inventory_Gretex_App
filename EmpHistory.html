@@ -75,7 +75,10 @@
     </div>
 
     <div class="main-content">
-        <h3 class="mb-4">Employee Asset History</h3>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">Employee Asset History</h3>
+            <div class="bg-white px-3 py-2 rounded shadow-sm"><i class="fas fa-user-circle text-primary me-2"></i><span class="fw-bold" id="userNameDisplay">User</span></div>
+        </div>
 
         <div class="card p-3 mb-4 border-0 shadow-sm">
             <div class="row g-3 align-items-end">
@@ -96,21 +99,49 @@
         </div>
 
         <div class="card border-0 shadow-sm">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Emp ID</th>
-                        <th>Name</th>
-                        <th>Department</th>
-                        <th>Location</th>
-                        <th class="text-center">Assets Held</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <tr><td colspan="6" class="text-center p-3">Loading Employees...</td></tr>
-                </tbody>
-            </table>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Emp ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Location</th>
+                            <th class="text-center">Assets Held</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="6" class="text-center p-3">Loading Employees...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center">
+                    <span class="text-muted small me-2">Rows per page:</span>
+                    <select id="rowsPerPage" class="form-select form-select-sm" style="width: 70px;" onchange="changeRowsPerPage()">
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+                
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" id="btnPrev">
+                            <button class="page-link" onclick="changePage(-1)">Previous</button>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link text-dark" id="pageInfo">Page 1 of 1</span>
+                        </li>
+                        <li class="page-item" id="btnNext">
+                            <button class="page-link" onclick="changePage(1)">Next</button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
 
@@ -122,7 +153,6 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    
                     <h6 class="text-primary fw-bold"><i class="fas fa-hand-holding"></i> Currently Holding Assets</h6>
                     <ul class="list-group mb-4" id="currentAssetsList"></ul>
 
@@ -144,10 +174,17 @@
     <script>
         // *** PASTE YOUR GAS WEB APP URL HERE ***
         const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        
+        document.getElementById("userNameDisplay").innerText = user.name;
 
         let globalEmps = [];
+        let filteredEmps = []; // Stores filtered data
         let globalAssets = [];
         let globalTxns = [];
+
+        // Pagination Variables
+        let currentPage = 1;
+        let rowsPerPage = 20;
 
         // --- NEW SYSTEM REFRESH LOGIC ---
         function refreshSystem() {
@@ -156,13 +193,17 @@
             const statusDot = document.getElementById('connectionDot');
             const timeEl = document.getElementById('lastRefreshed');
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
-            btn.disabled = true;
+            if(btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+                btn.disabled = true;
+            }
 
             loadData().then(() => {
                 setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
-                    btn.disabled = false;
+                    if(btn) {
+                        btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
+                        btn.disabled = false;
+                    }
                     statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected';
                     statusText.className = 'fw-bold text-success mb-1';
                     statusDot.className = 'badge bg-success rounded-circle p-1';
@@ -171,8 +212,10 @@
                     toast.fire({ icon: 'success', title: 'Data Updated' });
                 }, 500);
             }).catch(() => {
-                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
-                btn.disabled = false;
+                if(btn) {
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
+                    btn.disabled = false;
+                }
                 statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error';
                 statusText.className = 'fw-bold text-danger mb-1';
                 statusDot.className = 'badge bg-danger rounded-circle p-1';
@@ -190,7 +233,8 @@
                     globalEmps = result.employees;
                     globalAssets = result.assets;
                     globalTxns = result.transactions;
-                    renderTable(globalEmps);
+                    filteredEmps = [...globalEmps]; // Init filtered list
+                    renderTable(); // Initial Render
                     return Promise.resolve();
                 } else {
                     return Promise.reject();
@@ -198,31 +242,23 @@
             });
         }
 
-        function filterTable() {
-            const searchText = document.getElementById("searchInput").value.toLowerCase();
-            const countFilter = document.getElementById("countFilter").value; 
-
-            const filtered = globalEmps.filter(row => {
-                const textMatch = (row[0]+row[1]+row[3]).toLowerCase().includes(searchText);
-                const assetCount = globalAssets.filter(a => 
-                    a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
-                ).length;
-                const countMatch = countFilter === "" ? true : assetCount == countFilter;
-                return textMatch && countMatch;
-            });
-            renderTable(filtered);
-        }
-
-        function renderTable(data) {
+        // --- PAGINATION & RENDERING ---
+        function renderTable() {
             const tbody = document.getElementById("tableBody");
             tbody.innerHTML = "";
             
-            if(data.length === 0) {
+            if(filteredEmps.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">No matching employees found</td></tr>';
+                document.getElementById("pageInfo").innerText = "Page 0 of 0";
                 return;
             }
 
-            data.forEach(row => {
+            // Pagination Logic
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedData = filteredEmps.slice(start, end);
+
+            paginatedData.forEach(row => {
                 const assetCount = globalAssets.filter(a => 
                     a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
                 ).length;
@@ -243,21 +279,52 @@
                 tr.onclick = () => showEmpDetails(row);
                 tbody.appendChild(tr);
             });
+
+            updatePaginationControls();
         }
 
-        function downloadFilteredData() {
-            const searchText = document.getElementById("searchInput").value.toLowerCase();
-            const countFilter = document.getElementById("countFilter").value;
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(filteredEmps.length / rowsPerPage) || 1;
+            document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages}`;
+            
+            document.getElementById("btnPrev").classList.toggle("disabled", currentPage === 1);
+            document.getElementById("btnNext").classList.toggle("disabled", currentPage === totalPages);
+        }
 
-            const filteredEmps = globalEmps.filter(row => {
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredEmps.length / rowsPerPage) || 1;
+            const newPage = currentPage + direction;
+            if (newPage > 0 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderTable();
+            }
+        }
+
+        function changeRowsPerPage() {
+            rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
+            currentPage = 1; // Reset to page 1
+            renderTable();
+        }
+
+        function filterTable() {
+            const searchText = document.getElementById("searchInput").value.toLowerCase();
+            const countFilter = document.getElementById("countFilter").value; 
+
+            filteredEmps = globalEmps.filter(row => {
                 const textMatch = (row[0]+row[1]+row[3]).toLowerCase().includes(searchText);
-                const empAssets = globalAssets.filter(a => 
+                const assetCount = globalAssets.filter(a => 
                     a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
-                );
-                const countMatch = countFilter === "" ? true : empAssets.length == countFilter;
+                ).length;
+                const countMatch = countFilter === "" ? true : assetCount == countFilter;
                 return textMatch && countMatch;
             });
+            
+            currentPage = 1; // Reset pagination on filter
+            renderTable();
+        }
 
+        // --- EXPORT & DETAILS ---
+        function downloadFilteredData() {
             if (filteredEmps.length === 0) {
                 Swal.fire("No Data", "No employees match the current filters.", "warning");
                 return;
@@ -313,6 +380,9 @@
 
             history.forEach(t => {
                 let badge = t[2] === "OUT" ? "<span class='badge bg-warning text-dark'>Received</span>" : "<span class='badge bg-success'>Returned</span>";
+                // New logic for Shift history
+                if(t[2] === 'TRANSFER') badge = "<span class='badge bg-info text-dark'>Shifted</span>";
+                
                 tbody.innerHTML += `<tr><td>${formatDate(t[1])}</td><td>${badge}</td><td>${t[4]}</td><td>${t[10]}</td></tr>`;
             });
             new bootstrap.Modal(document.getElementById('empModal')).show();
