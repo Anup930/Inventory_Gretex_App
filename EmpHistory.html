@@ -2,27 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Employee History - Gretex ERP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gretex ERP</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <style>
         body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; display: flex; flex-direction: column; }
-        .sidebar-header { text-align: center; margin-bottom: 30px; font-weight: bold; font-size: 1.2rem; border-bottom: 1px solid #34495e; padding-bottom: 20px; }
-        .sidebar a { color: #aab8c5; padding: 12px 25px; display: flex; align-items: center; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
-        .sidebar a i { width: 25px; text-align: center; margin-right: 10px; }
-        .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
         
-        /* Push content down to fit sidebar height */
+        /* SIDEBAR */
+        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; display: flex; flex-direction: column; }
+        .sidebar a { color: #aab8c5; padding: 12px 25px; display: flex; align-items: center; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
+        .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
         .sidebar-menu { flex-grow: 1; overflow-y: auto; }
         .sidebar-footer { padding: 20px; border-top: 1px solid #3e4b5b; background-color: #1a2530; }
 
         .main-content { margin-left: 250px; padding: 30px; }
         
-        .table-hover tbody tr { cursor: pointer; transition: background 0.2s; }
-        .table-hover tbody tr:hover { background-color: #e9ecef; }
+        /* CARDS */
+        .stat-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; border-left: 5px solid #ccc; cursor: pointer; position: relative; overflow: hidden; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .stat-card h2 { font-weight: bold; margin: 10px 0 0 0; color: #333; }
+        
+        .alert-card { border-left: 5px solid #e74a3b !important; background: #fff5f5; }
+        .warning-card { border-left: 5px solid #f6c23e !important; background: #fffdf5; }
+        .violation-card { border-left: 5px solid #6610f2 !important; background: #f3f0ff; }
+
+        /* CHARTS & TABLES */
+        .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .chart-wrapper { position: relative; height: 300px; width: 100%; }
+        .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; margin-top: 0; }
+        #hoverChartCard { display: none; position: absolute; z-index: 9999; width: 280px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: none; border: 1px solid rgba(0,0,0,0.1); }
+        .pivot-table th { background-color: #e2e6ea; font-size: 0.85rem; text-transform: uppercase; border: 1px solid #dee2e6; }
+        .pivot-table td { font-size: 0.9rem; border: 1px solid #dee2e6; }
+        .fw-bold-total { font-weight: 700; background-color: #d1d3e2 !important; }
+
+        /* CHATBOT STYLES */
+        .chat-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #4e73df; color: white; border-radius: 50%; text-align: center; line-height: 60px; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 10000; transition: transform 0.3s; }
+        .chat-btn:hover { transform: scale(1.1); background-color: #375a7f; }
+        
+        .chat-window { display: none; position: fixed; bottom: 100px; right: 30px; width: 350px; height: 450px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 10000; flex-direction: column; overflow: hidden; border: 1px solid #ddd; }
+        .chat-header { background: #4e73df; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa; font-size: 0.9rem; }
+        .chat-input-area { padding: 10px; border-top: 1px solid #ddd; background: white; display: flex; gap: 5px; }
+        
+        .msg { margin-bottom: 10px; padding: 10px; border-radius: 10px; max-width: 80%; word-wrap: break-word; }
+        .msg-user { background: #4e73df; color: white; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 0; }
+        .msg-bot { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 0; }
+        .typing { font-style: italic; color: #888; font-size: 0.8rem; margin-bottom: 10px; display: none; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -35,14 +66,14 @@
         <h4 class="text-center mt-4 mb-4"><i class="fas fa-warehouse"></i> Gretex ERP</h4>
         
         <div class="sidebar-menu">
-            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a>
             <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
             <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
             <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
             <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
             <a href="Shift.html"><i class="fas fa-truck-moving"></i> Shift Asset</a>
             <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
-            <a href="EmpHistory.html" class="active"><i class="fas fa-user-clock"></i> Emp History</a>
+            <a href="EmpHistory.html"><i class="fas fa-user-clock"></i> Emp History</a>
             <a href="Repair.html"><i class="fas fa-tools"></i> Maintenance</a>
             <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
             <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
@@ -57,15 +88,10 @@
                         <small class="text-white-50" style="font-size: 0.7rem;">SYSTEM STATUS</small>
                         <span id="connectionDot" class="badge bg-warning rounded-circle p-1" style="width: 10px; height: 10px;"> </span>
                     </div>
-                    
                     <div id="connectionText" class="fw-bold text-warning mb-1" style="font-size: 0.85rem;">
                         <i class="fas fa-plug me-1"></i> Connecting...
                     </div>
-                    
-                    <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">
-                        Last Sync: --:--
-                    </p>
-                    
+                    <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">Last Sync: --:--</p>
                     <button onclick="refreshSystem()" class="btn btn-sm btn-outline-light w-100" style="font-size: 0.75rem;">
                         <i class="fas fa-sync-alt me-1"></i> Force Refresh
                     </button>
@@ -76,326 +102,219 @@
 
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0">Employee Asset History</h3>
+            <div><h3 class="fw-bold text-dark m-0">Analytics Dashboard</h3><small class="text-muted">Live Inventory Status</small></div>
             <div class="bg-white px-3 py-2 rounded shadow-sm"><i class="fas fa-user-circle text-primary me-2"></i><span class="fw-bold" id="userNameDisplay">User</span></div>
         </div>
 
-        <div class="card p-3 mb-4 border-0 shadow-sm">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label class="form-label text-muted small">Search Employee</label>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Type Name, ID, or Department..." onkeyup="filterTable()">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label text-muted small fw-bold">Filter by Quantity</label>
-                    <input type="number" id="countFilter" class="form-control" placeholder="e.g. 3" onkeyup="filterTable()" onchange="filterTable()">
-                </div>
-                <div class="col-md-4">
-                    <button class="btn btn-success w-100" onclick="downloadFilteredData()">
-                        <i class="fas fa-file-csv me-2"></i> Export Filtered Data
-                    </button>
-                </div>
-            </div>
+        <div class="row g-3 mb-4">
+            <div class="col"><div class="stat-card" style="border-left-color: #4e73df;" onmouseenter="showBreakdown(this, 'total')" onmouseleave="hideBreakdown()"><div class="icon-box text-primary"><i class="fas fa-laptop"></i></div><p class="text-primary">Total Assets</p><h2 id="totalAssets">0</h2></div></div>
+            <div class="col"><div class="stat-card" style="border-left-color: #1cc88a;" onclick="showAvailableModal()" onmouseenter="showBreakdown(this, 'available')" onmouseleave="hideBreakdown()"><div class="icon-box text-success"><i class="fas fa-check-circle"></i></div><p class="text-success">Available</p><h2 id="totalAvailable">0</h2></div></div>
+            <div class="col"><div class="stat-card" style="border-left-color: #f6c23e;" onmouseenter="showBreakdown(this, 'allocated')" onmouseleave="hideBreakdown()"><div class="icon-box text-warning"><i class="fas fa-user-check"></i></div><p class="text-warning">Allocated</p><h2 id="totalAllocated">0</h2></div></div>
+            <div class="col"><div class="stat-card" style="border-left-color: #858796;" onmouseenter="showBreakdown(this, 'repair')" onmouseleave="hideBreakdown()"><div class="icon-box text-secondary"><i class="fas fa-tools"></i></div><p class="text-secondary">Maintenance</p><h2 id="totalRepair">0</h2></div></div>
         </div>
 
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Emp ID</th>
-                            <th>Name</th>
-                            <th>Department</th>
-                            <th>Location</th>
-                            <th class="text-center">Assets Held</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr><td colspan="6" class="text-center p-3">Loading Employees...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
-                <div class="d-flex align-items-center">
-                    <span class="text-muted small me-2">Rows per page:</span>
-                    <select id="rowsPerPage" class="form-select form-select-sm" style="width: 70px;" onchange="changeRowsPerPage()">
-                        <option value="20" selected>20</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="200">200</option>
-                    </select>
-                </div>
-                
-                <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item" id="btnPrev">
-                            <button class="page-link" onclick="changePage(-1)">Previous</button>
-                        </li>
-                        <li class="page-item disabled">
-                            <span class="page-link text-dark" id="pageInfo">Page 1 of 1</span>
-                        </li>
-                        <li class="page-item" id="btnNext">
-                            <button class="page-link" onclick="changePage(1)">Next</button>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="stat-card alert-card" onclick="showInactiveModal()"><div class="icon-box text-danger"><i class="fas fa-exclamation-triangle"></i></div><p class="text-danger fw-bold small text-uppercase">Inactive Emp With Asset</p><h2 id="totalInactiveAssets">0</h2></div></div>
+            <div class="col-md-4"><div class="stat-card warning-card" onclick="showPendingAllocationModal()"><div class="icon-box text-warning"><i class="fas fa-user-clock"></i></div><p class="text-warning fw-bold text-dark small text-uppercase">Pending Allocation (Req=Yes)</p><h2 id="totalPendingAlloc">0</h2></div></div>
+            <div class="col-md-4"><div class="stat-card violation-card" onclick="showUnnecessaryModal()"><div class="icon-box" style="color: #6610f2;"><i class="fas fa-user-tag"></i></div><p style="color: #6610f2;" class="fw-bold small text-uppercase">Unexpected (Req=No but Has)</p><h2 id="totalUnnecessaryAlloc">0</h2></div></div>
         </div>
+
+        <div id="hoverChartCard" class="card"><div class="card-body p-2"><h6 class="text-center small fw-bold text-muted mb-2 border-bottom pb-1" id="hoverChartTitle">Breakdown</h6><div style="height: 180px;"><canvas id="hoverChartCanvas"></canvas></div></div></div>
+        <div class="row g-4 mb-4"><div class="col-md-8"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Location-wise Asset Status</h6><div class="chart-wrapper"><canvas id="locationChart"></canvas></div></div></div><div class="col-md-4"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Assets per Employee</h6><div class="chart-wrapper"><canvas id="ownershipChart"></canvas></div></div></div></div>
+        <div class="row g-4 mb-4"><div class="col-md-6"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Category Distribution</h6><div class="chart-wrapper"><canvas id="categoryChart"></canvas></div></div></div><div class="col-md-6"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Brand Distribution</h6><div class="chart-wrapper"><canvas id="brandChart"></canvas></div></div></div></div>
+        <div class="row g-4 mb-4"><div class="col-12"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Overall Asset Status Distribution</h6><div class="chart-wrapper" style="height: 250px;"><canvas id="statusChart"></canvas></div></div></div></div>
+        <div class="row"><div class="col-12"><div class="table-container"><h5 class="text-dark mb-3 fw-bold"><i class="fas fa-table me-2"></i>Location vs Status Summary</h5><div class="table-responsive"><table class="table table-bordered table-hover pivot-table text-center align-middle" id="pivotTable"><thead class="table-light"><tr><th>Loading...</th></tr></thead><tbody></tbody></table></div></div></div></div>
     </div>
 
-    <div class="modal fade" id="empModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="empNameTitle">Employee Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <h6 class="text-primary fw-bold"><i class="fas fa-hand-holding"></i> Currently Holding Assets</h6>
-                    <ul class="list-group mb-4" id="currentAssetsList"></ul>
-
-                    <h6 class="text-secondary fw-bold border-top pt-3"><i class="fas fa-history"></i> Transaction History</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light">
-                                <tr><th>Date</th><th>Type</th><th>Asset ID</th><th>Action</th></tr>
-                            </thead>
-                            <tbody id="txnHistoryBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="chat-btn" onclick="toggleChat()"><i class="fas fa-robot"></i></div>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header"><span><i class="fas fa-robot me-2"></i> ERP Assistant</span><button type="button" class="btn-close btn-close-white" onclick="toggleChat()"></button></div>
+        <div class="chat-body" id="chatBody"><div class="msg msg-bot">Hello! I am your inventory assistant. Ask me about stock, employees, or specific assets.</div></div>
+        <div class="typing" id="typingIndicator">Assistant is thinking...</div>
+        <div class="chat-input-area"><input type="text" id="chatInput" class="form-control form-control-sm" placeholder="Ask something..." onkeypress="handleChatEnter(event)"><button class="btn btn-primary btn-sm" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button></div>
     </div>
+
+    <div class="modal fade" id="pendingAllocModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h5 class="modal-title">Pending Allocation</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Emp ID</th><th>Name</th><th>Email</th><th>Location</th></tr></thead><tbody id="pendingAllocBody"></tbody></table></div></div></div></div></div>
+    <div class="modal fade" id="unnecessaryModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-white text-primary" style="border-bottom: 3px solid #6610f2;"><h5 class="modal-title">Unexpected Allocation</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Emp ID</th><th>Name</th><th>Count</th><th>Req Status</th></tr></thead><tbody id="unnecessaryBody"></tbody></table></div></div></div></div></div>
+    <div class="modal fade" id="inactiveModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5 class="modal-title">Inactive Risk</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Asset ID</th><th>Serial</th><th>Type</th><th>Assigned To</th><th>Emp ID</th></tr></thead><tbody id="inactiveTableBody"></tbody></table></div></div></div></div></div>
+    <div class="modal fade" id="commonDetailModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="commonModalTitle">Details</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-2 mb-3"><div class="col-md-8"><input type="text" id="commonSearch" class="form-control" placeholder="Search..." onkeyup="filterCommonTable()"></div><div class="col-md-4 text-end"><button onclick="downloadCommonReport()" class="btn btn-dark w-100">Download</button></div></div><div class="table-responsive" style="max-height: 500px; overflow-y: auto;"><table class="table table-bordered table-hover text-center align-middle"><thead class="table-light sticky-top" id="commonTableHead"></thead><tbody id="commonTableBody"></tbody></table></div></div></div></div></div>
+    <div class="modal fade" id="availableModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">Available Stock Inventory</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-2 mb-3"><div class="col-md-8"><input type="text" id="availableSearch" class="form-control" placeholder="Search..." onkeyup="filterAvailableTable()"></div><div class="col-md-4 text-end"><button onclick="downloadAvailableReport()" class="btn btn-primary w-100">Export Stock List</button></div></div><div class="table-responsive" style="max-height: 500px; overflow-y: auto;"><table class="table table-bordered table-hover text-center align-middle"><thead class="table-light sticky-top"><tr><th>Asset ID</th><th>Serial No</th><th>Category</th><th>Brand / Type</th><th>Location</th></tr></thead><tbody id="availableTableBody"></tbody></table></div></div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // *** PASTE YOUR GAS WEB APP URL HERE ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        // ***************** PASTE YOUR GAS WEB APP URL HERE *****************
+        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        // *******************************************************************
         
         document.getElementById("userNameDisplay").innerText = user.name;
 
-        let globalEmps = [];
-        let filteredEmps = []; // Stores filtered data
-        let globalAssets = [];
-        let globalTxns = [];
+        // Variables
+        let locChartInstance=null,ownChartInstance=null,catChartInstance=null,brandChartInstance=null,hoverChartInstance=null,statusChartInstance=null;
+        let breakdownData={total:{},available:{},allocated:{},repair:{}};
+        let inactiveAssetsList=[],availableAssetsList=[],pendingAllocationList=[],unnecessaryAllocList=[],allAssetRows=[],currentDetailList=[];
 
-        // Pagination Variables
-        let currentPage = 1;
-        let rowsPerPage = 20;
-
-        // --- NEW SYSTEM REFRESH LOGIC ---
+        // --- REFRESH LOGIC ---
         function refreshSystem() {
             const btn = document.querySelector('button[onclick="refreshSystem()"]');
             const statusText = document.getElementById('connectionText');
             const statusDot = document.getElementById('connectionDot');
             const timeEl = document.getElementById('lastRefreshed');
-
-            if(btn) {
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
-                btn.disabled = true;
-            }
-
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; btn.disabled = true;
             loadData().then(() => {
                 setTimeout(() => {
-                    if(btn) {
-                        btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
-                        btn.disabled = false;
-                    }
-                    statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected';
-                    statusText.className = 'fw-bold text-success mb-1';
-                    statusDot.className = 'badge bg-success rounded-circle p-1';
-                    timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
+                    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh'; btn.disabled = false;
+                    statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected'; statusText.className = 'fw-bold text-success mb-1';
+                    statusDot.className = 'badge bg-success rounded-circle p-1'; timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
                     const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
                     toast.fire({ icon: 'success', title: 'Data Updated' });
                 }, 500);
-            }).catch(() => {
-                if(btn) {
-                    btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
-                    btn.disabled = false;
-                }
-                statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error';
-                statusText.className = 'fw-bold text-danger mb-1';
-                statusDot.className = 'badge bg-danger rounded-circle p-1';
+            }).catch(err => {
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry'; btn.disabled = false;
+                statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error'; statusText.className = 'fw-bold text-danger mb-1';
+                statusDot.className = 'badge bg-danger rounded-circle p-1'; timeEl.innerText = 'Sync Failed';
             });
         }
 
-        function loadData() {
-            return fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getHistoryData" })
-            })
-            .then(res => res.json())
-            .then(result => {
-                if(result.status === "success") {
-                    globalEmps = result.employees;
-                    globalAssets = result.assets;
-                    globalTxns = result.transactions;
-                    filteredEmps = [...globalEmps]; // Init filtered list
-                    renderTable(); // Initial Render
+        async function loadData() {
+            try {
+                const assetReq = fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "exportData", sheetName: "Asset_Master" }) });
+                const empReq = fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "exportData", sheetName: "Employees" }) });
+                const [assetRes, empRes] = await Promise.all([assetReq, empReq].map(p => p.then(r => r.json())));
+                if (assetRes.status === "success" && empRes.status === "success") {
+                    processDashboard(assetRes.data, empRes.data);
                     return Promise.resolve();
-                } else {
-                    return Promise.reject();
+                } else return Promise.reject("API Error");
+            } catch (error) { return Promise.reject(error); }
+        }
+
+        // --- DASHBOARD LOGIC (FIXED) ---
+        function processDashboard(assetData, empData) {
+            // 1. Employees
+            const empHeaders = empData[0];
+            const empRows = empData.slice(1);
+            const getEmpIdx = (name) => empHeaders.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
+            const EMP_ID = getEmpIdx("ID"); const EMP_NAME = getEmpIdx("Name");
+            const EMP_EMAIL = getEmpIdx("Email"); const EMP_LOC = getEmpIdx("Location");
+            const EMP_STATUS = getEmpIdx("Status"); const EMP_REQ = getEmpIdx("Asset Requi"); 
+
+            const inactiveEmpMap = {}; const empAssetCountMap = {}; const activeEmpReqList = []; const noAssetReqList = [];
+            empRows.forEach(row => {
+                const id = row[EMP_ID]; const name = row[EMP_NAME]; const status = (row[EMP_STATUS] || "").toString().trim(); const req = (row[EMP_REQ] || "").toString().trim();
+                empAssetCountMap[name.toLowerCase()] = 0; 
+                if(status === 'Inactive') inactiveEmpMap[name.toLowerCase()] = id || "N/A";
+                else if(status === 'Active') {
+                    if(req === 'Yes') activeEmpReqList.push({ id: id, name: name, email: row[EMP_EMAIL], loc: row[EMP_LOC] });
+                    else noAssetReqList.push({ id: id, name: name, req: req });
                 }
             });
-        }
+            const sortedEmpNames = Object.keys(empAssetCountMap).sort((a, b) => b.length - a.length);
 
-        // --- PAGINATION & RENDERING ---
-        function renderTable() {
-            const tbody = document.getElementById("tableBody");
-            tbody.innerHTML = "";
+            // 2. Assets (FIXED INDICES HERE)
+            const headers = assetData[0]; const rows = assetData.slice(1);
+            const getIdx = (head, name) => head.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
             
-            if(filteredEmps.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">No matching employees found</td></tr>';
-                document.getElementById("pageInfo").innerText = "Page 0 of 0";
-                return;
-            }
+            // --- FIX FOR CONSOLE ERROR: Define Constants BEFORE Loop ---
+            const IDX_ID = getIdx(headers, "AssetID");
+            const IDX_LOC = getIdx(headers, "Location");
+            const IDX_CAT = getIdx(headers, "Category");
+            const IDX_BRAND = getIdx(headers, "Brand");
+            const IDX_SERIAL = getIdx(headers, "Serial");
+            const IDX_STATUS = getIdx(headers, "Status"); 
+            const IDX_USER = getIdx(headers, "Assigned");
 
-            // Pagination Logic
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            const paginatedData = filteredEmps.slice(start, end);
+            allAssetRows = rows.map(r => ({ id: r[IDX_ID], serial: r[IDX_SERIAL], loc: r[IDX_LOC], user: r[IDX_USER], status: r[IDX_STATUS], cat: r[IDX_CAT], brand: r[IDX_BRAND] }));
 
-            paginatedData.forEach(row => {
-                const assetCount = globalAssets.filter(a => 
-                    a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
-                ).length;
+            let total = 0, available = 0, allocated = 0, repair = 0;
+            const locationMap = {}, categoryMap = {}, brandMap = {}, userAssetCounts = {}, statusMap = {};
+            const allStatuses = new Set();
+            inactiveAssetsList = []; availableAssetsList = [];
 
-                let countBadge = assetCount > 0 
-                    ? `<span class="badge bg-primary rounded-pill px-3">${assetCount}</span>` 
-                    : `<span class="badge bg-secondary rounded-pill px-3">0</span>`;
+            rows.forEach(r => {
+                const loc = (r[IDX_LOC] || "Unknown").toString().trim();
+                const status = (r[IDX_STATUS] || "Unknown").toString().trim();
+                const user = (r[IDX_USER] || "Unassigned").toString().trim();
+                const cat = (r[IDX_CAT] || "Unknown").toString().trim();
+                const brand = (r[IDX_BRAND] || "Unknown").toString().trim();
+                const assetId = r[IDX_ID]; const serial = r[IDX_SERIAL];
 
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td class="fw-bold text-secondary">${row[0]}</td>
-                    <td class="fw-bold">${row[1]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td class="text-center h5 mb-0">${countBadge}</td>
-                    <td><span class="badge ${row[5]=='Active'?'bg-success':'bg-danger'}">${row[5]}</span></td>
-                `;
-                tr.onclick = () => showEmpDetails(row);
-                tbody.appendChild(tr);
+                if(loc === "") return;
+                total++; breakdownData.total[cat] = (breakdownData.total[cat] || 0) + 1; statusMap[status] = (statusMap[status] || 0) + 1;
+
+                if(status === 'Available') {
+                    available++; breakdownData.available[cat] = (breakdownData.available[cat] || 0) + 1;
+                    availableAssetsList.push({ id: assetId, serial: serial, cat: cat, brand: brand, loc: loc });
+                } else if(status === 'In-Use') {
+                    allocated++; breakdownData.allocated[cat] = (breakdownData.allocated[cat] || 0) + 1;
+                    const userLower = user.toLowerCase();
+                    for(const empName of sortedEmpNames) { if(userLower.includes(empName)) { empAssetCountMap[empName]++; break; } }
+                    for (const [inactiveName, empId] of Object.entries(inactiveEmpMap)) {
+                        if (userLower.includes(inactiveName)) { inactiveAssetsList.push({ assetId: assetId, serial: serial, type: cat, user: user, empId: empId }); break; }
+                    }
+                } else if(['Repair', 'Damaged', 'Scrap'].includes(status)) {
+                    repair++; breakdownData.repair[cat] = (breakdownData.repair[cat] || 0) + 1;
+                }
+                allStatuses.add(status);
+                if (!locationMap[loc]) locationMap[loc] = {}; locationMap[loc][status] = (locationMap[loc][status] || 0) + 1;
+                if (!categoryMap[cat]) categoryMap[cat] = {}; categoryMap[cat][status] = (categoryMap[cat][status] || 0) + 1;
+                if (!brandMap[brand]) brandMap[brand] = {}; brandMap[brand][status] = (brandMap[brand][status] || 0) + 1;
+                if(status === 'In-Use' && user !== "Unassigned") userAssetCounts[user] = (userAssetCounts[user] || 0) + 1;
             });
 
-            updatePaginationControls();
+            pendingAllocationList = []; activeEmpReqList.forEach(emp => { if((empAssetCountMap[emp.name.toLowerCase()] || 0) === 0) pendingAllocationList.push(emp); });
+            unnecessaryAllocList = []; noAssetReqList.forEach(emp => { const c = empAssetCountMap[emp.name.toLowerCase()] || 0; if(c > 0) unnecessaryAllocList.push({ id: emp.id, name: emp.name, count: c, req: emp.req }); });
+
+            document.getElementById("totalAssets").innerText = total; document.getElementById("totalAvailable").innerText = available;
+            document.getElementById("totalAllocated").innerText = allocated; document.getElementById("totalRepair").innerText = repair;
+            document.getElementById("totalInactiveAssets").innerText = inactiveAssetsList.length; document.getElementById("totalPendingAlloc").innerText = pendingAllocationList.length;
+            document.getElementById("totalUnnecessaryAlloc").innerText = unnecessaryAllocList.length;
+
+            renderPivotTable(locationMap, Array.from(allStatuses).sort());
+            renderStackedChart('locationChart', locationMap, Array.from(allStatuses).sort(), locChartInstance, (i) => locChartInstance = i);
+            renderOwnershipChart(Object.values(userAssetCounts).reduce((acc, c) => { acc[c+(c===1?" Device":" Devices")] = (acc[c+(c===1?" Device":" Devices")]||0)+1; return acc; }, {}));
+            renderStackedChart('categoryChart', categoryMap, Array.from(allStatuses).sort(), catChartInstance, (i) => catChartInstance = i);
+            renderStackedChart('brandChart', brandMap, Array.from(allStatuses).sort(), brandChartInstance, (i) => brandChartInstance = i);
+            renderStatusChart(statusMap);
         }
 
-        function updatePaginationControls() {
-            const totalPages = Math.ceil(filteredEmps.length / rowsPerPage) || 1;
-            document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages}`;
-            
-            document.getElementById("btnPrev").classList.toggle("disabled", currentPage === 1);
-            document.getElementById("btnNext").classList.toggle("disabled", currentPage === totalPages);
+        // --- HELPER FUNCTIONS ---
+        function showPendingAllocationModal() { const b = document.getElementById("pendingAllocBody"); b.innerHTML = pendingAllocationList.length ? pendingAllocationList.map(e => `<tr><td class="fw-bold">${e.id}</td><td>${e.name}</td><td>${e.email}</td><td>${e.loc}</td></tr>`).join('') : "<tr><td colspan='4'>No Pending</td></tr>"; new bootstrap.Modal(document.getElementById('pendingAllocModal')).show(); }
+        function showUnnecessaryModal() { const b = document.getElementById("unnecessaryBody"); b.innerHTML = unnecessaryAllocList.length ? unnecessaryAllocList.map(e => `<tr><td class="fw-bold">${e.id}</td><td>${e.name}</td><td class="text-danger fw-bold">${e.count} Assets</td><td>${e.req}</td></tr>`).join('') : "<tr><td colspan='4'>No Unexpected Allocations</td></tr>"; new bootstrap.Modal(document.getElementById('unnecessaryModal')).show(); }
+        function showInactiveModal() { const b = document.getElementById("inactiveTableBody"); b.innerHTML = inactiveAssetsList.length ? inactiveAssetsList.map(i => `<tr><td class="fw-bold text-danger">${i.assetId}</td><td>${i.serial}</td><td>${i.type}</td><td>${i.user}</td><td>${i.empId}</td></tr>`).join('') : "<tr><td colspan='5'>All Clear</td></tr>"; new bootstrap.Modal(document.getElementById('inactiveModal')).show(); }
+        function downloadReport(type) { let d = []; if(type==='pending') d=pendingAllocationList; else if(type==='unnecessary') d=unnecessaryAllocList; else if(type==='inactive') d=inactiveAssetsList; if(d.length) { const l = document.createElement("a"); l.href = URL.createObjectURL(new Blob([Papa.unparse(d)], { type: 'text/csv' })); l.download = `${type}_report.csv`; l.click(); } }
+        function showAvailableModal() { openCommonModal("Available Stock", availableAssetsList, ['Asset ID','Serial','Category','Brand','Location'], i => `<tr><td class="fw-bold text-primary">${i.id}</td><td>${i.serial}</td><td>${i.cat}</td><td>${i.brand}</td><td>${i.loc}</td></tr>`); }
+        function openStatusModal(status) { const list = allAssetRows.filter(r => r.status === status); if(status === 'In-Use') openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location','Assigned To','Category'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td class="text-primary fw-bold">${i.user}</td><td>${i.cat}</td></tr>`); else openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location','Category','Brand'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td>${i.cat}</td><td>${i.brand}</td></tr>`); }
+        let commonRowBuilder = null; function openCommonModal(title, data, headers, rowFunc) { document.getElementById("commonModalTitle").innerText = title; document.getElementById("commonTableHead").innerHTML = `<tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr>`; currentDetailList = data; commonRowBuilder = rowFunc; renderCommonTable(data); new bootstrap.Modal(document.getElementById('commonDetailModal')).show(); }
+        function renderCommonTable(data) { document.getElementById("commonTableBody").innerHTML = data.map(commonRowBuilder).join('') || "<tr><td colspan='5'>No Data</td></tr>"; }
+        function filterCommonTable() { const input = document.getElementById("commonSearch").value.toLowerCase(); renderCommonTable(currentDetailList.filter(item => Object.values(item).some(val => val.toString().toLowerCase().includes(input)))); }
+        function downloadCommonReport() { if(currentDetailList.length) { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(currentDetailList)], { type: 'text/csv' })); link.download = "List_Report.csv"; link.click(); } }
+        function downloadAvailableReport() { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(availableAssetsList)], { type: 'text/csv' })); link.download = "Available_Stock.csv"; link.click(); }
+        function showBreakdown(el, type) { const p=document.getElementById("hoverChartCard"); const r=el.getBoundingClientRect(); p.style.display="block"; p.style.top=(r.top+window.scrollY+10)+"px"; p.style.left=(r.left+r.width-20)+"px"; document.getElementById("hoverChartTitle").innerText=type.toUpperCase()+" Breakdown"; const d=breakdownData[type], l=Object.keys(d), v=Object.values(d); if(!l.length){l.push("No Data");v.push(1);} const c=document.getElementById("hoverChartCanvas").getContext("2d"); if(hoverChartInstance)hoverChartInstance.destroy(); hoverChartInstance=new Chart(c,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:['#4e73df','#1cc88a','#36b9cc','#f6c23e']}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}}); }
+        function hideBreakdown() { document.getElementById("hoverChartCard").style.display="none"; }
+        function renderStackedChart(id, map, stats, inst, setInst) { const c=document.getElementById(id).getContext('2d'), l=Object.keys(map).sort(); if(inst) inst.destroy(); setInst(new Chart(c, { type: 'bar', data: { labels: l, datasets: stats.map((s,i)=>({label:s,data:l.map(k=>map[k][s]||0),backgroundColor:['#1cc88a','#f6c23e','#e74a3b','#4e73df','#858796','#36b9cc'][i%6]})) }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } })); }
+        function renderOwnershipChart(dist) { const c=document.getElementById('ownershipChart').getContext('2d'), l=Object.keys(dist).sort((a,b)=>parseInt(a)-parseInt(b)); if(ownChartInstance) ownChartInstance.destroy(); ownChartInstance = new Chart(c, { type: 'doughnut', data: { labels: l, datasets: [{ data: l.map(k=>dist[k]), backgroundColor: ['#4e73df','#1cc88a','#36b9cc'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } }); }
+        function renderStatusChart(map) { const ctx=document.getElementById("statusChart").getContext("2d"); if(statusChartInstance) statusChartInstance.destroy(); statusChartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(map), datasets: [{ label: 'Count', data: Object.values(map), backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#20c9a6', '#6610f2'], borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, onClick: (e, el) => { if (activeEls.length > 0) openStatusModal(Object.keys(map)[el[0].index]); } } }); }
+        function renderPivotTable(map, stats) { document.getElementById("pivotTable").innerHTML = `<thead class="table-light"><tr><th class="row-header">Location</th>${stats.map(s=>`<th>${s}</th>`).join('')}<th class="fw-bold-total">Total</th></tr></thead><tbody>${Object.keys(map).sort().map(l=>{let t=0; return `<tr><td class="row-header">${l}</td>${stats.map(s=>{const c=map[l][s]||0;t+=c;return `<td>${c||'-'}</td>`}).join('')}<td class="fw-bold-total">${t}</td></tr>`}).join('')}</tbody>`; }
+
+        // --- CHATBOT LOGIC ---
+        function toggleChat() { const w=document.getElementById("chatWindow"); w.style.display=(w.style.display==="flex")?"none":"flex"; }
+        function handleChatEnter(e) { if(e.key==="Enter") sendMessage(); }
+        function sendMessage() {
+            const i=document.getElementById("chatInput"); const m=i.value.trim(); if(!m)return;
+            addMessage(m, "user"); i.value="";
+            document.getElementById("typingIndicator").style.display="block";
+            fetch(API_URL, {method:"POST", body:JSON.stringify({action:"chatWithAI", message:m})})
+            .then(r=>r.json()).then(d=>{ document.getElementById("typingIndicator").style.display="none"; addMessage(d.reply, "bot"); })
+            .catch(()=>{ document.getElementById("typingIndicator").style.display="none"; addMessage("Error connecting.", "bot"); });
         }
-
-        function changePage(direction) {
-            const totalPages = Math.ceil(filteredEmps.length / rowsPerPage) || 1;
-            const newPage = currentPage + direction;
-            if (newPage > 0 && newPage <= totalPages) {
-                currentPage = newPage;
-                renderTable();
-            }
-        }
-
-        function changeRowsPerPage() {
-            rowsPerPage = parseInt(document.getElementById("rowsPerPage").value);
-            currentPage = 1; // Reset to page 1
-            renderTable();
-        }
-
-        function filterTable() {
-            const searchText = document.getElementById("searchInput").value.toLowerCase();
-            const countFilter = document.getElementById("countFilter").value; 
-
-            filteredEmps = globalEmps.filter(row => {
-                const textMatch = (row[0]+row[1]+row[3]).toLowerCase().includes(searchText);
-                const assetCount = globalAssets.filter(a => 
-                    a[11] && a[11].toString().includes(row[1]) && a[12] === "In-Use"
-                ).length;
-                const countMatch = countFilter === "" ? true : assetCount == countFilter;
-                return textMatch && countMatch;
-            });
-            
-            currentPage = 1; // Reset pagination on filter
-            renderTable();
-        }
-
-        // --- EXPORT & DETAILS ---
-        function downloadFilteredData() {
-            if (filteredEmps.length === 0) {
-                Swal.fire("No Data", "No employees match the current filters.", "warning");
-                return;
-            }
-
-            let maxAssets = 0;
-            const processedRows = filteredEmps.map(emp => {
-                const empAssets = globalAssets.filter(a => 
-                    a[11] && a[11].toString().includes(emp[1]) && a[12] === "In-Use"
-                );
-                if (empAssets.length > maxAssets) maxAssets = empAssets.length;
-                return { id: emp[0], name: emp[1], status: emp[5], count: empAssets.length, assets: empAssets };
-            });
-
-            let csv = "Emp ID,Name,Status,Assets Held";
-            for (let i = 1; i <= maxAssets; i++) { csv += `,Asset ${i} ID,Asset ${i} Serial`; }
-            csv += "\n";
-
-            processedRows.forEach(row => {
-                let line = `"${row.id}","${row.name}","${row.status}",${row.count}`;
-                row.assets.forEach(asset => { line += `,"${asset[0] || ""}","${asset[4] || ""}"`; });
-                const remaining = maxAssets - row.assets.length;
-                for (let i = 0; i < remaining; i++) { line += `,"",""`; }
-                csv += line + "\n";
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Filtered_Employee_Assets_${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
-        }
-
-        function showEmpDetails(emp) {
-            document.getElementById("empNameTitle").innerText = `${emp[1]} (${emp[0]})`;
-            const currentAssets = globalAssets.filter(a => 
-                a[11] && a[11].toString().includes(emp[1]) && a[12] === "In-Use"
-            );
-            const list = document.getElementById("currentAssetsList");
-            list.innerHTML = "";
-            if(currentAssets.length === 0) list.innerHTML = "<li class='list-group-item text-muted'>No assets currently assigned.</li>";
-            
-            currentAssets.forEach(a => {
-                list.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div><i class="fas fa-laptop text-muted me-2"></i><strong>${a[2]} ${a[3]}</strong> <small class="text-muted">(${a[0]})</small></div>
-                    <span class="badge bg-primary">In Use</span>
-                </li>`;
-            });
-            const history = globalTxns.filter(t => t[7] && t[7].toString().includes(emp[1]));
-            const tbody = document.getElementById("txnHistoryBody");
-            tbody.innerHTML = "";
-            if(history.length === 0) tbody.innerHTML = "<tr><td colspan='4' class='text-center text-muted'>No history found.</td></tr>";
-
-            history.forEach(t => {
-                let badge = t[2] === "OUT" ? "<span class='badge bg-warning text-dark'>Received</span>" : "<span class='badge bg-success'>Returned</span>";
-                // New logic for Shift history
-                if(t[2] === 'TRANSFER') badge = "<span class='badge bg-info text-dark'>Shifted</span>";
-                
-                tbody.innerHTML += `<tr><td>${formatDate(t[1])}</td><td>${badge}</td><td>${t[4]}</td><td>${t[10]}</td></tr>`;
-            });
-            new bootstrap.Modal(document.getElementById('empModal')).show();
-        }
-
-        function formatDate(dateStr) {
-            if(!dateStr) return "-";
-            return new Date(dateStr).toLocaleDateString('en-GB');
+        function addMessage(t,s) {
+            const b=document.getElementById("chatBody"); const d=document.createElement("div");
+            d.className=`msg msg-${s}`; d.innerHTML=t.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>');
+            b.appendChild(d); b.scrollTop=b.scrollHeight;
         }
 
         // Initial Load
         refreshSystem();
-
         function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
     </script>
 </body>
