@@ -25,10 +25,14 @@
         .select2-container .select2-selection--single { height: 38px; line-height: 38px; }
 
         /* Checklist Styles */
-        .check-group { background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; }
+        .check-group { background: #f8f9fa; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
         .check-label { font-weight: 600; color: #495057; margin-bottom: 0; }
-        .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; }
-        .btn-check:checked + .btn-outline-danger { background-color: #dc3545; color: white; }
+        .btn-group-sm .btn { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+        
+        /* Software Section Colors */
+        .soft-pass:checked + .btn-outline-primary { background-color: #0d6efd; color: white; }
+        .soft-fail:checked + .btn-outline-danger { background-color: #dc3545; color: white; }
+        .soft-na:checked + .btn-outline-secondary { background-color: #6c757d; color: white; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -63,15 +67,12 @@
                         <small class="text-white-50" style="font-size: 0.7rem;">SYSTEM STATUS</small>
                         <span id="connectionDot" class="badge bg-warning rounded-circle p-1" style="width: 10px; height: 10px;"> </span>
                     </div>
-                    
                     <div id="connectionText" class="fw-bold text-warning mb-1" style="font-size: 0.85rem;">
                         <i class="fas fa-plug me-1"></i> Connecting...
                     </div>
-                    
                     <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">
                         Last Sync: --:--
                     </p>
-                    
                     <button onclick="refreshSystem()" class="btn btn-sm btn-outline-light w-100" style="font-size: 0.75rem;">
                         <i class="fas fa-sync-alt me-1"></i> Force Refresh
                     </button>
@@ -86,7 +87,7 @@
         <div class="form-card">
             <h5 class="mb-4 text-warning"><i class="fas fa-hand-holding-box"></i> Assign Asset to Employee</h5>
             <form id="allocForm">
-                <div class="row g-4">
+                <div class="row g-3">
                     
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Select Asset (Available Only)</label>
@@ -112,84 +113,143 @@
                         <input type="date" class="form-control" name="returnDate">
                     </div>
 
-                    <div class="col-12">
-                        <div class="card bg-light border-0">
-                            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                                <span class="fw-bold"><i class="fas fa-clipboard-check me-2"></i> Pre-Allocation Health Check</span>
-                                <button type="button" class="btn btn-sm btn-light fw-bold text-dark" onclick="markAllGood()">
-                                    <i class="fas fa-check-double me-1"></i> Mark All Good
+                    <div class="col-12 mt-4">
+                        <div class="card border">
+                            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center py-2">
+                                <span class="fw-bold small text-uppercase"><i class="fas fa-laptop me-2"></i> Hardware Condition Check</span>
+                                <button type="button" class="btn btn-sm btn-light py-0 fw-bold" style="font-size: 0.75rem;" onclick="markAllHardwareGood()">
+                                    <i class="fas fa-check-double me-1"></i> All Good
                                 </button>
                             </div>
-                            <div class="card-body">
-                                <div class="row">
+                            <div class="card-body bg-light p-2">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <div class="check-group"><span><i class="fab fa-windows me-2"></i>OS</span><input type="checkbox" class="form-check-input hw-chk" checked title="Working"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="check-group"><span><i class="fas fa-desktop me-2"></i>Screen</span><input type="checkbox" class="form-check-input hw-chk" checked title="Good"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="check-group"><span><i class="fas fa-keyboard me-2"></i>Keys</span><input type="checkbox" class="form-check-input hw-chk" checked title="Working"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="check-group"><span><i class="fas fa-camera me-2"></i>Cam</span><input type="checkbox" class="form-check-input hw-chk" checked title="Working"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="check-group"><span><i class="fas fa-plug me-2"></i>Charger</span><input type="checkbox" class="form-check-input hw-chk" checked title="Original"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="check-group"><span><i class="fas fa-briefcase me-2"></i>Bag</span><input type="checkbox" class="form-check-input hw-chk" checked title="Given"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="check-group"><span><i class="fas fa-hdd me-2"></i>Body</span><input type="checkbox" class="form-check-input hw-chk" checked title="Clean"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="check-group"><span><i class="fas fa-mouse me-2"></i>Touchpad</span><input type="checkbox" class="form-check-input hw-chk" checked title="Working"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <div class="card border">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                                <span class="fw-bold small text-uppercase"><i class="fas fa-save me-2"></i> Software Setup & Access</span>
+                                <button type="button" class="btn btn-sm btn-light py-0 fw-bold" style="font-size: 0.75rem;" onclick="markAllSoftwareYes()">
+                                    <i class="fas fa-check-circle me-1"></i> All Yes
+                                </button>
+                            </div>
+                            <div class="card-body bg-white p-3">
+                                <div class="row g-3">
+                                    
                                     <div class="col-md-6">
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fab fa-windows me-2"></i>OS / Booting</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_os" id="os1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="os1">Pass</label>
-                                                <input type="radio" class="btn-check chk" name="chk_os" id="os2" value="Fail">
-                                                <label class="btn btn-sm btn-outline-danger" for="os2">Fail</label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="fw-bold text-dark small"><i class="fas fa-clock me-2"></i>Team Logger</label>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <input type="radio" class="btn-check soft-pass" name="sw_logger" id="log1" value="Yes" checked onclick="toggleLoggerReason(false)">
+                                                <label class="btn btn-outline-primary" for="log1">Yes</label>
+                                                
+                                                <input type="radio" class="btn-check soft-fail" name="sw_logger" id="log2" value="No" onclick="toggleLoggerReason(false)">
+                                                <label class="btn btn-outline-danger" for="log2">No</label>
+                                                
+                                                <input type="radio" class="btn-check soft-na" name="sw_logger" id="log3" value="NR" onclick="toggleLoggerReason(true)">
+                                                <label class="btn btn-outline-secondary" for="log3">N/R</label>
                                             </div>
                                         </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-desktop me-2"></i>Display / Screen</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_screen" id="scr1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="scr1">Pass</label>
-                                                <input type="radio" class="btn-check chk" name="chk_screen" id="scr2" value="Fail">
-                                                <label class="btn btn-sm btn-outline-danger" for="scr2">Fail</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-keyboard me-2"></i>Keyboard / Keys</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_kb" id="kb1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="kb1">Pass</label>
-                                                <input type="radio" class="btn-check chk" name="chk_kb" id="kb2" value="Fail">
-                                                <label class="btn btn-sm btn-outline-danger" for="kb2">Fail</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-camera me-2"></i>Camera / WebCam</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_cam" id="cam1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="cam1">Pass</label>
-                                                <input type="radio" class="btn-check chk" name="chk_cam" id="cam2" value="Fail">
-                                                <label class="btn btn-sm btn-outline-danger" for="cam2">Fail</label>
+                                        <input type="text" id="loggerReason" class="form-control form-control-sm mt-1" placeholder="Reason for Not Required?" style="display: none; border-color: #6c757d;">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="fw-bold text-dark small"><i class="fas fa-building me-2"></i>Zoho ManageEngine</label>
+                                            <div class="btn-group btn-group-sm">
+                                                <input type="radio" class="btn-check soft-pass" name="sw_zoho" id="zo1" value="Yes" checked><label class="btn btn-outline-primary" for="zo1">Yes</label>
+                                                <input type="radio" class="btn-check soft-fail" name="sw_zoho" id="zo2" value="No"><label class="btn btn-outline-danger" for="zo2">No</label>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="col-md-6">
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-laptop me-2"></i>Body (Front/Back)</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_body" id="bd1" value="Pass" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="bd1">Good</label>
-                                                <input type="radio" class="btn-check chk" name="chk_body" id="bd2" value="Damaged">
-                                                <label class="btn btn-sm btn-outline-danger" for="bd2">Damaged</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-plug me-2"></i>Original Charger</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_chg" id="ch1" value="Yes" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="ch1">Yes</label>
-                                                <input type="radio" class="btn-check chk" name="chk_chg" id="ch2" value="No">
-                                                <label class="btn btn-sm btn-outline-danger" for="ch2">No</label>
-                                            </div>
-                                        </div>
-                                        <div class="check-group">
-                                            <label class="check-label"><i class="fas fa-briefcase me-2"></i>Laptop Bag</label>
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check chk" name="chk_bag" id="bg1" value="Yes" checked>
-                                                <label class="btn btn-sm btn-outline-success" for="bg1">Yes</label>
-                                                <input type="radio" class="btn-check chk" name="chk_bag" id="bg2" value="No">
-                                                <label class="btn btn-sm btn-outline-danger" for="bg2">No</label>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="fw-bold text-dark small"><i class="fab fa-microsoft me-2"></i>MS Office</label>
+                                            <div class="btn-group btn-group-sm">
+                                                <input type="radio" class="btn-check soft-pass" name="sw_office" id="off1" value="Yes" checked><label class="btn btn-outline-primary" for="off1">Yes</label>
+                                                <input type="radio" class="btn-check soft-fail" name="sw_office" id="off2" value="No"><label class="btn btn-outline-danger" for="off2">No</label>
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="fw-bold text-dark small"><i class="fas fa-envelope me-2"></i>Email (Created)</label>
+                                            <div class="btn-group btn-group-sm">
+                                                <input type="radio" class="btn-check soft-pass" name="sw_email" id="em1" value="Yes" checked><label class="btn btn-outline-primary" for="em1">Yes</label>
+                                                <input type="radio" class="btn-check soft-na" name="sw_email" id="em3" value="NR"><label class="btn btn-outline-secondary" for="em3">N/R</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="fw-bold text-dark small"><i class="fas fa-paper-plane me-2"></i>Outlook Config</label>
+                                            <div class="btn-group btn-group-sm">
+                                                <input type="radio" class="btn-check soft-pass" name="sw_outlook" id="out1" value="Yes" checked><label class="btn btn-outline-primary" for="out1">Yes</label>
+                                                <input type="radio" class="btn-check soft-fail" name="sw_outlook" id="out2" value="No"><label class="btn btn-outline-danger" for="out2">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="fw-bold text-dark small"><i class="fas fa-file-excel me-2"></i>Excel Working</label>
+                                            <div class="btn-group btn-group-sm">
+                                                <input type="radio" class="btn-check soft-pass" name="sw_excel" id="exc1" value="Yes" checked><label class="btn btn-outline-primary" for="exc1">Yes</label>
+                                                <input type="radio" class="btn-check soft-fail" name="sw_excel" id="exc2" value="No"><label class="btn btn-outline-danger" for="exc2">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="fw-bold text-dark small"><i class="fas fa-shield-alt me-2"></i>VPN Access</label>
+                                            <div class="btn-group btn-group-sm">
+                                                <input type="radio" class="btn-check soft-pass" name="sw_vpn" id="vpn1" value="Yes"><label class="btn btn-outline-primary" for="vpn1">Yes</label>
+                                                <input type="radio" class="btn-check soft-na" name="sw_vpn" id="vpn3" value="NR" checked><label class="btn btn-outline-secondary" for="vpn3">N/R</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="fw-bold text-dark small"><i class="fas fa-calculator me-2"></i>Tally</label>
+                                            <div class="btn-group btn-group-sm">
+                                                <input type="radio" class="btn-check soft-pass" name="sw_tally" id="tal1" value="Yes"><label class="btn btn-outline-primary" for="tal1">Yes</label>
+                                                <input type="radio" class="btn-check soft-na" name="sw_tally" id="tal3" value="NR" checked><label class="btn btn-outline-secondary" for="tal3">N/R</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -222,7 +282,7 @@
 
         $(document).ready(function() {
             $('.select2').select2();
-            refreshSystem(); // Load data on start
+            refreshSystem(); 
         });
 
         function refreshSystem() {
@@ -231,13 +291,11 @@
             const statusDot = document.getElementById('connectionDot');
             const timeEl = document.getElementById('lastRefreshed');
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
-            btn.disabled = true;
+            if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; btn.disabled = true; }
 
             loadDropdowns().then(() => {
                 setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh';
-                    btn.disabled = false;
+                    if(btn) { btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh'; btn.disabled = false; }
                     statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected';
                     statusText.className = 'fw-bold text-success mb-1';
                     statusDot.className = 'badge bg-success rounded-circle p-1';
@@ -246,8 +304,7 @@
                     toast.fire({ icon: 'success', title: 'Data Loaded' });
                 }, 500);
             }).catch(() => {
-                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry';
-                btn.disabled = false;
+                if(btn) { btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry'; btn.disabled = false; }
                 statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error';
                 statusText.className = 'fw-bold text-danger mb-1';
                 statusDot.className = 'badge bg-danger rounded-circle p-1';
@@ -255,76 +312,71 @@
         }
 
         function loadDropdowns() {
-            return fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getAllocationData" })
-            })
+            return fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getAllocationData" }) })
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
                     const assetSelect = document.getElementById("assetSelect");
                     assetSelect.innerHTML = '<option value="">-- Select Asset --</option>';
-                    if(result.assets.length === 0) assetSelect.innerHTML = '<option value="">No Available Assets</option>';
-                    result.assets.forEach(item => {
-                        let opt = document.createElement("option");
-                        opt.value = item.id;
-                        opt.text = item.name;
-                        assetSelect.appendChild(opt);
-                    });
+                    result.assets.forEach(item => { let opt = document.createElement("option"); opt.value = item.id; opt.text = item.name; assetSelect.appendChild(opt); });
 
                     const empSelect = document.getElementById("empSelect");
                     empSelect.innerHTML = '<option value="">-- Select Employee --</option>';
-                    result.employees.forEach(item => {
-                        let opt = document.createElement("option");
-                        opt.value = item.name; 
-                        opt.text = item.name;
-                        empSelect.appendChild(opt);
-                    });
+                    result.employees.forEach(item => { let opt = document.createElement("option"); opt.value = item.name; opt.text = item.name; empSelect.appendChild(opt); });
                     return Promise.resolve();
-                } else {
-                    return Promise.reject();
-                }
+                } else return Promise.reject();
             });
         }
 
-        // --- QC Helper ---
-        function markAllGood() {
-            document.querySelectorAll('input[type="radio"]').forEach(radio => {
-                if(radio.value === 'Pass' || radio.value === 'Yes') {
-                    radio.checked = true;
-                }
-            });
+        // --- QC Helper Functions ---
+        function markAllHardwareGood() {
+            document.querySelectorAll('.hw-chk').forEach(chk => chk.checked = true);
         }
 
-        // 2. SUBMIT ALLOCATION
+        function markAllSoftwareYes() {
+            document.querySelectorAll('input[type="radio"][value="Yes"]').forEach(radio => radio.checked = true);
+            toggleLoggerReason(false);
+        }
+
+        function toggleLoggerReason(show) {
+            document.getElementById("loggerReason").style.display = show ? "block" : "none";
+            if(!show) document.getElementById("loggerReason").value = "";
+        }
+
+        // --- SUBMIT LOGIC ---
         document.getElementById("allocForm").addEventListener("submit", function(e) {
             e.preventDefault();
-            
             const assetId = $('#assetSelect').val();
             const empId = $('#empSelect').val();
 
-            if(!assetId || !empId) {
-                Swal.fire('Error', 'Please select both Asset and Employee', 'warning');
-                return;
-            }
+            if(!assetId || !empId) { Swal.fire('Error', 'Select Asset & Employee', 'warning'); return; }
 
-            // Generate QC Report String
-            let qcReport = "[Pre-Delivery QC] ";
-            qcReport += "OS: " + document.querySelector('input[name="chk_os"]:checked').value + " | ";
-            qcReport += "Screen: " + document.querySelector('input[name="chk_screen"]:checked').value + " | ";
-            qcReport += "Keys: " + document.querySelector('input[name="chk_kb"]:checked').value + " | ";
-            qcReport += "Cam: " + document.querySelector('input[name="chk_cam"]:checked').value + " | ";
-            qcReport += "Body: " + document.querySelector('input[name="chk_body"]:checked').value + " | ";
-            qcReport += "Charger: " + document.querySelector('input[name="chk_chg"]:checked').value + " | ";
-            qcReport += "Bag: " + document.querySelector('input[name="chk_bag"]:checked').value;
+            // 1. Hardware Report
+            const hwItems = ["OS", "Screen", "Keys", "Cam", "Charger", "Bag", "Body", "Touchpad"];
+            const hwChecks = document.querySelectorAll('.hw-chk');
+            let hwFails = [];
+            hwChecks.forEach((chk, i) => { if(!chk.checked) hwFails.push(hwItems[i]); });
+            let hwReport = hwFails.length > 0 ? `[HW Issues: ${hwFails.join(', ')}]` : "[HW: All OK]";
 
+            // 2. Software Report
+            let swReport = "[SW: ";
+            const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value || '-';
+            
+            const loggerVal = getRadio('sw_logger');
+            swReport += `Logger:${loggerVal}`;
+            if(loggerVal === 'NR') swReport += `(${document.getElementById("loggerReason").value || 'No Reason'})`;
+            
+            swReport += ` | Zoho:${getRadio('sw_zoho')} | Office:${getRadio('sw_office')} | Email:${getRadio('sw_email')}`;
+            swReport += ` | Outlook:${getRadio('sw_outlook')} | Excel:${getRadio('sw_excel')} | VPN:${getRadio('sw_vpn')} | Tally:${getRadio('sw_tally')}]`;
+
+            // Combine
             const userRemarks = document.getElementById("remarksInput").value;
-            const finalRemarks = qcReport + (userRemarks ? " || Note: " + userRemarks : "");
+            const finalRemarks = `${hwReport} ${swReport} ${userRemarks ? "|| " + userRemarks : ""}`;
 
             Swal.fire({
                 title: 'Confirm Allocation?',
-                text: "Asset status will change to In-Use.",
-                icon: 'warning',
+                html: `<div class="text-start small"><b>Summary:</b><br>${hwReport}<br>${swReport}</div>`,
+                icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#ffc107',
                 confirmButtonText: 'Yes, Allocate'
@@ -337,32 +389,26 @@
 
         function submitAllocation(assetId, empId, remarks, form) {
             Swal.fire({ title: 'Allocating...', didOpen: () => Swal.showLoading() });
-
+            
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             data.action = "allocateAsset";
             data.user = user.name;
             data.assetId = assetId;
             data.empId = empId;
-            data.remarks = remarks; // Override remarks with QC data
+            data.remarks = remarks;
 
-            fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify(data)
-            })
+            fetch(API_URL, { method: "POST", body: JSON.stringify(data) })
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
                     Swal.fire('Success', result.message, 'success').then(() => {
-                        refreshSystem(); 
-                        form.reset();
+                        refreshSystem(); form.reset();
                         $('#assetSelect').val(null).trigger('change');
                         $('#empSelect').val(null).trigger('change');
-                        markAllGood(); // Reset checkboxes
+                        markAllHardwareGood();
                     });
-                } else {
-                    Swal.fire('Error', result.message, 'error');
-                }
+                } else Swal.fire('Error', result.message, 'error');
             })
             .catch(err => Swal.fire('Error', 'Connection Failed', 'error'));
         }
