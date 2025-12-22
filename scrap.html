@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scrap Asset Management - Gretex ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; display: flex; flex-direction: column; }
+        .sidebar-header { text-align: center; margin-bottom: 30px; font-weight: bold; font-size: 1.2rem; border-bottom: 1px solid #34495e; padding-bottom: 20px; }
+        .sidebar a { color: #aab8c5; padding: 12px 25px; display: flex; align-items: center; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
+        .sidebar a i { width: 25px; text-align: center; margin-right: 10px; }
+        .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
+        
+        /* Push content down to fit sidebar height */
+        .sidebar-menu { flex-grow: 1; overflow-y: auto; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid #3e4b5b; background-color: #1a2530; }
+
+        .main-content { margin-left: 250px; padding: 30px; }
+        .form-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-top: 5px solid #dc3545; }
+        .select2-container .select2-selection--single { height: 38px; line-height: 38px; }
+    </style>
+    <script>
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        if (!user) window.location.href = "index.html";
+    </script>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h4 class="text-center mt-4 mb-4"><i class="fas fa-warehouse"></i> Gretex ERP</h4>
+        
+        <div class="sidebar-menu">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
+            <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
+            <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
+            <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
+            <a href="Shift.html"><i class="fas fa-truck-moving"></i> Shift Asset</a>
+            <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
+            <a href="EmpHistory.html"><i class="fas fa-user-clock"></i> Emp History</a>
+            <a href="Repair.html"><i class="fas fa-tools"></i> Maintenance</a>
+            <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
+            <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
+            <a href="scrap.html" class="active"><i class="fas fa-trash-alt"></i> Scrap Asset</a>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="#" onclick="logout()" class="mb-3 text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            
+            <div class="card border-0 bg-dark text-white shadow-sm" style="background-color: #2c3e50 !important; border: 1px solid #4e5d6c !important;">
+                <div class="card-body p-2 text-center">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-white-50" style="font-size: 0.7rem;">SYSTEM STATUS</small>
+                        <span id="connectionDot" class="badge bg-warning rounded-circle p-1" style="width: 10px; height: 10px;"> </span>
+                    </div>
+                    <div id="connectionText" class="fw-bold text-warning mb-1" style="font-size: 0.85rem;">
+                        <i class="fas fa-plug me-1"></i> Connecting...
+                    </div>
+                    <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">
+                        Last Sync: --:--
+                    </p>
+                    <button onclick="refreshSystem()" class="btn btn-sm btn-outline-light w-100" style="font-size: 0.75rem;">
+                        <i class="fas fa-sync-alt me-1"></i> Force Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h3 class="mb-4">Scrap Asset Management</h3>
+        
+        <div class="form-card">
+            <h5 class="mb-4 text-danger"><i class="fas fa-dumpster-fire me-2"></i> Dispose / Scrap Asset</h5>
+            <div class="alert alert-warning small">
+                <i class="fas fa-exclamation-triangle me-2"></i> 
+                <strong>Warning:</strong> Scrapping an asset removes it from active inventory. This action is usually permanent.
+            </div>
+
+            <form id="scrapForm">
+                <div class="row g-4">
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Select Asset to Scrap</label>
+                        <select class="form-select select2" name="assetId" id="assetSelect" required>
+                            <option value="">Loading Assets...</option>
+                        </select>
+                        <div class="form-text">Only non-scrapped assets are shown here.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Scrap Date</label>
+                        <input type="date" class="form-control" name="scrapDate" id="scrapDate" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Scrap Value / Sale Price (₹)</label>
+                        <input type="number" class="form-control" name="scrapAmount" placeholder="0" value="0">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Vendor / Buyer Name (Optional)</label>
+                        <input type="text" class="form-control" name="vendor" placeholder="e.g. E-Waste Recyclers Ltd">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Current Condition</label>
+                        <input type="text" class="form-control bg-light" id="currentStatus" readonly placeholder="Select asset to see status">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Reason for Scrapping <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="remarks" rows="3" placeholder="e.g. Motherboard dead, repair cost too high, obsolete model..." required></textarea>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-danger px-5 w-100 fw-bold">
+                            <i class="fas fa-trash-alt me-2"></i> Confirm Move to Scrap
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        // *** PASTE YOUR GAS WEB APP URL HERE ***
+        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+
+        document.getElementById("scrapDate").valueAsDate = new Date();
+        let assetsData = [];
+
+        $(document).ready(function() {
+            $('.select2').select2();
+            
+            // --- NEW SYSTEM REFRESH LOGIC ---
+            refreshSystem(); 
+
+            // Auto-fill current status when asset is selected
+            $('#assetSelect').on('change', function() {
+                const selectedId = $(this).val();
+                const asset = assetsData.find(a => a.id == selectedId);
+                if(asset) {
+                    $('#currentStatus').val(asset.status + (asset.user ? ` (Assigned to ${asset.user})` : ''));
+                } else {
+                    $('#currentStatus').val('');
+                }
+            });
+        });
+
+        function refreshSystem() {
+            const btn = document.querySelector('button[onclick="refreshSystem()"]');
+            const statusText = document.getElementById('connectionText');
+            const statusDot = document.getElementById('connectionDot');
+            const timeEl = document.getElementById('lastRefreshed');
+
+            if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; btn.disabled = true; }
+
+            loadScrapableAssets().then(() => {
+                setTimeout(() => {
+                    if(btn) { btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh'; btn.disabled = false; }
+                    statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected';
+                    statusText.className = 'fw-bold text-success mb-1';
+                    statusDot.className = 'badge bg-success rounded-circle p-1';
+                    timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
+                    const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+                    toast.fire({ icon: 'success', title: 'Asset List Updated' });
+                }, 500);
+            }).catch(() => {
+                if(btn) { btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry'; btn.disabled = false; }
+                statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error';
+                statusText.className = 'fw-bold text-danger mb-1';
+                statusDot.className = 'badge bg-danger rounded-circle p-1';
+            });
+        }
+
+        // 1. FETCH ASSETS (FILTERED)
+        function loadScrapableAssets() {
+            return fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "getHistoryData" }) // Reusing history data to get full list
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    const select = document.getElementById("assetSelect");
+                    select.innerHTML = '<option value="">-- Select Asset --</option>';
+                    
+                    // Filter: Only show assets that are NOT already 'Scrap' or 'Sale'
+                    assetsData = result.assets.filter(r => r[12] !== 'Scrap' && r[12] !== 'Sale' && r[12] !== 'Missing').map(r => ({
+                        id: r[0],
+                        name: `${r[2]} ${r[3]} (${r[1]})`, // Brand Model (Category)
+                        status: r[12],
+                        user: r[11]
+                    }));
+
+                    if(assetsData.length === 0) {
+                        select.innerHTML = '<option value="">No assets available to scrap</option>';
+                    }
+
+                    assetsData.forEach(item => {
+                        let opt = document.createElement("option");
+                        opt.value = item.id;
+                        opt.text = `${item.id} | ${item.name}`;
+                        select.appendChild(opt);
+                    });
+                    return Promise.resolve();
+                } else {
+                    return Promise.reject();
+                }
+            });
+        }
+
+        // 2. SUBMIT SCRAP FORM
+        document.getElementById("scrapForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const assetId = $('#assetSelect').val();
+            if(!assetId) {
+                Swal.fire('Error', 'Please select an asset', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This asset will be marked as SCRAP. This cannot be easily undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, Scrap It!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    submitScrap(assetId, e.target);
+                }
+            });
+        });
+
+        function submitScrap(assetId, form) {
+            Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading() });
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            data.action = "scrapAsset"; // Requires Backend Handler
+            data.user = user.name;
+            data.assetId = assetId;
+
+            // Append extra info to remarks
+            data.remarks = `[SCRAP] Value: ₹${data.scrapAmount} | Vendor: ${data.vendor} || Reason: ${data.remarks}`;
+
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    Swal.fire('Success', 'Asset moved to Scrap successfully!', 'success').then(() => {
+                        refreshSystem(); // Reload list
+                        form.reset();
+                        $('#assetSelect').val(null).trigger('change');
+                        $('#currentStatus').val('');
+                    });
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            })
+            .catch(err => Swal.fire('Error', 'Connection Failed', 'error'));
+        }
+
+        function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>
