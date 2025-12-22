@@ -88,10 +88,15 @@
                         <small class="text-white-50" style="font-size: 0.7rem;">SYSTEM STATUS</small>
                         <span id="connectionDot" class="badge bg-warning rounded-circle p-1" style="width: 10px; height: 10px;"> </span>
                     </div>
+                    
                     <div id="connectionText" class="fw-bold text-warning mb-1" style="font-size: 0.85rem;">
                         <i class="fas fa-plug me-1"></i> Connecting...
                     </div>
-                    <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">Last Sync: --:--</p>
+                    
+                    <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">
+                        Last Sync: --:--
+                    </p>
+                    
                     <button onclick="refreshSystem()" class="btn btn-sm btn-outline-light w-100" style="font-size: 0.75rem;">
                         <i class="fas fa-sync-alt me-1"></i> Force Refresh
                     </button>
@@ -122,7 +127,16 @@
         <div id="hoverChartCard" class="card"><div class="card-body p-2"><h6 class="text-center small fw-bold text-muted mb-2 border-bottom pb-1" id="hoverChartTitle">Breakdown</h6><div style="height: 180px;"><canvas id="hoverChartCanvas"></canvas></div></div></div>
         <div class="row g-4 mb-4"><div class="col-md-8"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Location-wise Asset Status</h6><div class="chart-wrapper"><canvas id="locationChart"></canvas></div></div></div><div class="col-md-4"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Assets per Employee</h6><div class="chart-wrapper"><canvas id="ownershipChart"></canvas></div></div></div></div>
         <div class="row g-4 mb-4"><div class="col-md-6"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Category Distribution</h6><div class="chart-wrapper"><canvas id="categoryChart"></canvas></div></div></div><div class="col-md-6"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Brand Distribution</h6><div class="chart-wrapper"><canvas id="brandChart"></canvas></div></div></div></div>
-        <div class="row g-4 mb-4"><div class="col-12"><div class="chart-box"><h6 class="text-muted mb-3 fw-bold">Overall Asset Status Distribution</h6><div class="chart-wrapper" style="height: 250px;"><canvas id="statusChart"></canvas></div></div></div></div>
+        
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="chart-box">
+                    <h6 class="text-muted mb-3 fw-bold">Overall Asset Status Distribution <span class="badge bg-info text-dark ms-2">Click Bars to View Data</span></h6>
+                    <div class="chart-wrapper" style="height: 250px;"><canvas id="statusChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        
         <div class="row"><div class="col-12"><div class="table-container"><h5 class="text-dark mb-3 fw-bold"><i class="fas fa-table me-2"></i>Location vs Status Summary</h5><div class="table-responsive"><table class="table table-bordered table-hover pivot-table text-center align-middle" id="pivotTable"><thead class="table-light"><tr><th>Loading...</th></tr></thead><tbody></tbody></table></div></div></div></div>
     </div>
 
@@ -144,7 +158,7 @@
 
     <script>
         // ***************** PASTE YOUR GAS WEB APP URL HERE *****************
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         // *******************************************************************
         
         document.getElementById("userNameDisplay").innerText = user.name;
@@ -160,17 +174,17 @@
             const statusText = document.getElementById('connectionText');
             const statusDot = document.getElementById('connectionDot');
             const timeEl = document.getElementById('lastRefreshed');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; btn.disabled = true;
+            if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; btn.disabled = true; }
             loadData().then(() => {
                 setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh'; btn.disabled = false;
+                    if(btn) { btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh'; btn.disabled = false; }
                     statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected'; statusText.className = 'fw-bold text-success mb-1';
                     statusDot.className = 'badge bg-success rounded-circle p-1'; timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
                     const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
                     toast.fire({ icon: 'success', title: 'Data Updated' });
                 }, 500);
             }).catch(err => {
-                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry'; btn.disabled = false;
+                if(btn) { btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry'; btn.disabled = false; }
                 statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error'; statusText.className = 'fw-bold text-danger mb-1';
                 statusDot.className = 'badge bg-danger rounded-circle p-1'; timeEl.innerText = 'Sync Failed';
             });
@@ -188,7 +202,7 @@
             } catch (error) { return Promise.reject(error); }
         }
 
-        // --- DASHBOARD LOGIC (FIXED) ---
+        // --- DASHBOARD LOGIC ---
         function processDashboard(assetData, empData) {
             // 1. Employees
             const empHeaders = empData[0];
@@ -210,11 +224,10 @@
             });
             const sortedEmpNames = Object.keys(empAssetCountMap).sort((a, b) => b.length - a.length);
 
-            // 2. Assets (FIXED INDICES HERE)
+            // 2. Assets
             const headers = assetData[0]; const rows = assetData.slice(1);
             const getIdx = (head, name) => head.findIndex(h => h.toString().toLowerCase().includes(name.toLowerCase()));
             
-            // --- FIX FOR CONSOLE ERROR: Define Constants BEFORE Loop ---
             const IDX_ID = getIdx(headers, "AssetID");
             const IDX_LOC = getIdx(headers, "Location");
             const IDX_CAT = getIdx(headers, "Category");
@@ -293,7 +306,23 @@
         function hideBreakdown() { document.getElementById("hoverChartCard").style.display="none"; }
         function renderStackedChart(id, map, stats, inst, setInst) { const c=document.getElementById(id).getContext('2d'), l=Object.keys(map).sort(); if(inst) inst.destroy(); setInst(new Chart(c, { type: 'bar', data: { labels: l, datasets: stats.map((s,i)=>({label:s,data:l.map(k=>map[k][s]||0),backgroundColor:['#1cc88a','#f6c23e','#e74a3b','#4e73df','#858796','#36b9cc'][i%6]})) }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } })); }
         function renderOwnershipChart(dist) { const c=document.getElementById('ownershipChart').getContext('2d'), l=Object.keys(dist).sort((a,b)=>parseInt(a)-parseInt(b)); if(ownChartInstance) ownChartInstance.destroy(); ownChartInstance = new Chart(c, { type: 'doughnut', data: { labels: l, datasets: [{ data: l.map(k=>dist[k]), backgroundColor: ['#4e73df','#1cc88a','#36b9cc'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } }); }
-        function renderStatusChart(map) { const ctx=document.getElementById("statusChart").getContext("2d"); if(statusChartInstance) statusChartInstance.destroy(); statusChartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(map), datasets: [{ label: 'Count', data: Object.values(map), backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#20c9a6', '#6610f2'], borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, onClick: (e, el) => { if (activeEls.length > 0) openStatusModal(Object.keys(map)[el[0].index]); } } }); }
+        
+        // --- FIXED CHART CLICK HANDLER ---
+        function renderStatusChart(map) { 
+            const ctx=document.getElementById("statusChart").getContext("2d"); 
+            if(statusChartInstance) statusChartInstance.destroy(); 
+            statusChartInstance = new Chart(ctx, { 
+                type: 'bar', 
+                data: { labels: Object.keys(map), datasets: [{ label: 'Count', data: Object.values(map), backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#4e73df', '#858796', '#36b9cc', '#20c9a6', '#6610f2'], borderRadius: 5 }] }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { y: { beginAtZero: true } }, 
+                    onClick: (e, el) => { if (el.length > 0) openStatusModal(Object.keys(map)[el[0].index]); } 
+                } 
+            }); 
+        }
+        
         function renderPivotTable(map, stats) { document.getElementById("pivotTable").innerHTML = `<thead class="table-light"><tr><th class="row-header">Location</th>${stats.map(s=>`<th>${s}</th>`).join('')}<th class="fw-bold-total">Total</th></tr></thead><tbody>${Object.keys(map).sort().map(l=>{let t=0; return `<tr><td class="row-header">${l}</td>${stats.map(s=>{const c=map[l][s]||0;t+=c;return `<td>${c||'-'}</td>`}).join('')}<td class="fw-bold-total">${t}</td></tr>`}).join('')}</tbody>`; }
 
         // --- CHATBOT LOGIC ---
