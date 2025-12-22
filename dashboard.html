@@ -75,11 +75,8 @@
             <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
             <a href="EmpHistory.html"><i class="fas fa-user-clock"></i> Emp History</a>
             <a href="Repair.html"><i class="fas fa-tools"></i> Maintenance</a>
-           
-            <a href="scrap.html"><i class="fas fa-tools"></i> Scrap Asset</a>
-             <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
+            <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
             <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
-            <a href="StockQC.html" class="active"><i class="fas fa-clipboard-check"></i> Stock QC</a>
         </div>
 
         <div class="sidebar-footer">
@@ -156,7 +153,7 @@
 
     <script>
         // ***************** PASTE YOUR GAS WEB APP URL HERE *****************
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         // *******************************************************************
         
         document.getElementById("userNameDisplay").innerText = user.name;
@@ -294,53 +291,24 @@
         function showInactiveModal() { const b = document.getElementById("inactiveTableBody"); b.innerHTML = inactiveAssetsList.length ? inactiveAssetsList.map(i => `<tr><td class="fw-bold text-danger">${i.assetId}</td><td>${i.serial}</td><td>${i.type}</td><td>${i.user}</td><td>${i.empId}</td></tr>`).join('') : "<tr><td colspan='5'>All Clear</td></tr>"; new bootstrap.Modal(document.getElementById('inactiveModal')).show(); }
         function downloadReport(type) { let d = []; if(type==='pending') d=pendingAllocationList; else if(type==='unnecessary') d=unnecessaryAllocList; else if(type==='inactive') d=inactiveAssetsList; if(d.length) { const l = document.createElement("a"); l.href = URL.createObjectURL(new Blob([Papa.unparse(d)], { type: 'text/csv' })); l.download = `${type}_report.csv`; l.click(); } }
         function showAvailableModal() { openCommonModal("Available Stock", availableAssetsList, ['Asset ID','Serial','Category','Brand','Location'], i => `<tr><td class="fw-bold text-primary">${i.id}</td><td>${i.serial}</td><td>${i.cat}</td><td>${i.brand}</td><td>${i.loc}</td></tr>`); }
-        function openStatusModal(status) { const list = allAssetRows.filter(r => r.status === status); if(status === 'In-Use') openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location','Assigned To','Category'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td class="text-primary fw-bold">${i.user}</td><td>${i.cat}</td></tr>`); else openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location','Category','Brand'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td>${i.cat}</td><td>${i.brand}</td></tr>`); }
+        
+        // --- FIXED STATUS MODAL LOGIC (NOW INCLUDES GIFT) ---
+        function openStatusModal(status) { 
+            const list = allAssetRows.filter(r => r.status === status); 
+            // Treat 'GIFT' like 'In-Use' to show Assigned To
+            if(status === 'In-Use' || status === 'GIFT') 
+                openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location', status === 'GIFT' ? 'Gifted To' : 'Assigned To', 'Category'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td class="text-primary fw-bold">${i.user}</td><td>${i.cat}</td></tr>`); 
+            else 
+                openCommonModal(`Details: ${status}`, list, ['Asset ID','Serial','Location','Category','Brand'], i => `<tr><td class="fw-bold">${i.id}</td><td>${i.serial}</td><td>${i.loc}</td><td>${i.cat}</td><td>${i.brand}</td></tr>`); 
+        }
+
         let commonRowBuilder = null; function openCommonModal(title, data, headers, rowFunc) { document.getElementById("commonModalTitle").innerText = title; document.getElementById("commonTableHead").innerHTML = `<tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr>`; currentDetailList = data; commonRowBuilder = rowFunc; renderCommonTable(data); new bootstrap.Modal(document.getElementById('commonDetailModal')).show(); }
         function renderCommonTable(data) { document.getElementById("commonTableBody").innerHTML = data.map(commonRowBuilder).join('') || "<tr><td colspan='5'>No Data</td></tr>"; }
         function filterCommonTable() { const input = document.getElementById("commonSearch").value.toLowerCase(); renderCommonTable(currentDetailList.filter(item => Object.values(item).some(val => val.toString().toLowerCase().includes(input)))); }
         function downloadCommonReport() { if(currentDetailList.length) { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(currentDetailList)], { type: 'text/csv' })); link.download = "List_Report.csv"; link.click(); } }
         function downloadAvailableReport() { const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([Papa.unparse(availableAssetsList)], { type: 'text/csv' })); link.download = "Available_Stock.csv"; link.click(); }
-        
-        // --- ADDED MISSING FUNCTIONS (FIX) ---
-        function showBreakdown(el, type) { 
-            const p=document.getElementById("hoverChartCard"); 
-            const r=el.getBoundingClientRect(); 
-            p.style.display="block"; 
-            p.style.top=(r.top+window.scrollY+10)+"px"; 
-            p.style.left=(r.left+r.width-20)+"px"; 
-            document.getElementById("hoverChartTitle").innerText=type.toUpperCase()+" Breakdown"; 
-            
-            const d=breakdownData[type] || {};
-            const l=Object.keys(d);
-            const v=Object.values(d); 
-            
-            if(l.length === 0){ l.push("No Data"); v.push(1); } 
-            
-            const c=document.getElementById("hoverChartCanvas").getContext("2d"); 
-            if(hoverChartInstance) hoverChartInstance.destroy(); 
-            
-            hoverChartInstance=new Chart(c,{
-                type:'doughnut',
-                data:{
-                    labels:l,
-                    datasets:[{
-                        data:v,
-                        backgroundColor:['#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b','#858796']
-                    }]
-                },
-                options:{
-                    responsive:true,
-                    maintainAspectRatio:false,
-                    animation:{duration:0},
-                    plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}
-                }
-            }); 
-        }
-
-        function hideBreakdown() { 
-            document.getElementById("hoverChartCard").style.display="none"; 
-        }
-
+        function showBreakdown(el, type) { const p=document.getElementById("hoverChartCard"); const r=el.getBoundingClientRect(); p.style.display="block"; p.style.top=(r.top+window.scrollY+10)+"px"; p.style.left=(r.left+r.width-20)+"px"; document.getElementById("hoverChartTitle").innerText=type.toUpperCase()+" Breakdown"; const d=breakdownData[type], l=Object.keys(d), v=Object.values(d); if(!l.length){l.push("No Data");v.push(1);} const c=document.getElementById("hoverChartCanvas").getContext("2d"); if(hoverChartInstance)hoverChartInstance.destroy(); hoverChartInstance=new Chart(c,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:['#4e73df','#1cc88a','#36b9cc','#f6c23e']}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}}}}}); }
+        function hideBreakdown() { document.getElementById("hoverChartCard").style.display="none"; }
         function renderStackedChart(id, map, stats, inst, setInst) { const c=document.getElementById(id).getContext('2d'), l=Object.keys(map).sort(); if(inst) inst.destroy(); setInst(new Chart(c, { type: 'bar', data: { labels: l, datasets: stats.map((s,i)=>({label:s,data:l.map(k=>map[k][s]||0),backgroundColor:['#1cc88a','#f6c23e','#e74a3b','#4e73df','#858796','#36b9cc'][i%6]})) }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } })); }
         function renderOwnershipChart(dist) { const c=document.getElementById('ownershipChart').getContext('2d'), l=Object.keys(dist).sort((a,b)=>parseInt(a)-parseInt(b)); if(ownChartInstance) ownChartInstance.destroy(); ownChartInstance = new Chart(c, { type: 'doughnut', data: { labels: l, datasets: [{ data: l.map(k=>dist[k]), backgroundColor: ['#4e73df','#1cc88a','#36b9cc'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } }); }
         
