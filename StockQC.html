@@ -27,6 +27,12 @@
         .check-label { font-weight: 600; color: #495057; margin-bottom: 0; }
         .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; }
         .btn-check:checked + .btn-outline-danger { background-color: #dc3545; color: white; }
+        
+        /* Filter Tabs */
+        .nav-pills .nav-link.active { background-color: #4e73df; }
+        .history-box { max-height: 200px; overflow-y: auto; background: #fdfdfd; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-top: 10px; }
+        .history-item { font-size: 0.85rem; border-bottom: 1px solid #eee; padding: 8px 0; }
+        .history-item:last-child { border-bottom: none; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -37,7 +43,6 @@
 
     <div class="sidebar">
         <h4 class="text-center mt-4 mb-4"><i class="fas fa-warehouse"></i> Gretex ERP</h4>
-        
         <div class="sidebar-menu">
             <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
             <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
@@ -52,23 +57,14 @@
             <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
             <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
         </div>
-
         <div class="sidebar-footer">
             <a href="#" onclick="logout()" class="mb-3 text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            
             <div class="card border-0 bg-dark text-white shadow-sm" style="background-color: #2c3e50 !important; border: 1px solid #4e5d6c !important;">
                 <div class="card-body p-2 text-center">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="text-white-50" style="font-size: 0.7rem;">SYSTEM STATUS</small>
-                        <span id="connectionDot" class="badge bg-warning rounded-circle p-1" style="width: 10px; height: 10px;"> </span>
-                    </div>
-                    <div id="connectionText" class="fw-bold text-warning mb-1" style="font-size: 0.85rem;">
-                        <i class="fas fa-plug me-1"></i> Connecting...
-                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2"><small class="text-white-50" style="font-size: 0.7rem;">SYSTEM STATUS</small><span id="connectionDot" class="badge bg-warning rounded-circle p-1" style="width: 10px; height: 10px;"> </span></div>
+                    <div id="connectionText" class="fw-bold text-warning mb-1" style="font-size: 0.85rem;"><i class="fas fa-plug me-1"></i> Connecting...</div>
                     <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">Last Sync: --:--</p>
-                    <button onclick="refreshSystem()" class="btn btn-sm btn-outline-light w-100" style="font-size: 0.75rem;">
-                        <i class="fas fa-sync-alt me-1"></i> Force Refresh
-                    </button>
+                    <button onclick="refreshSystem()" class="btn btn-sm btn-outline-light w-100" style="font-size: 0.75rem;"><i class="fas fa-sync-alt me-1"></i> Force Refresh</button>
                 </div>
             </div>
         </div>
@@ -78,23 +74,44 @@
         <h3 class="mb-4">Stock Readiness Check (QC)</h3>
         
         <div class="form-card">
-            <h5 class="mb-4 text-success"><i class="fas fa-check-circle me-2"></i> Verify "Ready to Use" Status</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-success m-0"><i class="fas fa-check-circle me-2"></i> Verify "Ready to Use" Status</h5>
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="filterQC" id="filterPending" value="Pending" checked onchange="applyFilter()">
+                    <label class="btn btn-outline-warning" for="filterPending">QC Pending</label>
+
+                    <input type="radio" class="btn-check" name="filterQC" id="filterDone" value="Done" onchange="applyFilter()">
+                    <label class="btn btn-outline-success" for="filterDone">QC Done (Ready)</label>
+
+                    <input type="radio" class="btn-check" name="filterQC" id="filterAll" value="All" onchange="applyFilter()">
+                    <label class="btn btn-outline-secondary" for="filterAll">Show All</label>
+                </div>
+            </div>
             
             <form id="qcForm">
                 <div class="row g-4">
                     
                     <div class="col-12">
                         <label class="form-label fw-bold">Select Available Asset</label>
-                        <select class="form-select select2" name="assetId" id="assetSelect" required>
+                        <select class="form-select select2" name="assetId" id="assetSelect" required onchange="loadAssetHistory(this.value)">
                             <option value="">Loading Stock...</option>
                         </select>
-                        <div class="form-text">Only 'Available' assets are shown.</div>
+                        <div class="form-text">Only 'Available' assets are shown based on filter.</div>
+                    </div>
+
+                    <div class="col-12" id="historySection" style="display:none;">
+                        <div class="alert alert-info">
+                            <strong><i class="fas fa-history me-2"></i> Previous QC History</strong>
+                            <div class="history-box" id="historyContent">
+                                Loading history...
+                            </div>
+                        </div>
                     </div>
 
                     <div class="col-12">
                         <div class="card bg-light border-0">
                             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                                <span class="fw-bold"><i class="fas fa-stethoscope me-2"></i> Full System Health Check</span>
+                                <span class="fw-bold"><i class="fas fa-stethoscope me-2"></i> Perform QC (New Check)</span>
                                 <button type="button" class="btn btn-sm btn-light fw-bold text-dark" onclick="markAllPass()">
                                     <i class="fas fa-magic me-1"></i> Mark All Pass
                                 </button>
@@ -128,7 +145,7 @@
 
                     <div class="col-12 mt-4">
                         <button type="submit" class="btn btn-success px-5 w-100 fw-bold">
-                            <i class="fas fa-save me-2"></i> Save QC Report
+                            <i class="fas fa-save me-2"></i> Save & Update QC Status
                         </button>
                     </div>
 
@@ -143,6 +160,8 @@
     <script>
         // *** PASTE YOUR GAS WEB APP URL HERE ***
         const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+
+        let globalAssets = [];
 
         $(document).ready(function() {
             $('.select2').select2();
@@ -175,26 +194,84 @@
             });
         }
 
-        // 1. FETCH AVAILABLE ASSETS
+        // 1. FETCH & STORE ASSETS
         function loadStockAssets() {
             return fetch(API_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "getAllocationData" }) // Reusing allocation data as it returns available assets
+                body: JSON.stringify({ action: "getAllocationData" }) 
             })
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
-                    const select = document.getElementById("assetSelect");
-                    select.innerHTML = '<option value="">-- Select Asset --</option>';
-                    if(result.assets.length === 0) select.innerHTML = '<option value="">No Stock Available</option>';
-                    result.assets.forEach(item => {
-                        let opt = document.createElement("option");
-                        opt.value = item.id;
-                        opt.text = item.name;
-                        select.appendChild(opt);
-                    });
+                    globalAssets = result.assets; // Store globally for filtering
+                    applyFilter(); // Initial Render
                     return Promise.resolve();
                 } else return Promise.reject();
+            });
+        }
+
+        // 2. FILTER ASSETS
+        function applyFilter() {
+            const filterType = document.querySelector('input[name="filterQC"]:checked').value;
+            const select = document.getElementById("assetSelect");
+            select.innerHTML = '<option value="">-- Select Asset --</option>';
+            $('#historySection').hide(); // Hide history on filter change
+
+            let filteredList = [];
+
+            if (filterType === 'All') {
+                filteredList = globalAssets;
+            } else if (filterType === 'Done') {
+                // Check if remarks contain [READY TO USE]
+                filteredList = globalAssets.filter(a => a.remarks && a.remarks.includes("[READY TO USE]"));
+            } else if (filterType === 'Pending') {
+                // Check if remarks DO NOT contain [READY TO USE]
+                filteredList = globalAssets.filter(a => !a.remarks || !a.remarks.includes("[READY TO USE]"));
+            }
+
+            if(filteredList.length === 0) select.innerHTML = '<option value="">No Matching Stock Found</option>';
+            
+            filteredList.forEach(item => {
+                let opt = document.createElement("option");
+                opt.value = item.id;
+                opt.text = item.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // 3. LOAD QC HISTORY
+        function loadAssetHistory(assetId) {
+            if (!assetId) {
+                $('#historySection').hide();
+                return;
+            }
+
+            $('#historySection').show();
+            document.getElementById('historyContent').innerHTML = '<div class="text-muted"><i class="fas fa-spinner fa-spin"></i> Checking Records...</div>';
+
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "getQCLogs", assetId: assetId })
+            })
+            .then(res => res.json())
+            .then(result => {
+                const box = document.getElementById('historyContent');
+                if (result.status === "success" && result.logs.length > 0) {
+                    let html = '';
+                    result.logs.forEach(log => {
+                        html += `<div class="history-item">
+                            <span class="fw-bold text-primary">${new Date(log.date).toLocaleDateString()}</span> 
+                            by <span class="fw-bold">${log.admin}</span>: 
+                            <span class="text-dark">${log.remarks}</span>
+                        </div>`;
+                    });
+                    box.innerHTML = html;
+                } else {
+                    box.innerHTML = '<div class="text-muted small">No previous QC records found.</div>';
+                }
+            })
+            .catch(() => {
+                document.getElementById('historyContent').innerHTML = '<div class="text-danger">Error loading history.</div>';
             });
         }
 
@@ -205,7 +282,7 @@
             document.querySelectorAll('input[type="radio"][value="Yes"]').forEach(r => r.checked = true);
         }
 
-        // 2. SUBMIT
+        // 4. SUBMIT
         document.getElementById("qcForm").addEventListener("submit", function(e) {
             e.preventDefault();
             const assetId = $('#assetSelect').val();
@@ -219,8 +296,8 @@
             if(userNote) report += " || Note: " + userNote;
 
             Swal.fire({
-                title: 'Mark as Ready?',
-                text: "This will tag the asset as 'Ready to Use' in the system.",
+                title: 'Confirm QC Status?',
+                text: "This will update the asset status to 'Ready to Use' and save this check.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#198754',
@@ -239,7 +316,6 @@
         function submitQC(assetId, report) {
             Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() });
 
-            // We use 'updateStockQC' action (Needs to be added in Code.gs)
             fetch(API_URL, {
                 method: "POST",
                 body: JSON.stringify({
@@ -253,8 +329,12 @@
             .then(result => {
                 if(result.status === "success") {
                     Swal.fire('Success', 'QC Saved Successfully!', 'success').then(() => {
+                        // Refresh logic to update remarks in memory without full reload if possible,
+                        // but refreshing system is safer to sync dropdowns.
+                        refreshSystem(); 
                         document.getElementById("qcForm").reset();
                         $('#assetSelect').val(null).trigger('change');
+                        $('#historySection').hide();
                     });
                 } else {
                     Swal.fire('Error', result.message, 'error');
