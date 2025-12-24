@@ -69,8 +69,12 @@
         <h3 class="mb-4">IT Onboarding & Offboarding</h3>
         
         <ul class="nav nav-tabs mb-4">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#newChecklist" onclick="toggleView('new')">New Checklist</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#historyView" onclick="loadHistory()">Search & Download History</a></li>
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#newChecklist" onclick="toggleView('new')">New Checklist</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#historyView" onclick="toggleView('history'); loadHistory()">Search & Download History</a>
+            </li>
         </ul>
 
         <div id="newView" class="form-card">
@@ -155,11 +159,14 @@
             renderChecklist('Entry'); 
         });
 
+        // FIX: Toggle view function updated
         function toggleView(view) {
             if(view === 'new') {
-                $('#newView').show(); $('#historyViewSection').hide();
+                $('#newView').show(); 
+                $('#historyViewSection').hide();
             } else {
-                $('#newView').hide(); $('#historyViewSection').show();
+                $('#newView').hide(); 
+                $('#historyViewSection').show();
             }
         }
 
@@ -203,8 +210,10 @@
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check chk-item" name="${id}" id="${id}_y" value="Done" ${mode==='Entry'?'checked':''} data-label="${item}">
                             <label class="btn btn-outline-success" for="${id}_y">Done</label>
+
                             <input type="radio" class="btn-check chk-item" name="${id}" id="${id}_p" value="Pending" ${mode==='Exit'?'checked':''}>
                             <label class="btn btn-outline-warning" for="${id}_p">Pending</label>
+
                             <input type="radio" class="btn-check chk-item" name="${id}" id="${id}_n" value="NA">
                             <label class="btn btn-outline-secondary" for="${id}_n">N/A</label>
                         </div>
@@ -219,15 +228,17 @@
             e.preventDefault();
             const empName = $('#empSelect').val();
             if(!empName) { Swal.fire('Error', 'Select Employee', 'warning'); return; }
+
             const mode = document.getElementById('checkType').value;
             
-            // Build Report String
+            // Build Report
             let reportArr = [];
             document.querySelectorAll('input[type=radio]:checked').forEach(radio => {
                 const label = radio.getAttribute('data-label');
                 reportArr.push(`${label}:${radio.value}`);
             });
             const rawRemarks = document.getElementById('remarksInput').value;
+            // Join with pipe and double pipe for remarks
             const finalReport = reportArr.join('|') + (rawRemarks ? `||Note:${rawRemarks}` : "");
 
             Swal.fire({
@@ -272,13 +283,16 @@
         // --- HISTORY & DOWNLOAD ---
         function loadHistory() {
             const tbody = document.getElementById('historyBody');
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Fetching Data...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center"><i class="fas fa-spinner fa-spin"></i> Fetching Data...</td></tr>';
             
             fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getChecklistHistory" }) })
             .then(res => res.json())
             .then(result => {
                 historyData = result.logs;
                 renderHistoryTable(historyData);
+            })
+            .catch(err => {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error Loading History</td></tr>';
             });
         }
 
@@ -289,12 +303,12 @@
             tbody.innerHTML = data.map(log => `
                 <tr>
                     <td>${new Date(log.date).toLocaleDateString()}</td>
-                    <td><span class="badge ${log.type==='IT_ENTRY'?'bg-success':'bg-danger'}">${log.type}</span></td>
+                    <td><span class="badge ${log.type==='IT_ENTRY'?'bg-success':'bg-danger'}">${log.type.replace('IT_','')}</span></td>
                     <td class="fw-bold">${log.empName}</td>
                     <td>${log.admin}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary" onclick="downloadOldPDF('${log.empName}', '${log.type}', '${log.remarks.replace(/'/g, "\\'")}', '${log.admin}', '${log.date}')">
-                            <i class="fas fa-file-download"></i> PDF
+                            <i class="fas fa-file-download me-1"></i> PDF
                         </button>
                     </td>
                 </tr>
@@ -313,16 +327,18 @@
             const doc = new jsPDF();
 
             // Header
-            doc.setFontSize(18);
-            doc.setTextColor(40, 116, 166);
-            doc.text("Gretex ERP - IT Checklist", 105, 15, null, null, "center");
+            doc.setFillColor(78, 115, 223); // Primary Blue
+            doc.rect(0, 0, 210, 20, 'F');
+            doc.setFontSize(16);
+            doc.setTextColor(255, 255, 255);
+            doc.text("Gretex ERP - IT Checklist Report", 14, 13);
             
-            doc.setFontSize(12);
             doc.setTextColor(0, 0, 0);
+            doc.setFontSize(11);
             doc.text(`Employee: ${empName}`, 14, 30);
             doc.text(`Type: ${type.replace('IT_', '')} Checklist`, 14, 38);
             doc.text(`Date: ${new Date(date).toLocaleDateString()}`, 150, 30);
-            doc.text(`IT Admin: ${adminName}`, 150, 38);
+            doc.text(`Admin: ${adminName}`, 150, 38);
 
             // Process Data string "Item:Status|Item2:Status||Note:..."
             const parts = rawData.split('||');
@@ -330,7 +346,10 @@
             const remarks = parts[1] || "";
 
             const tableRows = checks.map(c => {
-                const [item, status] = c.split(':');
+                const parts = c.split(':');
+                // Handle cases where item name might contain colons
+                const status = parts.pop();
+                const item = parts.join(':');
                 return [item, status];
             });
 
@@ -338,29 +357,35 @@
                 startY: 45,
                 head: [['Checkpoint Description', 'Status']],
                 body: tableRows,
-                theme: 'grid',
-                headStyles: { fillColor: [41, 128, 185] },
-                styles: { fontSize: 10 }
+                theme: 'striped',
+                headStyles: { fillColor: [78, 115, 223] },
+                styles: { fontSize: 10, cellPadding: 3 },
+                columnStyles: { 1: { fontStyle: 'bold', textColor: [40, 40, 40] } }
             });
 
             let finalY = doc.lastAutoTable.finalY + 10;
+            
             if(remarks) {
                 doc.setFontSize(10);
-                doc.text(`Remarks: ${remarks.replace('Note:', '')}`, 14, finalY);
-                finalY += 10;
+                doc.setTextColor(100);
+                doc.text("Remarks:", 14, finalY);
+                doc.setTextColor(0);
+                doc.text(remarks.replace('Note:', ''), 35, finalY);
+                finalY += 15;
             }
 
-            // Footer Signatures
-            doc.text("_______________________", 14, finalY + 30);
-            doc.text("Employee Signature", 14, finalY + 37);
-
-            doc.text("_______________________", 150, finalY + 30);
-            doc.text("IT Manager Signature", 150, finalY + 37);
+            // Footer
+            doc.setDrawColor(200);
+            doc.line(14, finalY + 25, 80, finalY + 25);
+            doc.line(130, finalY + 25, 196, finalY + 25);
+            doc.setFontSize(9);
+            doc.text("Employee Signature", 14, finalY + 30);
+            doc.text("IT Manager Signature", 130, finalY + 30);
 
             doc.save(`${empName}_${type}_Checklist.pdf`);
         }
 
-        // Wrapper for onclick in HTML string
+        // Wrapper for onclick in HTML string to handle scope issues
         window.downloadOldPDF = function(name, type, data, admin, date) {
             generatePDF(name, type, data, admin, date);
         }
