@@ -23,16 +23,16 @@
         .select2-container .select2-selection--single { height: 38px; line-height: 38px; }
 
         /* Checklist Styles */
-        .check-group { background: #f8f9fa; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; }
-        .check-label { font-weight: 600; color: #495057; margin-bottom: 0; }
+        .check-section-title { font-size: 0.9rem; font-weight: 700; color: #4e73df; border-bottom: 2px solid #eaecf4; padding-bottom: 5px; margin-bottom: 15px; margin-top: 10px; }
+        .check-group { background: #fff; padding: 5px 0; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+        .check-label { font-weight: 600; color: #555; margin-bottom: 0; max-width: 60%; }
+        
         .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; }
         .btn-check:checked + .btn-outline-danger { background-color: #dc3545; color: white; }
+        .btn-check:checked + .btn-outline-secondary { background-color: #6c757d; color: white; }
         
-        /* Filter Tabs */
-        .nav-pills .nav-link.active { background-color: #4e73df; }
         .history-box { max-height: 200px; overflow-y: auto; background: #fdfdfd; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-top: 10px; }
         .history-item { font-size: 0.85rem; border-bottom: 1px solid #eee; padding: 8px 0; }
-        .history-item:last-child { border-bottom: none; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -79,10 +79,8 @@
                 <div class="btn-group" role="group">
                     <input type="radio" class="btn-check" name="filterQC" id="filterPending" value="Pending" checked onchange="applyFilter()">
                     <label class="btn btn-outline-warning" for="filterPending">QC Pending</label>
-
                     <input type="radio" class="btn-check" name="filterQC" id="filterDone" value="Done" onchange="applyFilter()">
-                    <label class="btn btn-outline-success" for="filterDone">QC Done (Ready)</label>
-
+                    <label class="btn btn-outline-success" for="filterDone">QC Done</label>
                     <input type="radio" class="btn-check" name="filterQC" id="filterAll" value="All" onchange="applyFilter()">
                     <label class="btn btn-outline-secondary" for="filterAll">Show All</label>
                 </div>
@@ -92,47 +90,62 @@
                 <div class="row g-4">
                     
                     <div class="col-12">
-                        <label class="form-label fw-bold">Select Available Asset</label>
                         <select class="form-select select2" name="assetId" id="assetSelect" required onchange="loadAssetHistory(this.value)">
                             <option value="">Loading Stock...</option>
                         </select>
-                        <div class="form-text">Only 'Available' assets are shown based on filter.</div>
                     </div>
 
                     <div class="col-12" id="historySection" style="display:none;">
-                        <div class="alert alert-info">
-                            <strong><i class="fas fa-history me-2"></i> Previous QC History</strong>
-                            <div class="history-box" id="historyContent">
-                                Loading history...
-                            </div>
+                        <div class="alert alert-info py-2">
+                            <strong><i class="fas fa-history me-2"></i> Previous QC Logs</strong>
+                            <div class="history-box" id="historyContent">Loading...</div>
                         </div>
                     </div>
 
                     <div class="col-12">
                         <div class="card bg-light border-0">
                             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                                <span class="fw-bold"><i class="fas fa-stethoscope me-2"></i> Perform QC (New Check)</span>
+                                <span class="fw-bold"><i class="fas fa-tasks me-2"></i> Comprehensive Checklist</span>
                                 <button type="button" class="btn btn-sm btn-light fw-bold text-dark" onclick="markAllPass()">
-                                    <i class="fas fa-magic me-1"></i> Mark All Pass
+                                    <i class="fas fa-check-double me-1"></i> Pass All
                                 </button>
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <h6 class="text-muted border-bottom pb-2 mb-3">Hardware</h6>
-                                        <div class="check-group"><label class="check-label">Display / Screen</label><div class="btn-group"><input type="radio" class="btn-check chk" name="qc_scr" id="scr1" value="Pass"><label class="btn btn-sm btn-outline-success" for="scr1">Pass</label><input type="radio" class="btn-check chk" name="qc_scr" id="scr2" value="Fail"><label class="btn btn-sm btn-outline-danger" for="scr2">Fail</label></div></div>
-                                        <div class="check-group"><label class="check-label">Keyboard / Keys</label><div class="btn-group"><input type="radio" class="btn-check chk" name="qc_key" id="key1" value="Pass"><label class="btn btn-sm btn-outline-success" for="key1">Pass</label><input type="radio" class="btn-check chk" name="qc_key" id="key2" value="Fail"><label class="btn btn-sm btn-outline-danger" for="key2">Fail</label></div></div>
-                                        <div class="check-group"><label class="check-label">Camera / Mic</label><div class="btn-group"><input type="radio" class="btn-check chk" name="qc_cam" id="cam1" value="Pass"><label class="btn btn-sm btn-outline-success" for="cam1">Pass</label><input type="radio" class="btn-check chk" name="qc_cam" id="cam2" value="Fail"><label class="btn btn-sm btn-outline-danger" for="cam2">Fail</label></div></div>
-                                        <div class="check-group"><label class="check-label">Battery Backup</label><div class="btn-group"><input type="radio" class="btn-check chk" name="qc_bat" id="bat1" value="Pass"><label class="btn btn-sm btn-outline-success" for="bat1">Good</label><input type="radio" class="btn-check chk" name="qc_bat" id="bat2" value="Weak"><label class="btn btn-sm btn-outline-danger" for="bat2">Weak</label></div></div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="check-section-title">1. Physical Inspection</div>
+                                        <div class="check-group"><span>Body (Cracks/Dents)</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_1" id="q1_1a" value="Pass"><label class="btn btn-outline-success" for="q1_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_1" id="q1_1b" value="Fail"><label class="btn btn-outline-danger" for="q1_1b">X</label></div></div>
+                                        <div class="check-group"><span>Screws Intact</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_2" id="q1_2a" value="Pass"><label class="btn btn-outline-success" for="q1_2a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_2" id="q1_2b" value="Fail"><label class="btn btn-outline-danger" for="q1_2b">X</label></div></div>
+                                        <div class="check-group"><span>Cooling Vents</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_3" id="q1_3a" value="Pass"><label class="btn btn-outline-success" for="q1_3a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_3" id="q1_3b" value="Fail"><label class="btn btn-outline-danger" for="q1_3b">X</label></div></div>
+                                        <div class="check-group"><span>Ports (Physical)</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_4" id="q1_4a" value="Pass"><label class="btn btn-outline-success" for="q1_4a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_4" id="q1_4b" value="Fail"><label class="btn btn-outline-danger" for="q1_4b">X</label></div></div>
+                                        <div class="check-group"><span>Boot / Power On</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_5" id="q1_5a" value="Pass"><label class="btn btn-outline-success" for="q1_5a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_5" id="q1_5b" value="Fail"><label class="btn btn-outline-danger" for="q1_5b">X</label></div></div>
+                                        <div class="check-group"><span>Charging Indicator</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_6" id="q1_6a" value="Pass"><label class="btn btn-outline-success" for="q1_6a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_6" id="q1_6b" value="Fail"><label class="btn btn-outline-danger" for="q1_6b">X</label></div></div>
                                     </div>
 
-                                    <div class="col-md-6">
-                                        <h6 class="text-muted border-bottom pb-2 mb-3">System & Body</h6>
-                                        <div class="check-group"><label class="check-label">OS Booting</label><div class="btn-group"><input type="radio" class="btn-check chk" name="qc_os" id="os1" value="Pass"><label class="btn btn-sm btn-outline-success" for="os1">Fast</label><input type="radio" class="btn-check chk" name="qc_os" id="os2" value="Slow"><label class="btn btn-sm btn-outline-danger" for="os2">Slow</label></div></div>
-                                        <div class="check-group"><label class="check-label">Body Condition</label><div class="btn-group"><input type="radio" class="btn-check chk" name="qc_body" id="bod1" value="Clean"><label class="btn btn-sm btn-outline-success" for="bod1">Clean</label><input type="radio" class="btn-check chk" name="qc_body" id="bod2" value="Damage"><label class="btn btn-sm btn-outline-danger" for="bod2">Damage</label></div></div>
-                                        <div class="check-group"><label class="check-label">Wi-Fi / Drivers</label><div class="btn-group"><input type="radio" class="btn-check chk" name="qc_wifi" id="wf1" value="Pass"><label class="btn btn-sm btn-outline-success" for="wf1">OK</label><input type="radio" class="btn-check chk" name="qc_wifi" id="wf2" value="Fail"><label class="btn btn-sm btn-outline-danger" for="wf2">Fail</label></div></div>
-                                        <div class="check-group"><label class="check-label">Formatting Done?</label><div class="btn-group"><input type="radio" class="btn-check chk" name="qc_fmt" id="fmt1" value="Yes"><label class="btn btn-sm btn-outline-success" for="fmt1">Yes</label><input type="radio" class="btn-check chk" name="qc_fmt" id="fmt2" value="No"><label class="btn btn-sm btn-outline-danger" for="fmt2">No</label></div></div>
+                                    <div class="col-md-4">
+                                        <div class="check-section-title">2. Hardware Check</div>
+                                        <div class="check-group"><span>Display (Pixels/Line)</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_1" id="q2_1a" value="Pass"><label class="btn btn-outline-success" for="q2_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_1" id="q2_1b" value="Fail"><label class="btn btn-outline-danger" for="q2_1b">X</label></div></div>
+                                        <div class="check-group"><span>Keyboard Keys</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_2" id="q2_2a" value="Pass"><label class="btn btn-outline-success" for="q2_2a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_2" id="q2_2b" value="Fail"><label class="btn btn-outline-danger" for="q2_2b">X</label></div></div>
+                                        <div class="check-group"><span>Trackpad/Gestures</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_3" id="q2_3a" value="Pass"><label class="btn btn-outline-success" for="q2_3a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_3" id="q2_3b" value="Fail"><label class="btn btn-outline-danger" for="q2_3b">X</label></div></div>
+                                        <div class="check-group"><span>USB/HDMI Ports</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_4" id="q2_4a" value="Pass"><label class="btn btn-outline-success" for="q2_4a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_4" id="q2_4b" value="Fail"><label class="btn btn-outline-danger" for="q2_4b">X</label></div></div>
+                                        <div class="check-group"><span>Webcam/Mic/Speaker</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_5" id="q2_5a" value="Pass"><label class="btn btn-outline-success" for="q2_5a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_5" id="q2_5b" value="Fail"><label class="btn btn-outline-danger" for="q2_5b">X</label></div></div>
+                                        <div class="check-group"><span>Wi-Fi/Bluetooth</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_6" id="q2_6a" value="Pass"><label class="btn btn-outline-success" for="q2_6a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_6" id="q2_6b" value="Fail"><label class="btn btn-outline-danger" for="q2_6b">X</label></div></div>
+                                        <div class="check-group"><span>Fan Noise/Heat</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_7" id="q2_7a" value="Pass"><label class="btn btn-outline-success" for="q2_7a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_7" id="q2_7b" value="Fail"><label class="btn btn-outline-danger" for="q2_7b">X</label></div></div>
                                     </div>
+
+                                    <div class="col-md-4">
+                                        <div class="check-section-title">3. Software & Compliance</div>
+                                        <div class="check-group"><span>OS Activation</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q3_1" id="q3_1a" value="Pass"><label class="btn btn-outline-success" for="q3_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q3_1" id="q3_1b" value="Fail"><label class="btn btn-outline-danger" for="q3_1b">X</label></div></div>
+                                        <div class="check-group"><span>Drivers Updated</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q3_2" id="q3_2a" value="Pass"><label class="btn btn-outline-success" for="q3_2a">OK</label><input type="radio" class="btn-check qc-chk" name="q3_2" id="q3_2b" value="Fail"><label class="btn btn-outline-danger" for="q3_2b">X</label></div></div>
+                                        <div class="check-group"><span>Office/Teams Installed</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q3_3" id="q3_3a" value="Pass"><label class="btn btn-outline-success" for="q3_3a">OK</label><input type="radio" class="btn-check qc-chk" name="q3_3" id="q3_3b" value="Fail"><label class="btn btn-outline-danger" for="q3_3b">X</label></div></div>
+                                        <div class="check-group"><span>BitLocker/Encryption</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q3_4" id="q3_4a" value="Pass"><label class="btn btn-outline-success" for="q3_4a">OK</label><input type="radio" class="btn-check qc-chk" name="q3_4" id="q3_4b" value="NA"><label class="btn btn-outline-secondary" for="q3_4b">NA</label></div></div>
+                                        
+                                        <div class="check-section-title mt-3">4. Deep Diagnostics</div>
+                                        <div class="check-group"><span>BIOS/Time Check</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q4_1" id="q4_1a" value="Pass"><label class="btn btn-outline-success" for="q4_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q4_1" id="q4_1b" value="Fail"><label class="btn btn-outline-danger" for="q4_1b">X</label></div></div>
+                                        <div class="check-group"><span>SSD Health</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q4_2" id="q4_2a" value="Pass"><label class="btn btn-outline-success" for="q4_2a">OK</label><input type="radio" class="btn-check qc-chk" name="q4_2" id="q4_2b" value="Fail"><label class="btn btn-outline-danger" for="q4_2b">X</label></div></div>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -140,12 +153,12 @@
 
                     <div class="col-12">
                         <label class="form-label">QC Engineer Remarks</label>
-                        <textarea class="form-control" name="remarks" id="remarksInput" rows="2" placeholder="e.g. Ready for allocation, Installed Win 11..."></textarea>
+                        <textarea class="form-control" name="remarks" id="remarksInput" rows="2" placeholder="e.g. Ready for allocation, Installed Win 11, Battery at 85% health..."></textarea>
                     </div>
 
                     <div class="col-12 mt-4">
                         <button type="submit" class="btn btn-success px-5 w-100 fw-bold">
-                            <i class="fas fa-save me-2"></i> Save & Update QC Status
+                            <i class="fas fa-save me-2"></i> Save QC & Mark Ready
                         </button>
                     </div>
 
@@ -158,9 +171,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-        // *** PASTE YOUR GAS WEB APP URL HERE ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
-
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
         let globalAssets = [];
 
         $(document).ready(function() {
@@ -173,38 +184,29 @@
             const statusText = document.getElementById('connectionText');
             const statusDot = document.getElementById('connectionDot');
             const timeEl = document.getElementById('lastRefreshed');
-
             if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; btn.disabled = true; }
-
             loadStockAssets().then(() => {
                 setTimeout(() => {
                     if(btn) { btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh'; btn.disabled = false; }
-                    statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected';
-                    statusText.className = 'fw-bold text-success mb-1';
-                    statusDot.className = 'badge bg-success rounded-circle p-1';
-                    timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
+                    statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected'; statusText.className = 'fw-bold text-success mb-1';
+                    statusDot.className = 'badge bg-success rounded-circle p-1'; timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
                     const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
-                    toast.fire({ icon: 'success', title: 'Stock List Updated' });
+                    toast.fire({ icon: 'success', title: 'Stock Updated' });
                 }, 500);
             }).catch(() => {
                 if(btn) { btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry'; btn.disabled = false; }
-                statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error';
-                statusText.className = 'fw-bold text-danger mb-1';
-                statusDot.className = 'badge bg-danger rounded-circle p-1';
+                statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error'; statusText.className = 'fw-bold text-danger mb-1'; statusDot.className = 'badge bg-danger rounded-circle p-1';
             });
         }
 
         // 1. FETCH & STORE ASSETS
         function loadStockAssets() {
-            return fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getAllocationData" }) 
-            })
+            return fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getAllocationData" }) })
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
-                    globalAssets = result.assets; // Store globally for filtering
-                    applyFilter(); // Initial Render
+                    globalAssets = result.assets; 
+                    applyFilter(); 
                     return Promise.resolve();
                 } else return Promise.reject();
             });
@@ -215,71 +217,42 @@
             const filterType = document.querySelector('input[name="filterQC"]:checked').value;
             const select = document.getElementById("assetSelect");
             select.innerHTML = '<option value="">-- Select Asset --</option>';
-            $('#historySection').hide(); // Hide history on filter change
+            $('#historySection').hide();
 
             let filteredList = [];
+            if (filterType === 'All') filteredList = globalAssets;
+            else if (filterType === 'Done') filteredList = globalAssets.filter(a => a.remarks && a.remarks.includes("[READY TO USE]"));
+            else if (filterType === 'Pending') filteredList = globalAssets.filter(a => !a.remarks || !a.remarks.includes("[READY TO USE]"));
 
-            if (filterType === 'All') {
-                filteredList = globalAssets;
-            } else if (filterType === 'Done') {
-                // Check if remarks contain [READY TO USE]
-                filteredList = globalAssets.filter(a => a.remarks && a.remarks.includes("[READY TO USE]"));
-            } else if (filterType === 'Pending') {
-                // Check if remarks DO NOT contain [READY TO USE]
-                filteredList = globalAssets.filter(a => !a.remarks || !a.remarks.includes("[READY TO USE]"));
-            }
-
-            if(filteredList.length === 0) select.innerHTML = '<option value="">No Matching Stock Found</option>';
-            
+            if(filteredList.length === 0) select.innerHTML = '<option value="">No Matching Stock</option>';
             filteredList.forEach(item => {
                 let opt = document.createElement("option");
-                opt.value = item.id;
-                opt.text = item.name;
-                select.appendChild(opt);
+                opt.value = item.id; opt.text = item.name; select.appendChild(opt);
             });
         }
 
-        // 3. LOAD QC HISTORY
+        // 3. LOAD HISTORY
         function loadAssetHistory(assetId) {
-            if (!assetId) {
-                $('#historySection').hide();
-                return;
-            }
-
+            if (!assetId) { $('#historySection').hide(); return; }
             $('#historySection').show();
             document.getElementById('historyContent').innerHTML = '<div class="text-muted"><i class="fas fa-spinner fa-spin"></i> Checking Records...</div>';
-
-            fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getQCLogs", assetId: assetId })
-            })
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getQCLogs", assetId: assetId }) })
             .then(res => res.json())
             .then(result => {
                 const box = document.getElementById('historyContent');
                 if (result.status === "success" && result.logs.length > 0) {
                     let html = '';
                     result.logs.forEach(log => {
-                        html += `<div class="history-item">
-                            <span class="fw-bold text-primary">${new Date(log.date).toLocaleDateString()}</span> 
-                            by <span class="fw-bold">${log.admin}</span>: 
-                            <span class="text-dark">${log.remarks}</span>
-                        </div>`;
+                        html += `<div class="history-item"><span class="fw-bold text-primary">${new Date(log.date).toLocaleDateString()}</span> by <span class="fw-bold">${log.admin}</span>: <span class="text-dark">${log.remarks}</span></div>`;
                     });
                     box.innerHTML = html;
-                } else {
-                    box.innerHTML = '<div class="text-muted small">No previous QC records found.</div>';
-                }
-            })
-            .catch(() => {
-                document.getElementById('historyContent').innerHTML = '<div class="text-danger">Error loading history.</div>';
-            });
+                } else box.innerHTML = '<div class="text-muted small">No previous QC records.</div>';
+            }).catch(() => { document.getElementById('historyContent').innerHTML = '<div class="text-danger">Error loading history.</div>'; });
         }
 
         // --- QC Logic ---
         function markAllPass() {
             document.querySelectorAll('input[type="radio"][value="Pass"]').forEach(r => r.checked = true);
-            document.querySelectorAll('input[type="radio"][value="Clean"]').forEach(r => r.checked = true);
-            document.querySelectorAll('input[type="radio"][value="Yes"]').forEach(r => r.checked = true);
         }
 
         // 4. SUBMIT
@@ -288,59 +261,51 @@
             const assetId = $('#assetSelect').val();
             if(!assetId) { Swal.fire('Error', 'Select an Asset', 'warning'); return; }
 
-            // Construct Report
-            let report = "[READY TO USE] QC Passed on " + new Date().toLocaleDateString() + ". ";
-            report += `Screen:${getVal('qc_scr')} | Key:${getVal('qc_key')} | Cam:${getVal('qc_cam')} | Bat:${getVal('qc_bat')} | OS:${getVal('qc_os')} | Wifi:${getVal('qc_wifi')}`;
+            // Construct Comprehensive Report
+            const map = {
+                'q1_1': 'Body', 'q1_2': 'Screws', 'q1_3': 'Vents', 'q1_4': 'Ports(Phy)', 'q1_5': 'Boot', 'q1_6': 'Charging',
+                'q2_1': 'Disp', 'q2_2': 'Keys', 'q2_3': 'Trackpad', 'q2_4': 'USB/HDMI', 'q2_5': 'Cam/Mic', 'q2_6': 'Wifi/BT', 'q2_7': 'Fan',
+                'q3_1': 'OSAct', 'q3_2': 'Drvs', 'q3_3': 'Apps', 'q3_4': 'Encrypt',
+                'q4_1': 'BIOS', 'q4_2': 'SSD'
+            };
             
+            let issues = [];
+            for(const [key, label] of Object.entries(map)) {
+                const val = document.querySelector(`input[name="${key}"]:checked`)?.value;
+                if(val && val !== 'Pass' && val !== 'OK') issues.push(`${label}:${val}`);
+            }
+
+            const statusSummary = issues.length > 0 ? `[Issues: ${issues.join(', ')}]` : "[ALL SYSTEMS GO]";
             const userNote = document.getElementById("remarksInput").value;
-            if(userNote) report += " || Note: " + userNote;
+            const fullReport = `[READY TO USE] QC: ${statusSummary}` + (userNote ? ` || Note: ${userNote}` : "");
 
             Swal.fire({
-                title: 'Confirm QC Status?',
-                text: "This will update the asset status to 'Ready to Use' and save this check.",
+                title: 'Confirm QC?',
+                text: "Status will be marked 'Ready to Use'.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#198754',
-                confirmButtonText: 'Yes, Save QC'
+                confirmButtonText: 'Yes, Save'
             }).then((result) => {
-                if (result.isConfirmed) {
-                    submitQC(assetId, report);
-                }
+                if (result.isConfirmed) submitQC(assetId, fullReport);
             });
         });
 
-        function getVal(name) {
-            return document.querySelector(`input[name="${name}"]:checked`)?.value || '-';
-        }
-
         function submitQC(assetId, report) {
             Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() });
-
             fetch(API_URL, {
                 method: "POST",
-                body: JSON.stringify({
-                    action: "updateStockQC",
-                    assetId: assetId,
-                    user: user.name,
-                    remarks: report
-                })
+                body: JSON.stringify({ action: "updateStockQC", assetId: assetId, user: user.name, remarks: report })
             })
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
                     Swal.fire('Success', 'QC Saved Successfully!', 'success').then(() => {
-                        // Refresh logic to update remarks in memory without full reload if possible,
-                        // but refreshing system is safer to sync dropdowns.
-                        refreshSystem(); 
-                        document.getElementById("qcForm").reset();
-                        $('#assetSelect').val(null).trigger('change');
-                        $('#historySection').hide();
+                        refreshSystem(); document.getElementById("qcForm").reset();
+                        $('#assetSelect').val(null).trigger('change'); $('#historySection').hide();
                     });
-                } else {
-                    Swal.fire('Error', result.message, 'error');
-                }
-            })
-            .catch(err => Swal.fire('Error', 'Connection Failed', 'error'));
+                } else Swal.fire('Error', result.message, 'error');
+            }).catch(err => Swal.fire('Error', 'Connection Failed', 'error'));
         }
 
         function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
