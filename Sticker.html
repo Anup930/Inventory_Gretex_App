@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Asset Sticker Generator - Gretex ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Sidebar & Layout (Screen Only) */
+        @media screen {
+            .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; display: flex; flex-direction: column; }
+            .sidebar a { color: #aab8c5; padding: 12px 25px; display: flex; align-items: center; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
+            .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
+            .sidebar-menu { flex-grow: 1; overflow-y: auto; }
+            .sidebar-footer { padding: 20px; border-top: 1px solid #3e4b5b; background-color: #1a2530; }
+            .main-content { margin-left: 250px; padding: 30px; }
+            .form-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        }
+
+        /* STICKER DESIGN */
+        .sticker-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            padding: 20px;
+            background: white;
+        }
+
+        .sticker {
+            width: 280px;  /* Standard Label Size Width */
+            height: 140px; /* Height */
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            page-break-inside: avoid;
+        }
+
+        /* Modern Accent Strip */
+        .sticker::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background: #4e73df; /* Gretex Blue */
+            border-radius: 6px 0 0 6px;
+        }
+
+        .sticker-content {
+            flex: 1;
+            padding-left: 15px;
+        }
+
+        .company-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #666; font-weight: bold; margin-bottom: 5px; }
+        .asset-id { font-size: 22px; font-weight: 800; color: #222; font-family: 'Courier New', monospace; letter-spacing: -1px; margin-bottom: 2px; }
+        .asset-meta { font-size: 11px; color: #444; font-weight: 600; }
+        .location-tag { 
+            display: inline-block; 
+            background: #eee; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            margin-top: 5px; 
+            font-weight: bold;
+        }
+
+        .qr-box {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .qr-box img { width: 100%; height: auto; }
+
+        /* PRINT SETTINGS */
+        @media print {
+            body { background: white; margin: 0; padding: 0; }
+            .sidebar, .form-card, h3, .btn-print-area { display: none !important; }
+            .main-content { margin: 0; padding: 0; }
+            .sticker-container { display: block; padding: 0; }
+            .sticker { 
+                float: left; 
+                margin: 5px; 
+                border: 1px solid #000; /* Darker border for print */
+                box-shadow: none;
+            }
+            /* Adjust based on label paper, usually 2 or 3 per row */
+            .sticker { width: 45%; margin: 2.5%; height: 130px; } 
+        }
+    </style>
+    <script>
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        if (!user) window.location.href = "index.html";
+    </script>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h4 class="text-center mt-4 mb-4"><i class="fas fa-warehouse"></i> Gretex ERP</h4>
+        <div class="sidebar-menu">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
+            <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
+            <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
+            <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
+            <a href="Shift.html"><i class="fas fa-truck-moving"></i> Shift Asset</a>
+            <a href="Sticker.html" class="active"><i class="fas fa-tags"></i> Create Sticker</a>
+            <a href="StockQC.html"><i class="fas fa-clipboard-check"></i> Stock QC</a>
+            <a href="ITChecklist.html"><i class="fas fa-tasks"></i> IT Checklist</a>
+            <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
+            <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="#" onclick="logout()" class="mb-3 text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h3 class="mb-4">Asset Sticker Generator</h3>
+        
+        <div class="form-card">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Category</label>
+                    <select class="form-select" id="catSelect">
+                        <option value="L">Laptop (L)</option>
+                        <option value="D">Desktop (D)</option>
+                        <option value="T">Tablet (T)</option>
+                        <option value="P">Printer (P)</option>
+                        <option value="A">Accessory (A)</option>
+                        <option value="O">Other (O)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Year</label>
+                    <input type="number" class="form-control" id="yearInput" value="2025">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Start Sequence</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="seqInput" placeholder="001">
+                        <button class="btn btn-outline-secondary" type="button" onclick="fetchNextSeq()" title="Get Next Available">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Quantity</label>
+                    <input type="number" class="form-control" id="qtyInput" value="1" min="1" max="50">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Location</label>
+                    <input type="text" class="form-control" id="locInput" value="Kolkata">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100 fw-bold" onclick="generateStickers()">
+                        <i class="fas fa-magic me-2"></i> Generate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-print-area text-end mb-3" id="printBtnArea" style="display:none;">
+            <button class="btn btn-success fw-bold px-4" onclick="window.print()">
+                <i class="fas fa-print me-2"></i> Print Stickers
+            </button>
+        </div>
+
+        <div class="sticker-container" id="stickerOutput">
+            <div class="text-muted text-center py-5">
+                <i class="fas fa-tag fa-3x mb-3 text-secondary"></i><br>
+                Enter details and click Generate to see stickers.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
+
+        function fetchNextSeq() {
+            const cat = document.getElementById('catSelect').value;
+            const yr = document.getElementById('yearInput').value;
+            
+            const btn = document.querySelector('button[title="Get Next Available"]');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "getNextSequence", categoryCode: cat, year: yr })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === "success") {
+                    document.getElementById('seqInput').value = data.nextSeq;
+                }
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            });
+        }
+
+        function generateStickers() {
+            const cat = document.getElementById('catSelect').value;
+            const year = document.getElementById('yearInput').value;
+            let startSeq = parseInt(document.getElementById('seqInput').value);
+            const qty = parseInt(document.getElementById('qtyInput').value);
+            const loc = document.getElementById('locInput').value;
+
+            if(!startSeq || !qty) {
+                Swal.fire("Missing Info", "Please enter Sequence and Quantity", "warning");
+                return;
+            }
+
+            const container = document.getElementById('stickerOutput');
+            container.innerHTML = ""; // Clear previous
+
+            for(let i = 0; i < qty; i++) {
+                const currentSeq = startSeq + i;
+                // Pad sequence with leading zeros (e.g., 5 -> 005)
+                const seqString = currentSeq.toString().padStart(3, '0');
+                const assetId = `${cat}-${year}-${seqString}`;
+                
+                // Create Sticker DOM
+                const sticker = document.createElement('div');
+                sticker.className = 'sticker';
+                sticker.innerHTML = `
+                    <div class="sticker-content">
+                        <div class="company-name">GRETEX ERP ASSET</div>
+                        <div class="asset-id">${cat} | ${year} | ${seqString}</div>
+                        <div class="asset-meta">ID: ${assetId}</div>
+                        <div class="location-tag"><i class="fas fa-map-marker-alt me-1"></i> ${loc}</div>
+                    </div>
+                    <div class="qr-box" id="qr-${assetId}"></div>
+                `;
+                
+                container.appendChild(sticker);
+
+                // Generate QR Code
+                new QRCode(document.getElementById(`qr-${assetId}`), {
+                    text: assetId,
+                    width: 70,
+                    height: 70,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }
+
+            document.getElementById('printBtnArea').style.display = 'block';
+        }
+
+        function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>
