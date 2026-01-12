@@ -30,7 +30,7 @@
             padding: 12px 20px;
             transition: 0.3s;
         }
-        .sidebar a:hover, .sidebar a.active {
+        . a:hover, . a.active {
             background: #34495e;
             color: white;
             border-left: 4px solid #3498db;
@@ -197,12 +197,19 @@
 </head>
 <body>
 
-    <div class="sidebar">
-        <h4 class="text-center mb-4"><i class="fas fa-warehouse me-2"></i>Gretex ERP</h4>
-        <a href="#"><i class="fas fa-home me-2"></i>Dashboard</a>
-        <a href="#" class="active"><i class="fas fa-tags me-2"></i>Sticker Station</a>
-        <a href="#"><i class="fas fa-exchange-alt me-2"></i>Stock In/Out</a>
-    </div>
+    <div class="sidebar-menu">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
+            <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
+            <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
+            <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
+            <a href="Shift.html"><i class="fas fa-truck-moving"></i> Shift Asset</a>
+            <a href="Sticker.html" class="active"><i class="fas fa-tags"></i> Create Sticker</a>
+            <a href="StockQC.html"><i class="fas fa-clipboard-check"></i> Stock QC</a>
+            <a href="ITChecklist.html"><i class="fas fa-tasks"></i> IT Checklist</a>
+            <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
+            <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
+     </div>
 
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
