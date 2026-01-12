@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Details - Gretex</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #eef2f7; font-family: 'Segoe UI', sans-serif; }
+        .mobile-card { max-width: 600px; margin: 20px auto; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .header-bg { background: linear-gradient(135deg, #4e73df, #224abe); color: white; padding: 30px 20px; text-align: center; }
+        .status-badge { font-size: 0.9rem; padding: 5px 15px; border-radius: 20px; font-weight: bold; background: white; color: #333; display: inline-block; margin-top: 10px; }
+        .info-row { padding: 12px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .info-row:last-child { border-bottom: none; }
+        .label { color: #888; font-size: 0.85rem; font-weight: 600; }
+        .value { color: #333; font-weight: 600; font-size: 0.95rem; text-align: right; }
+        
+        .user-card { background: #f8f9fa; margin: 20px; padding: 15px; border-radius: 10px; border-left: 5px solid #1cc88a; }
+        .loading { text-align: center; padding: 50px; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="contentArea">
+            <div class="loading">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3">Fetching Asset Details...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // *** PASTE YOUR GAS WEB APP URL HERE ***
+        const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
+
+        // Get Asset ID from URL (e.g., scan.html?id=L-2025-500)
+        const params = new URLSearchParams(window.location.search);
+        const assetId = params.get('id');
+
+        if(assetId) {
+            fetchDetails(assetId);
+        } else {
+            document.getElementById('contentArea').innerHTML = '<div class="text-center p-5 text-danger"><h3>Invalid QR Code</h3><p>No Asset ID found.</p></div>';
+        }
+
+        function fetchDetails(id) {
+            fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "getAssetDetails", assetId: id })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    renderAsset(result.data);
+                } else {
+                    document.getElementById('contentArea').innerHTML = '<div class="text-center p-5 text-danger"><h3>Asset Not Found</h3><p>Please check the ID.</p></div>';
+                }
+            })
+            .catch(err => {
+                document.getElementById('contentArea').innerHTML = '<div class="text-center p-5 text-danger"><h3>Connection Error</h3></div>';
+            });
+        }
+
+        function renderAsset(data) {
+            let statusColor = data.state === 'In-Use' ? '#f6c23e' : (data.state === 'Available' ? '#1cc88a' : '#e74a3b');
+            let statusText = data.state === 'In-Use' ? 'text-warning' : (data.state === 'Available' ? 'text-success' : 'text-danger');
+
+            let html = `
+                <div class="mobile-card">
+                    <div class="header-bg">
+                        <i class="fas fa-laptop fa-3x mb-2"></i>
+                        <h2 class="m-0">${data.id}</h2>
+                        <div class="status-badge" style="color:${statusColor}">${data.state}</div>
+                    </div>
+
+                    ${data.state === 'In-Use' ? `
+                    <div class="user-card">
+                        <div class="label">CURRENTLY ASSIGNED TO</div>
+                        <div class="value" style="font-size:1.2rem; color:#1cc88a; text-align:left;">
+                            <i class="fas fa-user-circle me-2"></i> ${data.user}
+                        </div>
+                    </div>` : ''}
+
+                    <div class="info-row"><span class="label">Category</span><span class="value">${data.category}</span></div>
+                    <div class="info-row"><span class="label">Brand / Model</span><span class="value">${data.brand} ${data.model}</span></div>
+                    <div class="info-row"><span class="label">Serial No</span><span class="value text-break">${data.serial}</span></div>
+                    <div class="info-row"><span class="label">Configuration</span><span class="value text-break">${data.config}</span></div>
+                    <div class="info-row"><span class="label">Location</span><span class="value">${data.location}</span></div>
+                    <div class="info-row"><span class="label">Warranty</span><span class="value">${data.warranty}</span></div>
+                    
+                    ${data.remarks ? `<div class="p-3 bg-light m-3 rounded"><small class="text-muted">Remarks:</small><br><strong>${data.remarks}</strong></div>` : ''}
+                    
+                    <div class="text-center p-3">
+                        <small class="text-muted">GRETEX ERP SYSTEM</small>
+                    </div>
+                </div>
+            `;
+            document.getElementById('contentArea').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
