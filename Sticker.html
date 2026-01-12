@@ -22,198 +22,146 @@
             width: 250px;
             padding-top: 20px;
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
         }
+        .sidebar-menu { flex-grow: 1; overflow-y: auto; }
         .sidebar a {
             color: #b0b8c5;
             text-decoration: none;
             display: block;
             padding: 12px 20px;
             transition: 0.3s;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
         }
-        . a:hover, . a.active {
+        .sidebar a:hover, .sidebar a.active {
             background: #34495e;
             color: white;
             border-left: 4px solid #3498db;
         }
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-        }
-        .card-custom {
-            border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-radius: 8px;
-        }
+        .sidebar i { width: 25px; }
 
-        /* --- STICKER CARD DESIGN --- */
-        .sticker-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-        }
+        .main-content { margin-left: 250px; padding: 20px; }
+        .card-custom { border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-radius: 8px; }
+
+        /* --- SCREEN VIEW STICKER --- */
+        .sticker-container { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
         
         .sticker-card {
             width: 340px;
-            height: 170px;
+            height: 150px;
             background: white;
             border: 2px solid #000;
             border-radius: 8px;
-            padding: 15px;
+            padding: 8px 12px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             position: relative;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
-        /* Left Side: Info */
-        .sticker-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: 100%;
+        .sticker-info { flex: 1; display: flex; flex-direction: column; height: 100%; }
+        .sticker-id { font-size: 18px; font-weight: 800; color: #000; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sticker-meta { font-size: 10px; color: #333; line-height: 1.3; font-weight: 600; }
+        .sticker-meta span { font-weight: 400; color: #555; margin-left: 4px; }
+        .sticker-footer { margin-top: auto; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: #000; font-weight: bold; border-top: 1px solid #000; padding-top: 2px; width: 100%; text-align: center; }
+        .sticker-qr-section { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 85px; margin-left: 5px; height: 100%; }
+        .sticker-qr img { width: 70px; height: 70px; mix-blend-mode: multiply; }
+        .sticker-badge { background: #000; color: #fff; font-size: 8px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-top: 4px; text-transform: uppercase; text-align: center; width: 100%; }
+
+        /* --- BLANK STICKER LOGIC --- */
+        /* Screen par dikhna nahi chahiye, print par invisible hona chahiye par jagah leni chahiye */
+        .blank-sticker {
+            display: none; 
         }
 
-        .sticker-id {
-            font-size: 24px;
-            font-weight: 800;
-            color: #000;
-            margin-bottom: 8px;
-            letter-spacing: -0.5px;
-        }
-
-        .sticker-meta {
-            font-size: 11px;
-            color: #333;
-            line-height: 1.5;
-            font-weight: 600;
-        }
-
-        .sticker-meta span {
-            font-weight: 400;
-            color: #555;
-            margin-left: 4px;
-        }
-
-        .sticker-footer {
-            margin-top: auto;
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #666;
-            font-weight: bold;
-            border-top: 1px solid #ddd;
-            padding-top: 5px;
-            width: 90%;
-        }
-
-        /* Right Side: QR & Label */
-        .sticker-qr-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100px;
-            border-left: 1px dashed #ccc;
-            padding-left: 10px;
-            margin-left: 10px;
-        }
-
-        .sticker-qr img {
-            width: 85px;
-            height: 85px;
-            mix-blend-mode: multiply;
-        }
-
-        .sticker-badge {
-            background: #000;
-            color: #fff;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 2px 8px;
-            border-radius: 12px;
-            margin-top: 5px;
-            text-transform: uppercase;
-        }
-
-        /* --- FIXED PRINT SETTINGS (GRID LAYOUT) --- */
+        /* --- PRINT SETTINGS (STRICT GRID) --- */
         @media print {
-            /* 1. Hide specific UI elements */
             .sidebar, .card-custom, .d-flex, .nav, .modal, .btn, .header-title, .select2-container, h5, .swal2-container {
                 display: none !important;
             }
 
-            /* 2. Reset Body properties */
-            body, .main-content {
-                background-color: white !important;
+            html, body {
+                height: 100%;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+
+            .main-content {
                 margin: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
-                visibility: visible !important;
+                height: 100% !important;
             }
 
-            /* 3. Position and Format the Printable Section */
             #printableSection {
                 display: grid !important;
-                grid-template-columns: 1fr 1fr; /* 2 Stickers per row */
-                gap: 15px; /* Space between stickers */
-                position: absolute;
-                top: 0;
-                left: 0;
+                /* JS will inject: grid-template-columns & grid-template-rows */
                 width: 100%;
-                padding: 10px;
+                height: 98vh; /* Force full page height */
+                padding: 5mm; /* Small margin for printer */
+                box-sizing: border-box;
                 visibility: visible !important;
+                position: absolute;
+                top: 0; left: 0;
             }
 
-            /* 4. Ensure contents are visible */
             #printableSection * {
                 visibility: visible !important;
             }
 
             #stickerPreviewArea {
-                display: contents; /* Allows grid to apply to children */
+                display: contents; /* Children join the main grid */
             }
 
+            /* --- Sticker Logic for Print --- */
             .sticker-card {
                 width: 100% !important;
+                height: 100% !important; /* Fill the assigned grid cell */
                 box-shadow: none !important;
-                border: 2px solid #000 !important;
-                break-inside: avoid; /* Don't cut stickers in half */
+                border: 1px solid #000 !important;
+                break-inside: avoid;
                 page-break-inside: avoid;
                 margin: 0 !important;
+                padding: 5px !important;
+                box-sizing: border-box;
+                display: flex; /* Ensure internal layout holds */
             }
 
-            .sticker-badge {
-                background: #000 !important;
-                color: #fff !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+            /* --- Blank/Skip Logic for Print --- */
+            .blank-sticker {
+                display: flex !important; /* Grid cell fill karega */
+                visibility: hidden !important; /* Content hide */
+                border: none !important; /* Border hide */
+                box-shadow: none !important;
             }
+
+            /* Adjust fonts for small grid cells */
+            .sticker-id { font-size: 14px !important; }
+            .sticker-meta { font-size: 8px !important; }
+            .sticker-footer { font-size: 6px !important; }
+            .sticker-qr img { width: 50px !important; height: 50px !important; }
+            .sticker-badge { font-size: 7px !important; padding: 1px 3px !important; }
         }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-            <a href="dashboard.html" ><i class="fas fa-home"></i> Dashboard</a>
-            <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
-            <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
-            <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
-            <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
-            <a href="Shift.html"><i class="fas fa-truck-moving"></i> Shift Asset</a>
+        <h4 class="text-center mt-4 mb-4"><i class="fas fa-warehouse me-2"></i>Gretex ERP</h4>
+        <div class="sidebar-menu">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
             <a href="Sticker.html" class="active"><i class="fas fa-tags"></i> Create Sticker</a>
-            <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
-            <a href="EmpHistory.html"><i class="fas fa-user-clock"></i> Emp History</a>
-            <a href="Repair.html"><i class="fas fa-tools"></i> Maintenance</a>
-              <a href="scrap.html"><i class="fas fa-tools"></i> Scrap Asset</a>
+            <a href="asset.html"><i class="fas fa-laptop-medical"></i> Add Asset</a>
             <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
-            <a href="ITChecklist.html"><i class="fas fa-tasks"></i> IT Checklist</a>
-            <a href="data.html"><i class="fas fa-database"></i> Import / Export</a>
-            <a href="StockQC.html"><i class="fas fa-clipboard-check"></i> Stock QC</a>
-     </div>
+        </div>
+        <div class="p-3"><a href="index.html" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a></div>
+    </div>
 
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -225,9 +173,7 @@
             <div class="row g-2 align-items-end">
                 <div class="col-md-9">
                     <label class="form-label text-muted small">Search by Asset ID or Name</label>
-                    <select class="form-select" id="assetSelect">
-                        <option value="">Loading Assets...</option>
-                    </select>
+                    <select class="form-select" id="assetSelect"><option value="">Loading...</option></select>
                 </div>
                 <div class="col-md-3">
                     <button class="btn btn-warning w-100 fw-bold" onclick="openConfigModal()">
@@ -240,67 +186,69 @@
         <div class="card card-custom p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="m-0">Sticker Queue</h5>
-                <button class="btn btn-outline-primary btn-sm" onclick="loadQueue()">
-                    <i class="fas fa-sync-alt me-1"></i> Refresh
-                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="loadQueue()"><i class="fas fa-sync-alt me-1"></i> Refresh</button>
             </div>
-
             <div class="table-responsive" style="max-height: 200px; overflow-y:auto;">
                 <table class="table queue-table align-middle table-sm">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Asset ID</th>
-                            <th>Category</th>
-                            <th>Label</th>
-                            <th class="text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="queueTableBody">
-                        <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
-                    </tbody>
+                    <thead class="table-light"><tr><th>Asset ID</th><th>Category</th><th>Label</th><th class="text-center">Action</th></tr></thead>
+                    <tbody id="queueTableBody"><tr><td colspan="4" class="text-center text-muted">Loading...</td></tr></tbody>
                 </table>
             </div>
-
             <div class="d-flex justify-content-end gap-3 mt-3 border-top pt-3">
-                <button class="btn btn-dark px-4" onclick="window.print()">
-                    <i class="fas fa-print me-2"></i>Step 1: Print Stickers
-                </button>
-                <button class="btn btn-success px-4" id="btnMarkDone" onclick="markAsDone()" disabled>
-                    <i class="fas fa-check-circle me-2"></i>Step 2: Mark as Done
-                </button>
+                <button class="btn btn-dark px-4" onclick="openPrintSettings()"><i class="fas fa-print me-2"></i>Step 1: Print Stickers</button>
+                <button class="btn btn-success px-4" id="btnMarkDone" onclick="markAsDone()" disabled><i class="fas fa-check-circle me-2"></i>Step 2: Mark as Done</button>
             </div>
         </div>
 
         <div id="printableSection">
-            <h5 class="mb-3 text-secondary d-print-none"><i class="fas fa-eye me-2"></i>Live Print Preview</h5>
-            <div id="stickerPreviewArea" class="sticker-container">
-                </div>
+            <div id="stickerPreviewArea" class="sticker-container"></div>
         </div>
-
     </div>
 
     <div class="modal fade" id="configModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title">Configure Stickers</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header bg-warning text-dark"><h5 class="modal-title">Configure Stickers</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <input type="hidden" id="modalAssetId">
-                    <input type="hidden" id="modalAssetName">
+                    <input type="hidden" id="modalAssetId"><input type="hidden" id="modalAssetName">
                     <p class="fw-bold mb-3 text-primary" id="modalAssetDisplay">Selected: None</p>
-
-                    <div class="mb-3">
-                        <label class="form-label">Quantity</label>
-                        <input type="number" id="stickerQty" class="form-control" value="1" min="1" onchange="renderStickerInputs()">
-                    </div>
-
+                    <div class="mb-3"><label class="form-label">Quantity</label><input type="number" id="stickerQty" class="form-control" value="1" min="1" onchange="renderStickerInputs()"></div>
                     <div id="stickerInputContainer"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-dark" onclick="confirmAndAddStickers()">Confirm & Add</button>
+                <div class="modal-footer"><button type="button" class="btn btn-dark" onclick="confirmAndAddStickers()">Confirm & Add</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="printSettingsModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white"><h5 class="modal-title">Page Layout (A4)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Columns per Row</label>
+                        <input type="number" id="printCols" class="form-control" value="2" min="1" max="5">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rows per Page</label>
+                        <input type="number" id="printRows" class="form-control" value="4" min="1" max="10">
+                        <div class="form-text small">Use 8 for standard small labels.</div>
+                    </div>
+                    
+                    <hr>
+                    <p class="small text-muted fw-bold mb-2">Resume Printing (Skip Used):</p>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small">Start Row</label>
+                            <input type="number" id="startRow" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">Start Col</label>
+                            <input type="number" id="startCol" class="form-control" value="1" min="1">
+                        </div>
+                    </div>
                 </div>
+                <div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="applyPrintSettings()">Print Now</button></div>
             </div>
         </div>
     </div>
@@ -311,69 +259,105 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // 👇👇👇 REPLACE WITH YOUR GAS SCRIPT URL 👇👇👇
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
-
-        // 👇👇👇 YOUR SCAN PAGE URL (User ne diya) 👇👇👇
-        const SCAN_BASE_URL = "https://anup930.github.io/Inventory_Gretex_App/scan.html";
-
+        const SCAN_BASE_URL = "https://anup930.github.io/Inventory_Gretex_App/scan.html"; 
         const STICKER_TYPES = ["Laptop", "Desktop", "Charger", "Keyboard", "Mouse", "Monitor", "Bag", "Main Asset", "Other"];
         const DEFAULT_SEQUENCE = ["Laptop", "Charger", "Keyboard", "Mouse", "Bag"]; 
 
         $(document).ready(function() {
-            // Select2 init
-            $('#assetSelect').select2({ 
-                theme: 'bootstrap-5', 
-                width: '100%',
-                placeholder: "-- Search Pending Asset --"
-            });
-
+            $('#assetSelect').select2({ theme: 'bootstrap-5', width: '100%', placeholder: "-- Search Pending Asset --" });
             loadPendingAssets();
             loadQueue();
-            
             document.getElementById('stickerQty').addEventListener('input', renderStickerInputs);
-            window.addEventListener("afterprint", () => {
-                document.getElementById('btnMarkDone').disabled = false;
-            });
+            window.addEventListener("afterprint", () => { document.getElementById('btnMarkDone').disabled = false; });
         });
 
-        // 1. LOAD QUEUE & GENERATE LINKED QR CODES
+        // --- STRICT GRID LOGIC WITH SKIP/OFFSET ---
+        function openPrintSettings() {
+            const rows = document.querySelectorAll('#queueTableBody tr');
+            if(rows.length === 0 || rows[0].innerText.includes("Loading")) {
+                Swal.fire("Queue Empty", "Add stickers first.", "warning");
+                return;
+            }
+            new bootstrap.Modal(document.getElementById('printSettingsModal')).show();
+        }
+
+        function applyPrintSettings() {
+            // 1. Get Values
+            const cols = parseInt(document.getElementById('printCols').value) || 2;
+            const rows = parseInt(document.getElementById('printRows').value) || 4;
+            const startRow = parseInt(document.getElementById('startRow').value) || 1;
+            const startCol = parseInt(document.getElementById('startCol').value) || 1;
+            
+            // Limit checks
+            const safeCols = Math.min(Math.max(cols, 1), 10);
+            const safeRows = Math.min(Math.max(rows, 1), 12);
+
+            // 2. CSS Grid Style Injection
+            const styleId = 'dynamic-print-style';
+            let oldStyle = document.getElementById(styleId);
+            if(oldStyle) oldStyle.remove();
+
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.innerHTML = `
+                @media print {
+                    #printableSection {
+                        /* Force exact grid division based on inputs */
+                        grid-template-columns: repeat(${safeCols}, 1fr) !important;
+                        grid-template-rows: repeat(${safeRows}, 1fr) !important; 
+                        gap: 5px !important;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // 3. HANDLE SKIP LOGIC (Insert Blank Divs)
+            // Remove old blanks first
+            $('.blank-sticker').remove();
+
+            // Calculate how many slots to skip: ((Row-1)*TotalCols) + (Col-1)
+            const blankCount = ((startRow - 1) * safeCols) + (startCol - 1);
+            
+            let blankHTML = '';
+            for(let i=0; i<blankCount; i++) {
+                // Ye div screen pe display:none rahega CSS ki wajah se
+                blankHTML += `<div class="sticker-card blank-sticker"></div>`;
+            }
+            
+            // Prepend blanks to the preview area
+            $('#stickerPreviewArea').prepend(blankHTML);
+
+            // 4. Print
+            bootstrap.Modal.getInstance(document.getElementById('printSettingsModal')).hide();
+            setTimeout(() => window.print(), 500);
+        }
+
         function loadQueue() {
             const tbody = document.getElementById('queueTableBody');
             const previewArea = document.getElementById('stickerPreviewArea');
-            
             tbody.innerHTML = '<tr><td colspan="4" class="text-center">Refreshing...</td></tr>';
-            previewArea.innerHTML = '<div class="text-muted p-3">Loading Preview...</div>';
+            previewArea.innerHTML = '<div class="text-muted p-3 text-center">Loading Preview...</div>';
 
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getStickerQueue" })
-            })
+            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "getStickerQueue" }) })
             .then(res => res.json())
             .then(data => {
                 tbody.innerHTML = '';
                 previewArea.innerHTML = '';
-
                 if(data.status === "success" && data.queue.length > 0) {
-                    
                     data.queue.forEach(item => {
-                        // A. Table Row
                         tbody.innerHTML += `
                             <tr>
                                 <td class="fw-bold">${item.id}</td>
                                 <td>${item.category || '-'}</td>
                                 <td><span class="badge bg-info text-dark">${item.label}</span></td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteItem(${item.rowIndex})"><i class="fas fa-trash"></i></button>
-                                </td>
+                                <td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="deleteItem(${item.rowIndex})"><i class="fas fa-trash"></i></button></td>
                             </tr>`;
 
-                        // B. QR CODE LINK GENERATION (Crucial Step)
                         const qrLink = `${SCAN_BASE_URL}?id=${item.id}`;
                         const qrData = encodeURIComponent(qrLink);
                         const qrUrl = `https://quickchart.io/qr?text=${qrData}&size=160&margin=1`;
 
-                        // C. Sticker Design
                         const stickerHTML = `
                             <div class="sticker-card">
                                 <div class="sticker-info">
@@ -381,29 +365,24 @@
                                     <div class="sticker-meta">
                                         <div>S/N: <span>${item.serial || 'N/A'}</span></div>
                                         <div>Model: <span>${item.brand} ${item.model}</span></div>
-                                        <div>Config: <span>${item.config || '-'}</span></div>
-                                        </div>
+                                    </div>
                                     <div class="sticker-footer">Property of Gretex</div>
                                 </div>
                                 <div class="sticker-qr-section">
-                                    <div class="sticker-qr">
-                                        <img src="${qrUrl}" alt="Scan to View">
-                                    </div>
+                                    <div class="sticker-qr"><img src="${qrUrl}" alt="QR"></div>
                                     <div class="sticker-badge">${item.label}</div>
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
                         previewArea.innerHTML += stickerHTML;
                     });
-
                 } else {
                     tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Queue is empty</td></tr>';
-                    previewArea.innerHTML = '<div class="text-muted p-3"><i>Add assets to see sticker preview.</i></div>';
+                    previewArea.innerHTML = '<div class="text-muted p-3 text-center"><i>Add assets to see sticker preview.</i></div>';
                 }
             });
         }
 
-        // 2. LOAD ASSETS
+        // --- Helper Functions ---
         function loadPendingAssets() {
             fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "getPendingAssets" }) })
             .then(res => res.json())
@@ -411,17 +390,11 @@
                 const select = $('#assetSelect');
                 select.empty();
                 select.append('<option value="">-- Select Asset --</option>');
-                
-                if(data.status === "success") {
-                    data.assets.forEach(asset => {
-                        select.append(new Option(asset.name, asset.id));
-                    });
-                }
+                if(data.status === "success") { data.assets.forEach(asset => select.append(new Option(asset.name, asset.id))); }
                 select.trigger('change'); 
             });
         }
 
-        // 3. HELPERS
         function openConfigModal() {
             const assetId = $('#assetSelect').val();
             if (!assetId) { Swal.fire("Wait!", "Select an asset first.", "warning"); return; }
@@ -458,10 +431,8 @@
             const btn = document.querySelector('#configModal .btn-dark');
             btn.innerText = "Adding..."; btn.disabled = true;
 
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "addToStickerQueue", assetId, assetName, labels, user: "Admin" })
-            }).then(() => {
+            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "addToStickerQueue", assetId, assetName, labels, user: "Admin" }) })
+            .then(() => {
                 bootstrap.Modal.getInstance(document.getElementById('configModal')).hide();
                 btn.innerText = "Confirm & Add"; btn.disabled = false;
                 loadQueue();
@@ -470,25 +441,16 @@
 
         function deleteItem(rowIndex) {
             if(!confirm("Remove sticker?")) return;
-            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "deleteFromQueue", rowIndex }) })
-            .then(() => loadQueue());
+            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "deleteFromQueue", rowIndex }) }).then(() => loadQueue());
         }
 
         function markAsDone() {
             Swal.fire({
-                title: "Mark as Printed?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Yes, Completed"
+                title: "Mark as Printed?", icon: "question", showCancelButton: true, confirmButtonText: "Yes, Completed"
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "markStickersGenerated" }) })
-                    .then(() => { 
-                        Swal.fire("Success", "Updated", "success"); 
-                        loadQueue(); 
-                        loadPendingAssets(); 
-                        document.getElementById('btnMarkDone').disabled = true;
-                    });
+                    .then(() => { Swal.fire("Success", "Updated", "success"); loadQueue(); loadPendingAssets(); document.getElementById('btnMarkDone').disabled = true; });
                 }
             });
         }
