@@ -44,7 +44,7 @@
             align-items: center;
             position: relative;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            page-break-inside: avoid;
+            page-break-inside: avoid; /* Prevents cutting in print */
         }
 
         /* Modern Accent Strip */
@@ -96,11 +96,12 @@
             .sticker { 
                 float: left; 
                 margin: 5px; 
-                border: 1px solid #000; /* Darker border for print */
+                border: 1px solid #000; /* Darker border for print clarity */
                 box-shadow: none;
-            }
-            /* Adjust based on label paper, usually 2 or 3 per row */
-            .sticker { width: 45%; margin: 2.5%; height: 130px; } 
+                width: 45%; /* Fits 2 per row roughly */
+                margin: 2.5%; 
+                height: 130px; 
+            } 
         }
     </style>
     <script>
@@ -131,7 +132,7 @@
     </div>
 
     <div class="main-content">
-        <h3 class="mb-4">Asset Sticker Generator</h3>
+        <h3 class="mb-4">Asset Sticker Generator (QR Link)</h3>
         
         <div class="form-card">
             <div class="row g-3 align-items-end">
@@ -190,7 +191,11 @@
     </div>
 
     <script>
+        // *** PASTE YOUR GAS WEB APP URL HERE ***
         const API_URL = "YOUR_DEPLOYED_GAS_URL_HERE"; 
+
+        // *** URL FOR SCAN PAGE (Based on your screenshots) ***
+        const BASE_URL = "https://anup930.github.io/Inventory_Gretex_App/scan.html"; 
 
         function fetchNextSeq() {
             const cat = document.getElementById('catSelect').value;
@@ -209,6 +214,9 @@
                     document.getElementById('seqInput').value = data.nextSeq;
                 }
                 btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            })
+            .catch(() => {
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
             });
         }
 
@@ -248,9 +256,10 @@
                 
                 container.appendChild(sticker);
 
-                // Generate QR Code
+                // Generate QR Code with Full URL
+                // This creates a scan-able link!
                 new QRCode(document.getElementById(`qr-${assetId}`), {
-                    text: assetId,
+                    text: `${BASE_URL}?id=${assetId}`, 
                     width: 70,
                     height: 70,
                     colorDark : "#000000",
