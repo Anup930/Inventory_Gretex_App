@@ -74,7 +74,6 @@
         .sticker-badge { background: #000; color: #fff; font-size: 8px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-top: 4px; text-transform: uppercase; text-align: center; width: 100%; }
 
         /* --- BLANK STICKER LOGIC --- */
-        /* Screen par dikhna nahi chahiye, print par invisible hona chahiye par jagah leni chahiye */
         .blank-sticker {
             display: none; 
         }
@@ -101,10 +100,9 @@
 
             #printableSection {
                 display: grid !important;
-                /* JS will inject: grid-template-columns & grid-template-rows */
+                /* JS will inject: grid-template-columns, grid-template-rows & margins */
                 width: 100%;
-                height: 98vh; /* Force full page height */
-                padding: 5mm; /* Small margin for printer */
+                height: 98vh; 
                 box-sizing: border-box;
                 visibility: visible !important;
                 position: absolute;
@@ -116,32 +114,31 @@
             }
 
             #stickerPreviewArea {
-                display: contents; /* Children join the main grid */
+                display: contents;
             }
 
             /* --- Sticker Logic for Print --- */
             .sticker-card {
                 width: 100% !important;
-                height: 100% !important; /* Fill the assigned grid cell */
+                height: 100% !important;
                 box-shadow: none !important;
                 border: 1px solid #000 !important;
                 break-inside: avoid;
                 page-break-inside: avoid;
                 margin: 0 !important;
-                padding: 5px !important;
+                /* Padding will be injected via JS */
                 box-sizing: border-box;
-                display: flex; /* Ensure internal layout holds */
+                display: flex;
             }
 
             /* --- Blank/Skip Logic for Print --- */
             .blank-sticker {
-                display: flex !important; /* Grid cell fill karega */
-                visibility: hidden !important; /* Content hide */
-                border: none !important; /* Border hide */
+                display: flex !important;
+                visibility: hidden !important;
+                border: none !important;
                 box-shadow: none !important;
             }
 
-            /* Adjust fonts for small grid cells */
             .sticker-id { font-size: 14px !important; }
             .sticker-meta { font-size: 8px !important; }
             .sticker-footer { font-size: 6px !important; }
@@ -235,27 +232,36 @@
     <div class="modal fade" id="printSettingsModal" tabindex="-1">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
-                <div class="modal-header bg-dark text-white"><h5 class="modal-title">Page Layout (A4)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header bg-dark text-white"><h5 class="modal-title">Layout Settings</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small">Page Margin (mm)</label>
+                            <input type="number" id="pageMargin" class="form-control" value="0.5" step="0.1" min="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">Sticker Padding (mm)</label>
+                            <input type="number" id="stickerPadding" class="form-control" value="0.5" step="0.1" min="0">
+                        </div>
+                    </div>
+                    <hr>
                     <div class="mb-3">
-                        <label class="form-label">Columns per Row</label>
+                        <label class="form-label small">Columns per Row</label>
                         <input type="number" id="printCols" class="form-control" value="2" min="1" max="5">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Rows per Page</label>
+                        <label class="form-label small">Rows per Page</label>
                         <input type="number" id="printRows" class="form-control" value="4" min="1" max="10">
-                        <div class="form-text small">Use 8 for standard small labels.</div>
                     </div>
-                    
                     <hr>
-                    <p class="small text-muted fw-bold mb-2">Resume Printing (Skip Used):</p>
+                    <p class="small text-muted fw-bold mb-2">Start From (Skip Used):</p>
                     <div class="row g-2">
                         <div class="col-6">
-                            <label class="form-label small">Start Row</label>
+                            <label class="form-label small">Row</label>
                             <input type="number" id="startRow" class="form-control" value="1" min="1">
                         </div>
                         <div class="col-6">
-                            <label class="form-label small">Start Col</label>
+                            <label class="form-label small">Column</label>
                             <input type="number" id="startCol" class="form-control" value="1" min="1">
                         </div>
                     </div>
@@ -284,7 +290,7 @@
             window.addEventListener("afterprint", () => { document.getElementById('btnMarkDone').disabled = false; });
         });
 
-        // --- STRICT GRID LOGIC WITH SKIP/OFFSET ---
+        // --- UPDATED PRINT LOGIC ---
         function openPrintSettings() {
             const rows = document.querySelectorAll('#queueTableBody tr');
             if(rows.length === 0 || rows[0].innerText.includes("Loading")) {
@@ -295,17 +301,21 @@
         }
 
         function applyPrintSettings() {
-            // 1. Get Values
+            // Get Grid Values
             const cols = parseInt(document.getElementById('printCols').value) || 2;
             const rows = parseInt(document.getElementById('printRows').value) || 4;
             const startRow = parseInt(document.getElementById('startRow').value) || 1;
             const startCol = parseInt(document.getElementById('startCol').value) || 1;
             
-            // Limit checks
+            // Get Margin & Padding Values
+            const pageMargin = document.getElementById('pageMargin').value || 0.5;
+            const stickerPad = document.getElementById('stickerPadding').value || 0.5;
+
+            // Safe Limits
             const safeCols = Math.min(Math.max(cols, 1), 10);
             const safeRows = Math.min(Math.max(rows, 1), 12);
 
-            // 2. CSS Grid Style Injection
+            // Inject Dynamic CSS
             const styleId = 'dynamic-print-style';
             let oldStyle = document.getElementById(styleId);
             if(oldStyle) oldStyle.remove();
@@ -315,32 +325,27 @@
             style.innerHTML = `
                 @media print {
                     #printableSection {
-                        /* Force exact grid division based on inputs */
                         grid-template-columns: repeat(${safeCols}, 1fr) !important;
-                        grid-template-rows: repeat(${safeRows}, 1fr) !important; 
-                        gap: 5px !important;
+                        grid-template-rows: repeat(${safeRows}, 1fr) !important;
+                        gap: 2mm !important;
+                        padding: ${pageMargin}mm !important; /* User Defined Page Margin */
+                    }
+                    .sticker-card {
+                        padding: ${stickerPad}mm !important; /* User Defined Sticker Padding */
                     }
                 }
             `;
             document.head.appendChild(style);
 
-            // 3. HANDLE SKIP LOGIC (Insert Blank Divs)
-            // Remove old blanks first
+            // Skip Logic (Invisible Placeholders)
             $('.blank-sticker').remove();
-
-            // Calculate how many slots to skip: ((Row-1)*TotalCols) + (Col-1)
             const blankCount = ((startRow - 1) * safeCols) + (startCol - 1);
-            
             let blankHTML = '';
             for(let i=0; i<blankCount; i++) {
-                // Ye div screen pe display:none rahega CSS ki wajah se
                 blankHTML += `<div class="sticker-card blank-sticker"></div>`;
             }
-            
-            // Prepend blanks to the preview area
             $('#stickerPreviewArea').prepend(blankHTML);
 
-            // 4. Print
             bootstrap.Modal.getInstance(document.getElementById('printSettingsModal')).hide();
             setTimeout(() => window.print(), 500);
         }
