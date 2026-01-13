@@ -50,9 +50,11 @@
             <a href="allocate.html"><i class="fas fa-hand-holding"></i> Allocate Asset</a>
             <a href="Return.html"><i class="fas fa-undo"></i> Return Asset</a>
             <a href="Shift.html"><i class="fas fa-truck-moving"></i> Shift Asset</a>
+            <a href="Sticker.html" ><i class="fas fa-tags"></i> Create Sticker</a>
             <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
             <a href="EmpHistory.html"><i class="fas fa-user-clock"></i> Emp History</a>
             <a href="Repair.html"><i class="fas fa-tools"></i> Maintenance</a>
+            <a href="scrap.html"><i class="fas fa-tools"></i> Scrap Asset</a>
             <a href="StockQC.html" class="active"><i class="fas fa-clipboard-check"></i> Stock QC</a>
             <a href="stock.html"><i class="fas fa-exchange-alt"></i> Stock In/Out</a>
             <a href="ITChecklist.html"><i class="fas fa-tasks"></i> IT Checklist</a>
@@ -60,14 +62,6 @@
         </div>
         <div class="sidebar-footer">
             <a href="#" onclick="logout()" class="mb-3 text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            <div class="card border-0 bg-dark text-white shadow-sm" style="background-color: #2c3e50 !important; border: 1px solid #4e5d6c !important;">
-                <div class="card-body p-2 text-center">
-                    <div class="d-flex justify-content-between align-items-center mb-2"><small class="text-white-50" style="font-size: 0.7rem;">SYSTEM STATUS</small><span id="connectionDot" class="badge bg-warning rounded-circle p-1" style="width: 10px; height: 10px;"> </span></div>
-                    <div id="connectionText" class="fw-bold text-warning mb-1" style="font-size: 0.85rem;"><i class="fas fa-plug me-1"></i> Connecting...</div>
-                    <p class="text-white-50 mb-2" style="font-size: 0.7rem;" id="lastRefreshed">Last Sync: --:--</p>
-                    <button onclick="refreshSystem()" class="btn btn-sm btn-outline-light w-100" style="font-size: 0.75rem;"><i class="fas fa-sync-alt me-1"></i> Force Refresh</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -113,7 +107,6 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    
                                     <div class="col-md-4">
                                         <div class="check-section-title">1. Physical Inspection</div>
                                         <div class="check-group"><span>Body (Cracks/Dents)</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_1" id="q1_1a" value="Pass"><label class="btn btn-outline-success" for="q1_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_1" id="q1_1b" value="Fail"><label class="btn btn-outline-danger" for="q1_1b">X</label></div></div>
@@ -121,45 +114,53 @@
                                         <div class="check-group"><span>Cooling Vents</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_3" id="q1_3a" value="Pass"><label class="btn btn-outline-success" for="q1_3a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_3" id="q1_3b" value="Fail"><label class="btn btn-outline-danger" for="q1_3b">X</label></div></div>
                                         <div class="check-group"><span>Ports (Physical)</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_4" id="q1_4a" value="Pass"><label class="btn btn-outline-success" for="q1_4a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_4" id="q1_4b" value="Fail"><label class="btn btn-outline-danger" for="q1_4b">X</label></div></div>
                                         <div class="check-group"><span>Boot / Power On</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_5" id="q1_5a" value="Pass"><label class="btn btn-outline-success" for="q1_5a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_5" id="q1_5b" value="Fail"><label class="btn btn-outline-danger" for="q1_5b">X</label></div></div>
-                                        <div class="check-group"><span>Charging Indicator</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_6" id="q1_6a" value="Pass"><label class="btn btn-outline-success" for="q1_6a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_6" id="q1_6b" value="Fail"><label class="btn btn-outline-danger" for="q1_6b">X</label></div></div>
+                                        <div class="check-group"><span>Power/Charging</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q1_6" id="q1_6a" value="Pass"><label class="btn btn-outline-success" for="q1_6a">OK</label><input type="radio" class="btn-check qc-chk" name="q1_6" id="q1_6b" value="Fail"><label class="btn btn-outline-danger" for="q1_6b">X</label></div></div>
                                     </div>
-
                                     <div class="col-md-4">
                                         <div class="check-section-title">2. Hardware Check</div>
-                                        <div class="check-group"><span>Display (Pixels/Line)</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_1" id="q2_1a" value="Pass"><label class="btn btn-outline-success" for="q2_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_1" id="q2_1b" value="Fail"><label class="btn btn-outline-danger" for="q2_1b">X</label></div></div>
+                                        <div class="check-group"><span>Display (Damage/Pixels)</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_1" id="q2_1a" value="Pass"><label class="btn btn-outline-success" for="q2_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_1" id="q2_1b" value="Fail"><label class="btn btn-outline-danger" for="q2_1b">X</label></div></div>
                                         <div class="check-group"><span>Keyboard Keys</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_2" id="q2_2a" value="Pass"><label class="btn btn-outline-success" for="q2_2a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_2" id="q2_2b" value="Fail"><label class="btn btn-outline-danger" for="q2_2b">X</label></div></div>
-                                        <div class="check-group"><span>Trackpad/Gestures</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_3" id="q2_3a" value="Pass"><label class="btn btn-outline-success" for="q2_3a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_3" id="q2_3b" value="Fail"><label class="btn btn-outline-danger" for="q2_3b">X</label></div></div>
-                                        <div class="check-group"><span>USB/HDMI Ports</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_4" id="q2_4a" value="Pass"><label class="btn btn-outline-success" for="q2_4a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_4" id="q2_4b" value="Fail"><label class="btn btn-outline-danger" for="q2_4b">X</label></div></div>
-                                        <div class="check-group"><span>Webcam/Mic/Speaker</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_5" id="q2_5a" value="Pass"><label class="btn btn-outline-success" for="q2_5a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_5" id="q2_5b" value="Fail"><label class="btn btn-outline-danger" for="q2_5b">X</label></div></div>
+                                        <div class="check-group"><span>Touchpad/Gestures</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_3" id="q2_3a" value="Pass"><label class="btn btn-outline-success" for="q2_3a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_3" id="q2_3b" value="Fail"><label class="btn btn-outline-danger" for="q2_3b">X</label></div></div>
+                                        <div class="check-group"><span>Battery Health</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_8" id="q2_8a" value="Pass"><label class="btn btn-outline-success" for="q2_8a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_8" id="q2_8b" value="Fail"><label class="btn btn-outline-danger" for="q2_8b">X</label></div></div>
+                                        <div class="check-group"><span>Motherboard</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_9" id="q2_9a" value="Pass"><label class="btn btn-outline-success" for="q2_9a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_9" id="q2_9b" value="Fail"><label class="btn btn-outline-danger" for="q2_9b">X</label></div></div>
                                         <div class="check-group"><span>Wi-Fi/Bluetooth</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_6" id="q2_6a" value="Pass"><label class="btn btn-outline-success" for="q2_6a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_6" id="q2_6b" value="Fail"><label class="btn btn-outline-danger" for="q2_6b">X</label></div></div>
                                         <div class="check-group"><span>Fan Noise/Heat</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q2_7" id="q2_7a" value="Pass"><label class="btn btn-outline-success" for="q2_7a">OK</label><input type="radio" class="btn-check qc-chk" name="q2_7" id="q2_7b" value="Fail"><label class="btn btn-outline-danger" for="q2_7b">X</label></div></div>
                                     </div>
-
                                     <div class="col-md-4">
                                         <div class="check-section-title">3. Software & Compliance</div>
                                         <div class="check-group"><span>OS Activation</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q3_1" id="q3_1a" value="Pass"><label class="btn btn-outline-success" for="q3_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q3_1" id="q3_1b" value="Fail"><label class="btn btn-outline-danger" for="q3_1b">X</label></div></div>
                                         <div class="check-group"><span>Drivers Updated</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q3_2" id="q3_2a" value="Pass"><label class="btn btn-outline-success" for="q3_2a">OK</label><input type="radio" class="btn-check qc-chk" name="q3_2" id="q3_2b" value="Fail"><label class="btn btn-outline-danger" for="q3_2b">X</label></div></div>
                                         <div class="check-group"><span>Office/Teams Installed</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q3_3" id="q3_3a" value="Pass"><label class="btn btn-outline-success" for="q3_3a">OK</label><input type="radio" class="btn-check qc-chk" name="q3_3" id="q3_3b" value="Fail"><label class="btn btn-outline-danger" for="q3_3b">X</label></div></div>
-                                        <div class="check-group"><span>BitLocker/Encryption</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q3_4" id="q3_4a" value="Pass"><label class="btn btn-outline-success" for="q3_4a">OK</label><input type="radio" class="btn-check qc-chk" name="q3_4" id="q3_4b" value="NA"><label class="btn btn-outline-secondary" for="q3_4b">NA</label></div></div>
                                         
                                         <div class="check-section-title mt-3">4. Deep Diagnostics</div>
-                                        <div class="check-group"><span>BIOS/Time Check</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q4_1" id="q4_1a" value="Pass"><label class="btn btn-outline-success" for="q4_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q4_1" id="q4_1b" value="Fail"><label class="btn btn-outline-danger" for="q4_1b">X</label></div></div>
+                                        <div class="check-group"><span>BIOS (Ver/Time)</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q4_1" id="q4_1a" value="Pass"><label class="btn btn-outline-success" for="q4_1a">OK</label><input type="radio" class="btn-check qc-chk" name="q4_1" id="q4_1b" value="Fail"><label class="btn btn-outline-danger" for="q4_1b">X</label></div></div>
                                         <div class="check-group"><span>SSD Health</span><div class="btn-group btn-group-sm"><input type="radio" class="btn-check qc-chk" name="q4_2" id="q4_2a" value="Pass"><label class="btn btn-outline-success" for="q4_2a">OK</label><input type="radio" class="btn-check qc-chk" name="q4_2" id="q4_2b" value="Fail"><label class="btn btn-outline-danger" for="q4_2b">X</label></div></div>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-12">
-                        <label class="form-label">QC Engineer Remarks</label>
-                        <textarea class="form-control" name="remarks" id="remarksInput" rows="2" placeholder="e.g. Ready for allocation, Installed Win 11, Battery at 85% health..."></textarea>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">QC Engineer Remarks</label>
+                        <textarea class="form-control" name="remarks" id="remarksInput" rows="2" placeholder="e.g. Ready for allocation, Installed Win 11..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Select Final Status</label>
+                        <select class="form-select border-primary" id="statusSelect">
+                            <option value="Available" selected>Available (Ready to Use)</option>
+                            <option value="Repair">Repair (Send to Maintenance)</option>
+                            <option value="Scrap">Scrap (Beyond Repair)</option>
+                            <option value="Damaged">Damaged (Needs Check)</option>
+                            <option value="Missing">Missing</option>
+                            <option value="IB Spare">IB Spare</option>
+                        </select>
+                        <div class="form-text text-primary">If QC Fail, please select Repair or Damaged.</div>
                     </div>
 
                     <div class="col-12 mt-4">
                         <button type="submit" class="btn btn-success px-5 w-100 fw-bold">
-                            <i class="fas fa-save me-2"></i> Save QC & Mark Ready
+                            <i class="fas fa-save me-2"></i> Save QC & Update Status
                         </button>
                     </div>
 
@@ -172,7 +173,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec";  
+        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
         let globalAssets = [];
 
         $(document).ready(function() {
@@ -183,20 +184,17 @@
         function refreshSystem() {
             const btn = document.querySelector('button[onclick="refreshSystem()"]');
             const statusText = document.getElementById('connectionText');
-            const statusDot = document.getElementById('connectionDot');
-            const timeEl = document.getElementById('lastRefreshed');
             if(btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; btn.disabled = true; }
             loadStockAssets().then(() => {
                 setTimeout(() => {
                     if(btn) { btn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Force Refresh'; btn.disabled = false; }
                     statusText.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connected'; statusText.className = 'fw-bold text-success mb-1';
-                    statusDot.className = 'badge bg-success rounded-circle p-1'; timeEl.innerText = 'Synced: ' + new Date().toLocaleTimeString();
                     const toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
                     toast.fire({ icon: 'success', title: 'Stock Updated' });
                 }, 500);
             }).catch(() => {
                 if(btn) { btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Retry'; btn.disabled = false; }
-                statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error'; statusText.className = 'fw-bold text-danger mb-1'; statusDot.className = 'badge bg-danger rounded-circle p-1';
+                statusText.innerHTML = '<i class="fas fa-times-circle me-1"></i> Error'; statusText.className = 'fw-bold text-danger mb-1';
             });
         }
 
@@ -251,21 +249,25 @@
             }).catch(() => { document.getElementById('historyContent').innerHTML = '<div class="text-danger">Error loading history.</div>'; });
         }
 
-        // --- QC Logic ---
         function markAllPass() {
             document.querySelectorAll('input[type="radio"][value="Pass"]').forEach(r => r.checked = true);
+            document.querySelectorAll('input[type="radio"][value="Clean"]').forEach(r => r.checked = true);
+            document.querySelectorAll('input[type="radio"][value="Yes"]').forEach(r => r.checked = true);
+            document.querySelectorAll('input[type="radio"][value="Good"]').forEach(r => r.checked = true);
+            document.querySelectorAll('input[type="radio"][value="Fast"]').forEach(r => r.checked = true);
+            document.querySelectorAll('input[type="radio"][value="OK"]').forEach(r => r.checked = true);
         }
 
         // 4. SUBMIT
         document.getElementById("qcForm").addEventListener("submit", function(e) {
             e.preventDefault();
             const assetId = $('#assetSelect').val();
+            const newStatus = $('#statusSelect').val(); 
             if(!assetId) { Swal.fire('Error', 'Select an Asset', 'warning'); return; }
 
-            // Construct Comprehensive Report
             const map = {
-                'q1_1': 'Body', 'q1_2': 'Screws', 'q1_3': 'Vents', 'q1_4': 'Ports(Phy)', 'q1_5': 'Boot', 'q1_6': 'Charging',
-                'q2_1': 'Disp', 'q2_2': 'Keys', 'q2_3': 'Trackpad', 'q2_4': 'USB/HDMI', 'q2_5': 'Cam/Mic', 'q2_6': 'Wifi/BT', 'q2_7': 'Fan',
+                'q1_1': 'Body', 'q1_2': 'Screws', 'q1_3': 'Vents', 'q1_4': 'Ports(Phy)', 'q1_5': 'Boot', 'q1_6': 'Power/Charging',
+                'q2_1': 'Disp(Dmg)', 'q2_2': 'Keys', 'q2_3': 'Touchpad', 'q2_4': 'USB/HDMI', 'q2_5': 'Cam/Mic', 'q2_6': 'Wifi/BT', 'q2_7': 'Fan', 'q2_8': 'Battery', 'q2_9': 'Mobo',
                 'q3_1': 'OSAct', 'q3_2': 'Drvs', 'q3_3': 'Apps', 'q3_4': 'Encrypt',
                 'q4_1': 'BIOS', 'q4_2': 'SSD'
             };
@@ -273,7 +275,7 @@
             let issues = [];
             for(const [key, label] of Object.entries(map)) {
                 const val = document.querySelector(`input[name="${key}"]:checked`)?.value;
-                if(val && val !== 'Pass' && val !== 'OK') issues.push(`${label}:${val}`);
+                if(val && val !== 'Pass' && val !== 'OK' && val !== 'Clean' && val !== 'Yes' && val !== 'Good' && val !== 'Fast' && val !== 'NA') issues.push(`${label}:${val}`);
             }
 
             const statusSummary = issues.length > 0 ? `[Issues: ${issues.join(', ')}]` : "[ALL SYSTEMS GO]";
@@ -281,29 +283,36 @@
             const fullReport = `[READY TO USE] QC: ${statusSummary}` + (userNote ? ` || Note: ${userNote}` : "");
 
             Swal.fire({
-                title: 'Confirm QC?',
-                text: "Status will be marked 'Ready to Use'.",
+                title: 'Confirm Update?',
+                html: `Asset will be marked as <b>${newStatus}</b>.`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#198754',
                 confirmButtonText: 'Yes, Save'
             }).then((result) => {
-                if (result.isConfirmed) submitQC(assetId, fullReport);
+                if (result.isConfirmed) submitQC(assetId, fullReport, newStatus);
             });
         });
 
-        function submitQC(assetId, report) {
+        function submitQC(assetId, report, newStatus) {
             Swal.fire({ title: 'Saving...', didOpen: () => Swal.showLoading() });
             fetch(API_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "updateStockQC", assetId: assetId, user: user.name, remarks: report })
+                body: JSON.stringify({ 
+                    action: "updateStockQC", 
+                    assetId: assetId, 
+                    user: user.name, 
+                    remarks: report,
+                    newStatus: newStatus 
+                })
             })
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
-                    Swal.fire('Success', 'QC Saved Successfully!', 'success').then(() => {
+                    Swal.fire('Success', 'QC & Status Updated!', 'success').then(() => {
                         refreshSystem(); document.getElementById("qcForm").reset();
                         $('#assetSelect').val(null).trigger('change'); $('#historySection').hide();
+                        document.getElementById("statusSelect").value = "Available";
                     });
                 } else Swal.fire('Error', result.message, 'error');
             }).catch(err => Swal.fire('Error', 'Connection Failed', 'error'));
