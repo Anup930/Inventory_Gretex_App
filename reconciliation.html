@@ -26,19 +26,68 @@
         .filter-chip { background-color: #e2e6ea; color: #2c3e50; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; margin-right: 8px; margin-bottom: 8px; border: 1px solid #ced4da; }
         .filter-chip i { cursor: pointer; margin-left: 8px; color: #dc3545; }
 
-        /* SCROLLABLE TABLE STYLING */
-        .table-scroll-area { max-height: 320px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 8px; }
-        .table-scroll-area::-webkit-scrollbar { width: 6px; height: 6px; }
-        .table-scroll-area::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        /* --- SCROLLABLE TABLE STYLING --- */
+        .table-scroll-area {
+            max-height: 320px; 
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        /* Modern Scrollbar */
+        .table-scroll-area::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-scroll-area::-webkit-scrollbar-track { background: #f1f1f1; }
         .table-scroll-area::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         .table-scroll-area::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        /* Sticky Headers */
-        .pivot-table th { background-color: #2c3e50; color: white; text-align: center; vertical-align: middle; font-size: 0.85rem; position: sticky; top: 0; z-index: 10; }
-        .pivot-table td { text-align: center; vertical-align: middle; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
-        .pivot-table td:hover { background-color: #f1f3f9; transform: scale(1.05); z-index: 1; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .row-header { background-color: #f8f9fa; font-weight: bold; text-align: left !important; padding-left: 15px !important; width: 180px; position: sticky; left: 0; z-index: 5; border-right: 2px solid #ddd; }
-        .grand-total-row { background-color: #e9ecef !important; font-weight: bold; border-top: 2px solid #333; position: sticky; bottom: 0; z-index: 10;}
+        /* STICKY HEADER */
+        .pivot-table th { 
+            background-color: #2c3e50 !important; 
+            color: white; 
+            text-align: center; 
+            vertical-align: middle; 
+            font-size: 0.85rem; 
+            position: sticky; 
+            top: 0; 
+            z-index: 20; 
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        /* STICKY FOOTER (GRAND TOTAL) */
+        .grand-total-row td {
+            background-color: #e9ecef !important;
+            color: #000000 !important;
+            font-weight: 800 !important;
+            border-top: 2px solid #333;
+            position: sticky;
+            bottom: 0;
+            z-index: 15;
+            box-shadow: 0 -2px 2px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        /* STICKY FIRST COLUMN */
+        .row-header { 
+            background-color: #f8f9fa !important; 
+            font-weight: bold; 
+            text-align: left !important; 
+            padding-left: 15px !important; 
+            width: 180px; 
+            position: sticky; 
+            left: 0; 
+            z-index: 10; 
+            border-right: 2px solid #ddd;
+        }
+
+        /* CORNER CELL (Top-Left) needs higher z-index */
+        .pivot-table thead th:first-child { z-index: 30; left: 0; }
+        
+        /* CORNER CELL (Bottom-Left) needs higher z-index */
+        .grand-total-row td:first-child { z-index: 25; left: 0; background-color: #dee2e6 !important; }
+
+        .pivot-table td { text-align: center; vertical-align: middle; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 0.9rem; white-space: nowrap; padding: 8px 12px;}
+        .pivot-table td:hover { background-color: #f1f3f9; transform: scale(1.05); z-index: 5; position: relative; }
         .count-badge { font-size: 0.95rem; font-weight: bold; color: #4e73df; }
         
         .stat-box { border-left: 4px solid; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
@@ -123,7 +172,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">2. Select Values (Multiple)</label>
+                    <label class="form-label small fw-bold">2. Select Values</label>
                     <select class="form-select select2" id="filterValue" multiple="multiple">
                         <option value="">-- Select Values --</option>
                     </select>
@@ -164,15 +213,7 @@
             </div>
             <div class="table-scroll-area" id="table-ownership">
                 <table class="table table-bordered table-hover pivot-table mb-0">
-                    <thead>
-                        <tr>
-                            <th class="bg-secondary text-white">Asset Count Bucket</th>
-                            <th class="bg-dark text-white">Total Count</th>
-                            <th class="bg-success text-white">Employee</th>
-                            <th class="bg-info text-white">Other</th>
-                            <th class="bg-light text-dark">Action</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th class="bg-secondary text-white">Asset Count Bucket</th><th class="bg-dark text-white">Total Count</th><th class="bg-success text-white">Employee</th><th class="bg-info text-white">Other</th><th class="bg-light text-dark">Action</th></tr></thead>
                     <tbody id="ownershipBody"></tbody>
                 </table>
             </div>
@@ -193,7 +234,6 @@
                     <div class="chart-container" id="chart-container-year"><canvas id="canvas-year"></canvas></div>
                 </div>
             </div>
-            
             <div class="col-md-6 mb-4">
                 <div class="card-custom p-4 h-100" id="section-location">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -207,7 +247,6 @@
                     <div class="chart-container" id="chart-container-location"><canvas id="canvas-location"></canvas></div>
                 </div>
             </div>
-
             <div class="col-md-6 mb-4">
                 <div class="card-custom p-4 h-100" id="section-brand">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -221,7 +260,6 @@
                     <div class="chart-container" id="chart-container-brand"><canvas id="canvas-brand"></canvas></div>
                 </div>
             </div>
-
             <div class="col-md-6 mb-4">
                 <div class="card-custom p-4 h-100" id="section-status">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -233,40 +271,22 @@
                 </div>
             </div>
         </div>
+
+        <h5 class="fw-bold text-dark mt-4 mb-3"><i class="fas fa-file-alt me-2"></i>Detailed Status Reports (Year vs Location)</h5>
+        <div class="row">
+            <div class="col-md-6 mb-4"><div class="card-custom p-4 h-100" id="report-scrap"><h6 class="text-danger fw-bold mb-3">1. Scrap & Damage</h6><div class="table-scroll-area"><table class="table table-sm table-bordered pivot-table mb-0"></table></div></div></div>
+            <div class="col-md-6 mb-4"><div class="card-custom p-4 h-100" id="report-repair"><h6 class="text-warning fw-bold mb-3">2. Repair / Under Repair</h6><div class="table-scroll-area"><table class="table table-sm table-bordered pivot-table mb-0"></table></div></div></div>
+            <div class="col-md-6 mb-4"><div class="card-custom p-4 h-100" id="report-inuse"><h6 class="text-success fw-bold mb-3">3. In Use</h6><div class="table-scroll-area"><table class="table table-sm table-bordered pivot-table mb-0"></table></div></div></div>
+            <div class="col-md-6 mb-4"><div class="card-custom p-4 h-100" id="report-gift"><h6 class="text-info fw-bold mb-3">4. Gift</h6><div class="table-scroll-area"><table class="table table-sm table-bordered pivot-table mb-0"></table></div></div></div>
+            <div class="col-md-6 mb-4"><div class="card-custom p-4 h-100" id="report-available"><h6 class="text-primary fw-bold mb-3">5. Available</h6><div class="table-scroll-area"><table class="table table-sm table-bordered pivot-table mb-0"></table></div></div></div>
+            <div class="col-md-6 mb-4"><div class="card-custom p-4 h-100" id="report-missing"><h6 class="text-dark fw-bold mb-3">6. Missing</h6><div class="table-scroll-area"><table class="table table-sm table-bordered pivot-table mb-0"></table></div></div></div>
+        </div>
+
     </div>
 
     <div class="modal fade" id="detailModal" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5 class="modal-title" id="modalTitle">Details</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="table-responsive" style="max-height: 500px; overflow-y: auto;"><table class="table table-striped table-hover align-middle"><thead class="table-light sticky-top"><tr><th>Asset ID</th><th>Serial No</th><th>Category</th><th>Brand / Model</th><th>Location</th><th>Assigned To</th><th>Status</th></tr></thead><tbody id="detailBody"></tbody></table></div></div></div></div></div>
-    
-    <div class="modal fade" id="userListModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title" id="userListTitle">Employee List</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6"><label class="small fw-bold">Filter Type</label><select id="modalFilterType" class="form-select form-select-sm" onchange="filterUserList()"><option value="All">All Types</option><option value="Employee">Employee</option><option value="other">Other</option></select></div>
-                        <div class="col-md-6"><label class="small fw-bold">Filter Status</label><select id="modalFilterStatus" class="form-select form-select-sm" onchange="filterUserList()"><option value="All">All Statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-                    </div>
-                    <div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>Employee Name</th><th>Type</th><th>Status</th><th class="text-center">Asset Count</th><th>Assets Held (Click)</th></tr></thead><tbody id="userListBody"></tbody></table></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="singleAssetModal" tabindex="-1" style="z-index: 1060;">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="singleAssetTitle"><i class="fas fa-laptop me-2"></i>Asset Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4"><table class="table table-bordered"><tbody id="singleAssetBody"></tbody></table></div>
-                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="userListModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-info text-white"><h5 class="modal-title" id="userListTitle">Employee List</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-2 mb-3"><div class="col-md-6"><label class="small fw-bold">Filter Type</label><select id="modalFilterType" class="form-select form-select-sm" onchange="filterUserList()"><option value="All">All Types</option><option value="Employee">Employee</option><option value="other">Other</option></select></div><div class="col-md-6"><label class="small fw-bold">Filter Status</label><select id="modalFilterStatus" class="form-select form-select-sm" onchange="filterUserList()"><option value="All">All Statuses</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div></div><div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>Employee Name</th><th>Type</th><th>Status</th><th class="text-center">Asset Count</th><th>Assets Held (Click)</th></tr></thead><tbody id="userListBody"></tbody></table></div></div></div></div></div>
+    <div class="modal fade" id="singleAssetModal" tabindex="-1" style="z-index: 1060;"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="singleAssetTitle">Asset Details</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><table class="table table-bordered"><tbody id="singleAssetBody"></tbody></table></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -288,30 +308,15 @@
         };
 
         $(document).ready(function() {
-            $('.select2').select2({ 
-                theme: 'bootstrap-5',
-                closeOnSelect: false,
-                placeholder: "-- Select Values --",
-                allowClear: true
-            });
+            $('.select2').select2({ theme: 'bootstrap-5', closeOnSelect: false, placeholder: "-- Select Values --", allowClear: true });
             loadData();
         });
 
-        // --- NEW DOWNLOAD FUNCTION ---
         function downloadReconciliation() {
-            Swal.fire({
-                title: 'Working on it!',
-                text: 'We are creating the module for Download Reconciliation.',
-                icon: 'info',
-                confirmButtonText: 'Okay',
-                confirmButtonColor: '#198754'
-            });
+            Swal.fire({ title: 'Working on it!', text: 'We are creating the module for Download Reconciliation.', icon: 'info', confirmButtonText: 'Okay', confirmButtonColor: '#198754' });
         }
 
-        function cleanName(str) {
-            if (!str) return "";
-            return str.split('(')[0].trim().toLowerCase();
-        }
+        function cleanName(str) { return str ? str.split('(')[0].trim().toLowerCase() : ""; }
 
         async function loadData() {
             Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading() });
@@ -336,9 +341,7 @@
                     const typeIdx = empHeaders.findIndex(h => h.toString().toLowerCase().includes("type"));
                     
                     rawEmployees = empRows.map(r => ({
-                        name: r[nameIdx],
-                        status: r[statusIdx] || 'Active', 
-                        type: r[typeIdx] || 'Other' 
+                        name: r[nameIdx], status: r[statusIdx] || 'Active', type: r[typeIdx] || 'Other' 
                     }));
 
                     filteredData = [...rawAssets];
@@ -350,7 +353,6 @@
                         initSectionStatusMenu(key, allStatuses);
                     });
                     sections['status'].statusFilter = new Set(allStatuses);
-
                     sections['ownership'].categoryFilter = new Set(allCategories);
                     initOwnershipCategoryMenu(allCategories);
 
@@ -360,11 +362,10 @@
             } catch(e) { Swal.fire("Error", "Failed to load data.", "error"); }
         }
 
-        // --- MULTI-SELECT FILTER LOGIC ---
+        // --- FILTERING & REFRESH ---
         function populateValues() {
             const col = document.getElementById('filterColumn').value;
-            const select = $('#filterValue'); 
-            select.empty(); 
+            const select = $('#filterValue'); select.empty(); 
             if (!col) return;
             const uniqueValues = [...new Set(rawAssets.map(item => item[col] || "Unknown"))].sort();
             uniqueValues.forEach(val => select.append(new Option(val, val, false, false)));
@@ -375,280 +376,251 @@
             const colKey = document.getElementById('filterColumn').value;
             const colName = $('#filterColumn option:selected').text();
             const values = $('#filterValue').val();
-            
-            if (!colKey || !values || values.length === 0) { 
-                Swal.fire("Incomplete", "Select a column and at least one value.", "warning"); return; 
-            }
-
-            if(!activeFilters[colKey]) {
-                activeFilters[colKey] = { label: colName, values: [] };
-            }
-            const combined = new Set([...activeFilters[colKey].values, ...values]);
-            activeFilters[colKey].values = Array.from(combined);
-
-            applyGlobalFilters();
-            renderChips();
-            $('#filterValue').val(null).trigger('change');
+            if (!colKey || !values || values.length === 0) { Swal.fire("Incomplete", "Select a column and values.", "warning"); return; }
+            if(!activeFilters[colKey]) { activeFilters[colKey] = { label: colName, values: [] }; }
+            activeFilters[colKey].values = Array.from(new Set([...activeFilters[colKey].values, ...values]));
+            applyGlobalFilters(); renderChips(); $('#filterValue').val(null).trigger('change');
         }
 
-        function removeFilter(colKey) {
-            delete activeFilters[colKey];
-            applyGlobalFilters();
-            renderChips();
-        }
+        function removeFilter(colKey) { delete activeFilters[colKey]; applyGlobalFilters(); renderChips(); }
 
         function renderChips() {
             const container = document.getElementById('chipsContainer');
-            const area = document.getElementById('activeFiltersArea');
             const keys = Object.keys(activeFilters);
-            
-            if(keys.length === 0) {
-                area.style.display = 'none';
-                return;
-            }
-            area.style.display = 'block';
-            container.innerHTML = keys.map(col => {
-                const f = activeFilters[col];
-                const valText = f.values.join(', ');
-                return `<span class="filter-chip"><b>${f.label}:</b> ${valText} <i class="fas fa-times-circle ms-2" onclick="removeFilter('${col}')"></i></span>`;
-            }).join('');
+            document.getElementById('activeFiltersArea').style.display = keys.length ? 'block' : 'none';
+            container.innerHTML = keys.map(col => `<span class="filter-chip"><b>${activeFilters[col].label}:</b> ${activeFilters[col].values.join(', ')} <i class="fas fa-times-circle ms-2" onclick="removeFilter('${col}')"></i></span>`).join('');
         }
 
         function applyGlobalFilters() {
-            const filterKeys = Object.keys(activeFilters);
-            filteredData = rawAssets.filter(item => {
-                return filterKeys.every(col => {
-                    const allowedValues = activeFilters[col].values;
-                    const itemValue = String(item[col] || "Unknown");
-                    return allowedValues.includes(itemValue);
-                });
-            });
+            const keys = Object.keys(activeFilters);
+            filteredData = rawAssets.filter(item => keys.every(col => activeFilters[col].values.includes(String(item[col] || "Unknown"))));
             refreshAllSections();
-        }
-
-        function initSectionStatusMenu(sectionKey, items) {
-            const menu = $(`#filterMenu-${sectionKey}`); menu.empty();
-            menu.append('<li><h6 class="dropdown-header">Show/Hide Statuses</h6></li><li><hr class="dropdown-divider"></li>');
-            Array.from(items).sort().forEach(item => {
-                menu.append(`<li><div class="form-check ms-3"><input class="form-check-input status-chk-${sectionKey}" type="checkbox" value="${item}" checked onchange="updateSectionFilter('${sectionKey}')"><label class="form-check-label small">${item}</label></div></li>`);
-            });
-        }
-
-        function updateSectionFilter(sectionKey) {
-            sections[sectionKey].statusFilter.clear();
-            $(`.status-chk-${sectionKey}:checked`).each(function() { sections[sectionKey].statusFilter.add($(this).val()); });
-            renderPivotSection(sectionKey);
-        }
-
-        function initOwnershipCategoryMenu(items) {
-            const menu = $('#filterMenu-ownership'); menu.empty();
-            menu.append('<li><h6 class="dropdown-header">Filter by Category</h6></li><li><hr class="dropdown-divider"></li>');
-            Array.from(items).sort().forEach(item => {
-                menu.append(`<li><div class="form-check ms-3"><input class="form-check-input cat-chk-ownership" type="checkbox" value="${item}" checked onchange="updateOwnershipCategoryFilter()"><label class="form-check-label small">${item}</label></div></li>`);
-            });
-        }
-
-        function updateOwnershipCategoryFilter() {
-            sections['ownership'].categoryFilter.clear();
-            $('.cat-chk-ownership:checked').each(function() { sections['ownership'].categoryFilter.add($(this).val()); });
-            renderOwnershipSection();
         }
 
         function refreshAllSections() {
             document.getElementById('recordCountDisplay').innerText = `Records: ${filteredData.length}`;
             ['year', 'location', 'brand', 'status'].forEach(key => renderPivotSection(key));
             renderOwnershipSection();
+            renderSpecialReports(); // NEW REPORTS
         }
 
+        // --- SPECIAL STATUS REPORTS (Year vs Location) ---
+        function renderSpecialReports() {
+            const reportConfigs = [
+                { id: 'report-scrap', filters: ['Scrap', 'Damaged', 'Damage'] },
+                { id: 'report-repair', filters: ['Repair', 'Under Repair', 'Maintenance'] },
+                { id: 'report-inuse', filters: ['In-Use', 'In Use'] },
+                { id: 'report-gift', filters: ['GIFT', 'Gift'] },
+                { id: 'report-available', filters: ['Available', 'Stock'] },
+                { id: 'report-missing', filters: ['Missing', 'Lost'] }
+            ];
+
+            reportConfigs.forEach(conf => {
+                const reportData = filteredData.filter(d => conf.filters.includes(d.status));
+                generateYearLocationMatrix(reportData, conf.id);
+            });
+        }
+
+        function generateYearLocationMatrix(data, containerId) {
+            let years = new Set(), locations = new Set(), matrix = {};
+            data.forEach(d => {
+                let y = d.year, l = d.location || 'Unknown';
+                years.add(y); locations.add(l);
+                if(!matrix[y]) matrix[y] = {};
+                if(!matrix[y][l]) matrix[y][l] = 0;
+                matrix[y][l]++;
+            });
+
+            let sortedYears = Array.from(years).sort().reverse();
+            let sortedLocations = Array.from(locations).sort();
+            
+            let thead = `<tr><th class="bg-light text-white row-header">Year \\ Location</th>` + sortedLocations.map(l => `<th class="bg-secondary text-white">${l}</th>`).join('') + `<th class="bg-dark text-white">Total</th></tr>`;
+            let tbody = '';
+            
+            // GRAND TOTAL CALCULATION VARIABLES
+            let locTotals = {};
+            let grandTotalAll = 0;
+
+            sortedYears.forEach(y => {
+                let rowTotal = 0;
+                let rowHtml = `<tr><td class="row-header">${y}</td>`;
+                sortedLocations.forEach(l => {
+                    let count = matrix[y][l] || 0;
+                    rowTotal += count;
+                    
+                    // Accumulate Column Totals
+                    if(!locTotals[l]) locTotals[l] = 0;
+                    locTotals[l] += count;
+
+                    rowHtml += count > 0 ? `<td><span class="count-badge">${count}</span></td>` : `<td class="text-muted">-</td>`;
+                });
+                grandTotalAll += rowTotal;
+                rowHtml += `<td class="fw-bold bg-light border-start">${rowTotal}</td></tr>`;
+                tbody += rowHtml;
+            });
+
+            // ADD GRAND TOTAL ROW
+            let footer = `<tr class="grand-total-row"><td>Grand Total</td>`;
+            sortedLocations.forEach(l => {
+                footer += `<td>${locTotals[l] || 0}</td>`;
+            });
+            footer += `<td class="bg-dark text-white" style="color: #000 !important;">${grandTotalAll}</td></tr>`;
+            tbody += footer;
+
+            if(data.length === 0) tbody = '<tr><td colspan="100%" class="text-center text-muted p-3">No records found</td></tr>';
+            
+            $(`#${containerId} table`).html(`<thead>${thead}</thead><tbody>${tbody}</tbody>`);
+        }
+
+        // --- EXISTING RENDERERS (Pivot, Ownership, Modals) ---
+        function initSectionStatusMenu(sectionKey, items) {
+            const menu = $(`#filterMenu-${sectionKey}`); menu.empty().append('<li><h6 class="dropdown-header">Show/Hide Statuses</h6></li><li><hr class="dropdown-divider"></li>');
+            Array.from(items).sort().forEach(item => menu.append(`<li><div class="form-check ms-3"><input class="form-check-input status-chk-${sectionKey}" type="checkbox" value="${item}" checked onchange="updateSectionFilter('${sectionKey}')"><label class="form-check-label small">${item}</label></div></li>`));
+        }
+        function updateSectionFilter(key) {
+            sections[key].statusFilter.clear();
+            $(`.status-chk-${key}:checked`).each(function() { sections[key].statusFilter.add($(this).val()); });
+            renderPivotSection(key);
+        }
+        function initOwnershipCategoryMenu(items) {
+            const menu = $('#filterMenu-ownership'); menu.empty().append('<li><h6 class="dropdown-header">Filter Category</h6></li><li><hr class="dropdown-divider"></li>');
+            Array.from(items).sort().forEach(item => menu.append(`<li><div class="form-check ms-3"><input class="form-check-input cat-chk-ownership" type="checkbox" value="${item}" checked onchange="updateOwnershipCategoryFilter()"><label class="form-check-label small">${item}</label></div></li>`));
+        }
+        function updateOwnershipCategoryFilter() {
+            sections['ownership'].categoryFilter.clear();
+            $('.cat-chk-ownership:checked').each(function() { sections['ownership'].categoryFilter.add($(this).val()); });
+            renderOwnershipSection();
+        }
         function toggleSectionView(key) {
-            const tableDiv = document.getElementById(`table-${key}`);
-            const chartDiv = document.getElementById(`chart-container-${key}`);
-            if (tableDiv.style.display !== 'none') { tableDiv.style.display = 'none'; chartDiv.style.display = 'block'; }
-            else { tableDiv.style.display = 'block'; chartDiv.style.display = 'none'; }
+            const t = document.getElementById(`table-${key}`), c = document.getElementById(`chart-container-${key}`);
+            if(t.style.display !== 'none') { t.style.display = 'none'; c.style.display = 'block'; } else { t.style.display = 'block'; c.style.display = 'none'; }
         }
 
         function renderPivotSection(key) {
             const config = sections[key];
-            const tableId = `table-${key}`;
-            const sectionData = filteredData.filter(item => config.statusFilter.has(item.status || "Unknown"));
-
-            let rows = new Set(); let cols = new Set(); let matrix = {}; 
-            sectionData.forEach(asset => {
-                let r = asset[config.row] || "Unknown"; let c = asset[config.col] || "Uncategorized";
+            const data = filteredData.filter(d => config.statusFilter.has(d.status || "Unknown"));
+            let rows = new Set(), cols = new Set(), matrix = {};
+            data.forEach(d => {
+                let r = d[config.row] || "Unknown", c = d[config.col] || "Uncategorized";
                 rows.add(r); cols.add(c);
                 if(!matrix[r]) matrix[r] = {}; if(!matrix[r][c]) matrix[r][c] = [];
-                matrix[r][c].push(asset);
+                matrix[r][c].push(d);
             });
-
             let sortedRows = Array.from(rows).sort(); if(key === 'year') sortedRows.reverse();
             let sortedCols = Array.from(cols).sort();
-
-            let thead = `<tr><th class="row-header">${key.toUpperCase()} \\ Category</th>`;
-            sortedCols.forEach(c => thead += `<th class="bg-secondary text-white">${c}</th>`);
-            thead += `<th class="bg-dark text-white">Total</th></tr>`;
-            $(`#${tableId} table thead`).html(thead);
-
+            
+            let thead = `<tr><th class="row-header">${key.toUpperCase()} \\ Category</th>` + sortedCols.map(c => `<th class="bg-secondary text-white">${c}</th>`).join('') + `<th class="bg-dark text-white">Total</th></tr>`;
             let tbody = '';
-            sortedRows.forEach(r => {
-                let rowTotal = 0; let rowHtml = `<tr><td class="row-header">${r}</td>`;
-                sortedCols.forEach(c => {
-                    let count = (matrix[r][c] || []).length; rowTotal += count;
-                    if(count > 0) rowHtml += `<td onclick='showDetails("${key}", "${r}", "${c}")'><span class="count-badge">${count}</span></td>`;
-                    else rowHtml += `<td class="text-muted">-</td>`;
-                });
-                rowHtml += `<td class="fw-bold bg-light border-start">${rowTotal}</td></tr>`; tbody += rowHtml;
-            });
-            $(`#${tableId} table tbody`).html(tbody);
+            
+            // Grand Total Calculation
+            let colTotals = {};
+            let globalTotal = 0;
 
+            sortedRows.forEach(r => {
+                let rt = 0, rowHtml = `<tr><td class="row-header">${r}</td>`;
+                sortedCols.forEach(c => {
+                    let count = (matrix[r][c] || []).length; 
+                    rt += count;
+                    if(!colTotals[c]) colTotals[c] = 0;
+                    colTotals[c] += count;
+
+                    rowHtml += count > 0 ? `<td onclick="showDetails('${key}', '${r}', '${c}')"><span class="count-badge">${count}</span></td>` : `<td class="text-muted">-</td>`;
+                });
+                globalTotal += rt;
+                tbody += rowHtml + `<td class="fw-bold bg-light border-start">${rt}</td></tr>`;
+            });
+
+            // Footer Row - FIXED VISIBILITY
+            let footer = `<tr class="grand-total-row"><td>Grand Total</td>`;
+            sortedCols.forEach(c => footer += `<td>${colTotals[c] || 0}</td>`);
+            footer += `<td class="bg-dark text-white" style="color: #000 !important;">${globalTotal}</td></tr>`;
+            tbody += footer;
+
+            $(`#table-${key} table`).html(`<thead>${thead}</thead><tbody>${tbody}</tbody>`);
             renderGenericChart(key, sortedRows, sortedCols, matrix);
         }
 
         function renderGenericChart(key, rows, cols, matrix) {
             const ctx = document.getElementById(`canvas-${key}`).getContext('2d');
             if (sections[key].chart) sections[key].chart.destroy();
-
-            let datasets = cols.map((col, i) => {
-                const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#6610f2'];
-                return { label: col, data: rows.map(r => (matrix[r] && matrix[r][col]) ? matrix[r][col].length : 0), backgroundColor: colors[i % colors.length] };
-            });
-
+            const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#6610f2'];
+            const datasets = cols.map((col, i) => ({ label: col, data: rows.map(r => (matrix[r] && matrix[r][col]) ? matrix[r][col].length : 0), backgroundColor: colors[i % colors.length] }));
             sections[key].chart = new Chart(ctx, {
                 type: 'bar', data: { labels: rows, datasets: datasets },
-                plugins: [{
-                    id: 'topLabels',
-                    afterDatasetsDraw(chart) {
-                        const { ctx, scales: { x, y } } = chart;
-                        chart.data.labels.forEach((label, index) => {
-                            let total = 0;
-                            chart.data.datasets.forEach((ds) => total += ds.data[index]);
-                            if (total > 0) {
-                                const xPos = x.getPixelForValue(index);
-                                const yPos = y.getPixelForValue(total);
-                                ctx.save(); ctx.font = "bold 11px Arial"; ctx.fillStyle = "black"; ctx.textAlign = "center";
-                                ctx.fillText(total, xPos, yPos - 5); ctx.restore();
-                            }
-                        });
-                    }
-                }],
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false }, 
-                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
-                    onClick: (e) => {
-                        const chart = sections[key].chart;
-                        const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-                        if (points.length) {
-                            const firstPoint = points[0];
-                            const rowVal = chart.data.labels[firstPoint.index]; 
-                            const colVal = chart.data.datasets[firstPoint.datasetIndex].label;
-                            showDetails(key, rowVal, colVal);
-                        }
-                    },
-                    plugins: { legend: { position: 'top' }, tooltip: { callbacks: { footer: (items) => 'Total: ' + items.reduce((a, b) => a + b.parsed.y, 0) } } } 
-                } 
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, 
+                onClick: (e) => {
+                    const points = sections[key].chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                    if(points.length) showDetails(key, sections[key].chart.data.labels[points[0].index], sections[key].chart.data.datasets[points[0].datasetIndex].label);
+                }}
             });
         }
 
-        // --- OWNERSHIP LOGIC ---
         function renderOwnershipSection() {
             const catFilter = sections['ownership'].categoryFilter;
             let empCounts = {};
-            
-            rawEmployees.forEach(empObj => {
-                const empNameClean = cleanName(empObj.name);
-                const assets = filteredData.filter(asset => {
-                    const assetUserClean = cleanName(asset.assignedTo);
-                    const isNameMatch = assetUserClean === empNameClean;
-                    const isStatusMatch = asset.status === 'In-Use';
-                    const isCatMatch = catFilter.has(asset.category || "Uncategorized");
-                    return isNameMatch && isStatusMatch && isCatMatch;
-                });
-
-                if (empObj.status === 'Active' || (empObj.status === 'Inactive' && assets.length > 0)) {
-                    let isRisk = (empObj.status === 'Inactive' && assets.length > 0 && cleanName(empObj.type) === 'employee');
-                    empCounts[empObj.name] = { count: assets.length, assets: assets, type: empObj.type, status: empObj.status, isRisk: isRisk };
+            rawEmployees.forEach(emp => {
+                const clean = cleanName(emp.name);
+                const assets = filteredData.filter(a => cleanName(a.assignedTo) === clean && a.status === 'In-Use' && catFilter.has(a.category || "Uncategorized"));
+                if(emp.status === 'Active' || (emp.status === 'Inactive' && assets.length > 0)) {
+                    let isRisk = emp.status === 'Inactive' && assets.length > 0 && cleanName(emp.type) === 'employee';
+                    empCounts[emp.name] = { count: assets.length, assets: assets, type: emp.type, status: emp.status, isRisk: isRisk };
                 }
             });
-
             let buckets = { '0 Assets': [], '1 Asset': [], '2 Assets': [], '3 Assets': [], '4 Assets': [], '5+ Assets': [] };
-            Object.keys(empCounts).forEach(name => {
-                const data = empCounts[name];
-                const count = data.count;
-                let bucketName = count === 0 ? '0 Assets' : count === 1 ? '1 Asset' : count <= 4 ? `${count} Assets` : '5+ Assets';
-                if (!buckets[bucketName]) buckets[bucketName] = []; 
-                buckets[bucketName].push({ name, ...data });
+            Object.keys(empCounts).forEach(n => {
+                let c = empCounts[n].count, b = c===0?'0 Assets':c===1?'1 Asset':c<=4?`${c} Assets`:'5+ Assets';
+                if(!buckets[b]) buckets[b]=[]; buckets[b].push({ name: n, ...empCounts[n] });
             });
-
-            $('#stat-zero').text(buckets['0 Assets'].length);
-            $('#stat-one').text(buckets['1 Asset'].length);
-            const multiCount = (buckets['2 Assets'] ? buckets['2 Assets'].length : 0) + (buckets['3 Assets'] ? buckets['3 Assets'].length : 0) + (buckets['4 Assets'] ? buckets['4 Assets'].length : 0);
-            $('#stat-multi').text(multiCount);
+            
+            $('#stat-zero').text(buckets['0 Assets'].length); $('#stat-one').text(buckets['1 Asset'].length);
+            $('#stat-multi').text((buckets['2 Assets']?.length||0)+(buckets['3 Assets']?.length||0)+(buckets['4 Assets']?.length||0));
             $('#stat-hoard').text(buckets['5+ Assets'].length);
 
             let tbody = '';
             Object.keys(buckets).forEach(b => {
-                const users = buckets[b];
-                const count = users.length;
-                const empCount = users.filter(u => cleanName(u.type) === 'employee').length;
-                const otherCount = users.filter(u => cleanName(u.type) !== 'employee').length;
-                let btnHtml = count > 0 ? `<button class="btn btn-sm btn-outline-info" onclick='showUserList("${b}")'>View List</button>` : '-';
-                tbody += `<tr><td class="fw-bold">${b}</td><td><span class="badge bg-dark fs-6">${count}</span></td><td class="text-success fw-bold">${empCount}</td><td class="text-info fw-bold">${otherCount}</td><td>${btnHtml}</td></tr>`;
+                const us = buckets[b], c = us.length;
+                const ec = us.filter(u => cleanName(u.type)==='employee').length, oc = us.filter(u => cleanName(u.type)!=='employee').length;
+                tbody += `<tr><td class="fw-bold">${b}</td><td><span class="badge bg-dark fs-6">${c}</span></td><td class="text-success fw-bold">${ec}</td><td class="text-info fw-bold">${oc}</td><td>${c>0 ? `<button class="btn btn-sm btn-outline-info" onclick='showUserList("${b}")'>View List</button>` : '-'}</td></tr>`;
                 sections['ownership'].buckets[b] = buckets[b];
             });
             $('#ownershipBody').html(tbody);
-
+            
             const ctx = document.getElementById(`canvas-ownership`).getContext('2d');
-            if (sections['ownership'].chart) sections['ownership'].chart.destroy();
-            const labels = Object.keys(buckets);
-            const data = labels.map(k => buckets[k].length);
-            sections['ownership'].chart = new Chart(ctx, {
-                type: 'bar', data: { labels: labels, datasets: [{ label: 'Employee Count', data: data, backgroundColor: ['#e74a3b', '#1cc88a', '#f6c23e', '#fd7e14', '#fd7e14', '#4e73df'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
+            if(sections['ownership'].chart) sections['ownership'].chart.destroy();
+            sections['ownership'].chart = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(buckets), datasets: [{ label: 'Employees', data: Object.keys(buckets).map(k=>buckets[k].length), backgroundColor: ['#e74a3b', '#1cc88a', '#f6c23e', '#fd7e14', '#fd7e14', '#4e73df'] }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
 
-        function showDetails(sectionKey, rowVal, colVal) {
-            const config = sections[sectionKey];
-            let list = filteredData.filter(asset => config.statusFilter.has(asset.status || "Unknown") && String(asset[config.row] || "Unknown") === String(rowVal) && String(asset[config.col] || "Uncategorized") === String(colVal));
-            $('#modalTitle').html(`<i class="fas fa-list me-2"></i> ${rowVal} - ${colVal} (${list.length})`);
-            let html = list.map(asset => `<tr><td class="fw-bold text-primary">${asset.id}</td><td>${asset.serial}</td><td>${asset.category}</td><td>${asset.brand} ${asset.model}</td><td>${asset.location}</td><td>${asset.assignedTo || '-'}</td><td>${asset.status}</td></tr>`).join('');
-            $('#detailBody').html(html);
+        function showDetails(key, r, c) {
+            const conf = sections[key];
+            const list = filteredData.filter(a => conf.statusFilter.has(a.status) && String(a[conf.row])===String(r) && String(a[conf.col])===String(c));
+            $('#modalTitle').html(`${r} - ${c} (${list.length})`);
+            $('#detailBody').html(list.map(a => `<tr><td class="fw-bold text-primary">${a.id}</td><td>${a.serial}</td><td>${a.category}</td><td>${a.brand}</td><td>${a.location}</td><td>${a.assignedTo}</td><td>${a.status}</td></tr>`).join(''));
             new bootstrap.Modal(document.getElementById('detailModal')).show();
         }
 
-        function showUserList(bucketKey) {
-            currentModalData = sections['ownership'].buckets[bucketKey]; 
-            $('#userListTitle').text(`${bucketKey} - ${currentModalData.length} Employees`);
+        function showUserList(b) {
+            currentModalData = sections['ownership'].buckets[b]; 
+            $('#userListTitle').text(`${b} - ${currentModalData.length} Employees`);
             $('#modalFilterType').val('All'); $('#modalFilterStatus').val('All');
             renderUserListTable(currentModalData);
             new bootstrap.Modal(document.getElementById('userListModal')).show();
         }
 
         function filterUserList() {
-            const typeFilter = cleanName($('#modalFilterType').val());
-            const statusFilter = cleanName($('#modalFilterStatus').val());
-            const filteredList = currentModalData.filter(u => {
-                const matchType = typeFilter === 'all' || cleanName(u.type) === typeFilter;
-                const matchStatus = statusFilter === 'all' || cleanName(u.status) === statusFilter;
-                return matchType && matchStatus;
-            });
-            renderUserListTable(filteredList);
+            const t = cleanName($('#modalFilterType').val()), s = cleanName($('#modalFilterStatus').val());
+            renderUserListTable(currentModalData.filter(u => (t==='all'||cleanName(u.type)===t) && (s==='all'||cleanName(u.status)===s)));
         }
 
         function renderUserListTable(data) {
-            let html = data.map(u => {
-                const assetBadges = u.assets.map(a => `<span class="badge asset-badge-btn me-1 mb-1" onclick="viewSpecificAsset('${a.id}')">${a.category} <i class="fas fa-info-circle ms-1"></i></span>`).join('');
-                let rowClass = u.isRisk ? 'row-risk' : '';
-                return `<tr class="${rowClass}"><td><div class="fw-bold text-primary">${u.name}</div></td><td>${u.type}</td><td>${u.status}</td><td class="text-center fw-bold">${u.count}</td><td>${assetBadges || '<span class="text-muted">None</span>'}</td></tr>`;
-            }).join('');
-            $('#userListBody').html(html || '<tr><td colspan="5" class="text-center">No matching records</td></tr>');
+            $('#userListBody').html(data.map(u => {
+                const badges = u.assets.map(a => `<span class="badge asset-badge-btn me-1 mb-1" onclick="viewSpecificAsset('${a.id}')">${a.category} <i class="fas fa-info-circle ms-1"></i></span>`).join('');
+                return `<tr class="${u.isRisk?'row-risk':''}"><td><div class="fw-bold text-primary">${u.name}</div></td><td>${u.type}</td><td>${u.status}</td><td class="text-center fw-bold">${u.count}</td><td>${badges||'-'}</td></tr>`;
+            }).join('') || '<tr><td colspan="5" class="text-center">No records</td></tr>');
         }
 
-        function viewSpecificAsset(assetId) {
-            const asset = rawAssets.find(a => a.id === assetId);
-            if(!asset) return;
-            const html = `<tr><th class="bg-light w-25">Asset ID</th><td class="fw-bold text-primary">${asset.id}</td></tr><tr><th class="bg-light">Serial No</th><td>${asset.serial || '-'}</td></tr><tr><th class="bg-light">Category</th><td>${asset.category}</td></tr><tr><th class="bg-light">Brand / Model</th><td>${asset.brand} / ${asset.model}</td></tr><tr><th class="bg-light">Location</th><td>${asset.location}</td></tr><tr><th class="bg-light">Allocated To</th><td>${asset.assignedTo}</td></tr><tr><th class="bg-light">Status</th><td><span class="badge bg-secondary">${asset.status}</span></td></tr><tr><th class="bg-light">Remarks</th><td>${asset.remarks || 'None'}</td></tr>`;
-            $('#singleAssetBody').html(html);
+        function viewSpecificAsset(id) {
+            const a = rawAssets.find(x => x.id === id); if(!a) return;
+            $('#singleAssetBody').html(`<tr><th class="bg-light w-25">Asset ID</th><td class="fw-bold text-primary">${a.id}</td></tr><tr><th class="bg-light">Serial</th><td>${a.serial||'-'}</td></tr><tr><th class="bg-light">Category</th><td>${a.category}</td></tr><tr><th class="bg-light">Brand/Model</th><td>${a.brand} / ${a.model}</td></tr><tr><th class="bg-light">Location</th><td>${a.location}</td></tr><tr><th class="bg-light">User</th><td>${a.assignedTo}</td></tr><tr><th class="bg-light">Status</th><td>${a.status}</td></tr><tr><th class="bg-light">Remarks</th><td>${a.remarks||'-'}</td></tr>`);
             new bootstrap.Modal(document.getElementById('singleAssetModal')).show();
         }
 
