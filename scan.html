@@ -42,22 +42,59 @@
                 <div class="modal-body">
                     <form id="issueForm">
                         <input type="hidden" id="modalAssetId">
+                        <div class="mb-3"><label class="form-label">Employee ID</label><input type="text" class="form-control" id="empId" required></div>
+                        <div class="mb-3"><label class="form-label">Your Name</label><input type="text" class="form-control" id="empName" required></div>
+                        <div class="mb-3"><label class="form-label">Describe Issue</label><textarea class="form-control" id="issueDesc" rows="3" required></textarea></div>
+                        <button type="submit" class="btn btn-danger w-100">Submit Report</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="verifyModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Verify Your Asset</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="verifyForm">
+                        <input type="hidden" id="verifyAssetId">
                         
+                        <div class="alert alert-success d-flex align-items-center" role="alert">
+                            <i class="fas fa-user-check me-2"></i>
+                            <div><strong>Declaration:</strong> This asset belongs to me.</div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label small text-muted">Employee ID</label>
+                                <input type="text" class="form-control fw-bold" id="verifyEmpId" readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-muted">Name</label>
+                                <input type="text" class="form-control fw-bold" id="verifyEmpName" readonly>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Employee ID</label>
-                            <input type="text" class="form-control" id="empId" placeholder="e.g. EMP001" required>
+                            <label class="form-label">Front Photo <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="frontPic" accept="image/*" required>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Your Name</label>
-                            <input type="text" class="form-control" id="empName" placeholder="Enter Name" required>
+                            <label class="form-label">Back Photo <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="backPic" accept="image/*" required>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Describe the Issue</label>
-                            <textarea class="form-control" id="issueDesc" rows="3" placeholder="e.g. Screen flickering, Keyboard not working..." required></textarea>
+                            <label class="form-label">Remarks (Optional)</label>
+                            <textarea class="form-control" id="verifyRemark" rows="2" placeholder="Any physical damage or notes?"></textarea>
                         </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-danger btn-lg">Submit Report</button>
-                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 btn-lg">Submit Verification</button>
                     </form>
                 </div>
             </div>
@@ -68,10 +105,11 @@
 
     <script>
         // 👇👇👇 PASTE YOUR GAS WEB APP URL HERE 👇👇👇
-        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbxsrVHpKEdYE98vNZj5tevxJVwjj-VHJ32uhqvLUrGiG7XQQKwTz7HOf7TKd3dw56xVvA/exec"; 
 
         const params = new URLSearchParams(window.location.search);
         const assetId = params.get('id');
+        let currentAssetData = {}; 
 
         if(assetId) {
             fetchDetails(assetId);
@@ -87,6 +125,7 @@
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
+                    currentAssetData = result.data;
                     renderAsset(result.data);
                 } else {
                     document.getElementById('contentArea').innerHTML = '<div class="text-center p-5 text-danger"><h3>Asset Not Found</h3><p>Please check the ID.</p></div>';
@@ -97,7 +136,6 @@
             });
         }
 
-        // --- Render UI ---
         function renderAsset(data) {
             let statusColor = data.state === 'In-Use' ? '#f6c23e' : (data.state === 'Available' ? '#1cc88a' : '#e74a3b');
             
@@ -123,8 +161,13 @@
                     <div class="info-row"><span class="label">Config</span><span class="value text-break">${data.config}</span></div>
                     <div class="info-row"><span class="label">Location</span><span class="value">${data.location}</span></div>
                     
-                    <div class="p-4">
-                        <button class="btn btn-outline-danger w-100 fw-bold py-2" onclick="openReportModal('${data.id}')">
+                    <div class="p-4 d-grid gap-2">
+                        ${data.state === 'In-Use' ? `
+                        <button class="btn btn-success fw-bold py-2" onclick="openVerifyModal()">
+                            <i class="fas fa-camera me-2"></i> VERIFY YOUR ASSET
+                        </button>` : ''}
+                        
+                        <button class="btn btn-outline-danger fw-bold py-2" onclick="openReportModal('${data.id}')">
                             <i class="fas fa-bug me-2"></i> REPORT ISSUE
                         </button>
                     </div>
@@ -137,7 +180,61 @@
             document.getElementById('contentArea').innerHTML = html;
         }
 
-        // --- Handle Report Issue ---
+        // --- VERIFY ASSET LOGIC ---
+        function openVerifyModal() {
+            document.getElementById('verifyAssetId').value = currentAssetData.id;
+            
+            let userStr = currentAssetData.user || "";
+            let name = userStr; 
+            let id = "";
+            
+            if(userStr.includes("(") && userStr.includes(")")) {
+                let parts = userStr.split('(');
+                name = parts[0].trim();
+                id = parts[1].replace(')', '').trim();
+            }
+
+            document.getElementById('verifyEmpName').value = name;
+            document.getElementById('verifyEmpId').value = id;
+
+            new bootstrap.Modal(document.getElementById('verifyModal')).show();
+        }
+
+        document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Uploading...';
+            btn.disabled = true;
+
+            try {
+                const frontFile = document.getElementById('frontPic').files[0];
+                const backFile = document.getElementById('backPic').files[0];
+
+                const frontBase64 = await toBase64(frontFile);
+                const backBase64 = await toBase64(backFile);
+
+                const payload = {
+                    action: "verifyAsset",
+                    assetId: document.getElementById('verifyAssetId').value,
+                    empId: document.getElementById('verifyEmpId').value,
+                    empName: document.getElementById('verifyEmpName').value,
+                    remark: document.getElementById('verifyRemark').value,
+                    frontImage: { name: frontFile.name, type: frontFile.type, data: frontBase64 },
+                    backImage: { name: backFile.name, type: backFile.type, data: backBase64 }
+                };
+
+                sendData(payload, btn, originalText, 'verifyModal');
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire("Error", "Image processing failed.", "error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // --- REPORT ISSUE LOGIC ---
         function openReportModal(id) {
             document.getElementById('modalAssetId').value = id;
             new bootstrap.Modal(document.getElementById('issueModal')).show();
@@ -145,7 +242,6 @@
 
         document.getElementById('issueForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             const btn = e.target.querySelector('button');
             const originalText = btn.innerText;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
@@ -159,6 +255,18 @@
                 issue: document.getElementById('issueDesc').value
             };
 
+            sendData(payload, btn, originalText, 'issueModal');
+        });
+
+        // Helper Functions
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+
+        function sendData(payload, btn, btnText, modalId) {
             fetch(API_URL, {
                 method: "POST",
                 body: JSON.stringify(payload)
@@ -166,33 +274,27 @@
             .then(res => res.json())
             .then(data => {
                 if(data.status === "success") {
-                    // Close Modal
-                    const modalEl = document.getElementById('issueModal');
-                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
                     modal.hide();
-
-                    // Show Success
                     Swal.fire({
                         icon: 'success',
-                        title: 'Report Sent!',
-                        text: 'IT Team has been notified. Ticket ID: ' + data.message.split(': ')[1],
-                        confirmButtonColor: '#4e73df'
+                        title: 'Success!',
+                        text: data.message,
+                        confirmButtonColor: '#1cc88a'
                     });
-
-                    // Clear Form
-                    document.getElementById('issueForm').reset();
+                    document.getElementById(modalId === 'issueModal' ? 'issueForm' : 'verifyForm').reset();
                 } else {
-                    Swal.fire("Error", "Could not submit report.", "error");
+                    Swal.fire("Error", data.message || "Submission failed.", "error");
                 }
-                btn.innerText = originalText;
+                btn.innerText = btnText;
                 btn.disabled = false;
             })
             .catch(err => {
                 Swal.fire("Error", "Network Error.", "error");
-                btn.innerText = originalText;
+                btn.innerText = btnText;
                 btn.disabled = false;
             });
-        });
+        }
     </script>
 </body>
 </html>
