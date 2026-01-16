@@ -32,6 +32,56 @@
         </div>
     </div>
 
+    <div class="modal fade" id="verifyModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-camera me-2"></i>Verify Asset</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="verifyForm">
+                        <input type="hidden" id="verifyAssetId">
+                        
+                        <div class="alert alert-success d-flex align-items-center small py-2" role="alert">
+                            <i class="fas fa-check-circle me-2"></i> I confirm this asset is with me.
+                        </div>
+
+                        <div class="row mb-3 g-2">
+                            <div class="col-6">
+                                <label class="form-label small text-muted mb-0">Emp ID</label>
+                                <input type="text" class="form-control form-control-sm fw-bold" id="verifyEmpId" readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-muted mb-0">Name</label>
+                                <input type="text" class="form-control form-control-sm fw-bold" id="verifyEmpName" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold"><i class="fas fa-camera text-primary me-1"></i> Take Front Photo</label>
+                            <input type="file" class="form-control" id="frontPic" accept="image/*" capture="environment" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold"><i class="fas fa-camera text-primary me-1"></i> Take Back Photo</label>
+                            <input type="file" class="form-control" id="backPic" accept="image/*" capture="environment" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Remarks (Optional)</label>
+                            <textarea class="form-control" id="verifyRemark" rows="2" placeholder="Any scratches or damage?"></textarea>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">Submit & Upload</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="issueModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -46,55 +96,6 @@
                         <div class="mb-3"><label class="form-label">Your Name</label><input type="text" class="form-control" id="empName" required></div>
                         <div class="mb-3"><label class="form-label">Describe Issue</label><textarea class="form-control" id="issueDesc" rows="3" required></textarea></div>
                         <button type="submit" class="btn btn-danger w-100">Submit Report</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="verifyModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Verify Your Asset</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="verifyForm">
-                        <input type="hidden" id="verifyAssetId">
-                        
-                        <div class="alert alert-success d-flex align-items-center" role="alert">
-                            <i class="fas fa-user-check me-2"></i>
-                            <div><strong>Declaration:</strong> This asset belongs to me.</div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <label class="form-label small text-muted">Employee ID</label>
-                                <input type="text" class="form-control fw-bold" id="verifyEmpId" readonly>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small text-muted">Name</label>
-                                <input type="text" class="form-control fw-bold" id="verifyEmpName" readonly>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Front Photo <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" id="frontPic" accept="image/*" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Back Photo <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" id="backPic" accept="image/*" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Remarks (Optional)</label>
-                            <textarea class="form-control" id="verifyRemark" rows="2" placeholder="Any physical damage or notes?"></textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-success w-100 btn-lg">Submit Verification</button>
                     </form>
                 </div>
             </div>
