@@ -21,15 +21,21 @@
         .main-content { margin-left: 250px; padding: 30px; }
         
         .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #4e73df; height: 100%; transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-3px); }
+        .stat-card:hover { transform: translateY(-3px); cursor: pointer; }
         .chart-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 350px; }
         .table-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 20px; }
         
         .badge-verified { background-color: #1cc88a; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; }
+        .badge-rejected { background-color: #e74a3b; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; }
         .badge-pending { background-color: #f6c23e; color: #333; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; }
         
         .pagination .page-link { color: #4e73df; border-radius: 5px; margin: 0 2px; }
         .pagination .active .page-link { background-color: #4e73df; border-color: #4e73df; color: white; }
+        
+        tr.clickable-row { cursor: pointer; transition: background 0.2s; }
+        tr.clickable-row:hover { background-color: #f8f9fc !important; }
+        .img-preview-box { background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 10px; overflow: hidden; height: 250px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .img-preview-box img { width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; }
     </style>
     <script>
         const user = JSON.parse(sessionStorage.getItem("user"));
@@ -41,7 +47,7 @@
     <div class="sidebar">
         <h4 class="text-center mt-4 mb-4"><i class="fas fa-warehouse me-2"></i>Gretex ERP</h4>
         <div class="sidebar-menu">
-             <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
             <a href="reconciliation.html" ><i class="fas fa-tasks"></i> Reconciliation</a>
             <a href="verification.html" class="active"><i class="fas fa-database"></i> verification</a>
             <a href="Emp.html"><i class="fas fa-user-plus"></i> Add Employee</a>
@@ -64,84 +70,106 @@
 
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold">Verification Analytics</h3>
-            <button class="btn btn-primary shadow-sm" onclick="refreshAnalysis()"><i class="fas fa-sync-alt me-2"></i> Sync Now</button>
+            <div>
+                <h3 class="fw-bold mb-0">Audit & Verification</h3>
+                <small class="text-muted">Tracking audit progress and management approvals</small>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-outline-success" onclick="downloadCSV()"><i class="fas fa-file-csv me-2"></i>Export CSV</button>
+                <button class="btn btn-primary shadow-sm" onclick="refreshAnalysis()"><i class="fas fa-sync-alt me-2"></i> Sync Data</button>
+            </div>
         </div>
 
         <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="stat-card"><p class="text-muted small fw-bold mb-1">TOTAL ASSETS</p><h3 id="totalAssets">0</h3></div></div>
-            <div class="col-md-3"><div class="stat-card" style="border-top-color: #1cc88a;"><p class="text-muted small fw-bold mb-1">VERIFIED</p><h3 id="totalVerified" class="text-success">0</h3></div></div>
-            <div class="col-md-3"><div class="stat-card" style="border-top-color: #f6c23e;"><p class="text-muted small fw-bold mb-1">PENDING</p><h3 id="totalPending" class="text-warning">0</h3></div></div>
-            <div class="col-md-3"><div class="stat-card" style="border-top-color: #36b9cc;"><p class="text-muted small fw-bold mb-1">COMPLETION %</p><h3 id="completionRate">0%</h3></div></div>
+            <div class="col-md-2.4 col-lg-2"> <div class="stat-card"><p class="text-muted small fw-bold mb-1">TOTAL ASSETS</p><h3 id="totalAssets">0</h3></div>
+            </div>
+            <div class="col-md-2.4 col-lg-2">
+                <div class="stat-card" style="border-top-color: #1cc88a;"><p class="text-muted small fw-bold mb-1">APPROVED</p><h3 id="totalVerified" class="text-success">0</h3></div>
+            </div>
+            <div class="col-md-2.4 col-lg-2">
+                <div class="stat-card" style="border-top-color: #f6c23e;"><p class="text-muted small fw-bold mb-1">PENDING REVIEW</p><h3 id="totalPending" class="text-warning">0</h3></div>
+            </div>
+            <div class="col-md-2.4 col-lg-3">
+                <div class="stat-card" style="border-top-color: #4e73df;"><p class="text-muted small fw-bold mb-1">TOTAL SUBMITTED %</p><h3 id="submissionRate" class="text-primary">0%</h3></div>
+            </div>
+            <div class="col-md-2.4 col-lg-3">
+                <div class="stat-card" style="border-top-color: #36b9cc;"><p class="text-muted small fw-bold mb-1">APPROVAL RATE %</p><h3 id="completionRate">0%</h3></div>
+            </div>
         </div>
 
         <div class="table-card mb-4 p-3 border-start border-4 border-primary">
             <h6 class="fw-bold mb-3"><i class="fas fa-filter me-2 text-primary"></i>Advanced Filters</h6>
             <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="small fw-bold text-muted">Asset Master Status</label>
+                    <label class="small fw-bold text-muted">Master Status</label>
                     <select id="filterMasterStatus" class="form-select select2" multiple="multiple">
                         <option value="Available">Available</option>
                         <option value="In-Use">In-Use</option>
                         <option value="Repair">Repair</option>
                         <option value="Scrap">Scrap</option>
-                        <option value="GIFT">GIFT</option>
-                        <option value="Missing">Missing</option>
-                        <option value="IB Spare">IB Spare</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="small fw-bold text-muted">Verification Status</label>
+                    <label class="small fw-bold text-muted">Approval Status</label>
                     <select id="filterAuditStatus" class="form-select select2" multiple="multiple">
-                        <option value="Verified">Verified</option>
-                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Pending Review">Pending Review</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Pending">Not Submitted</option>
                     </select>
                 </div>
                 <div class="col-md-6">
                     <label class="small fw-bold text-muted">Search Asset or User</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                        <input type="text" id="tableSearch" class="form-control" placeholder="Search ID, Name, Category..." onkeyup="handleFilter()">
+                        <input type="text" id="tableSearch" class="form-control" placeholder="Search..." onkeyup="handleFilter()">
+                        <button class="btn btn-outline-secondary" onclick="clearFilters()">Reset</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row g-4 mb-4">
-            <div class="col-md-8"><div class="chart-container"><h6 class="text-muted fw-bold mb-3">Location-wise Audit Health</h6><canvas id="locationChart"></canvas></div></div>
-            <div class="col-md-4"><div class="chart-container"><h6 class="text-muted fw-bold mb-3">Overall Completion</h6><canvas id="statusPieChart"></canvas></div></div>
+            <div class="col-md-8"><div class="chart-container"><h6 class="text-muted fw-bold mb-3">Location Audit Status</h6><canvas id="locationChart"></canvas></div></div>
+            <div class="col-md-4"><div class="chart-container"><h6 class="text-muted fw-bold mb-3">Audit Summary</h6><canvas id="statusPieChart"></canvas></div></div>
         </div>
 
         <div class="table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold m-0">Asset Audit List</h5>
-                <div class="d-flex align-items-center gap-2">
-                    <small class="text-muted fw-bold">Show:</small>
-                    <select id="rowsPerPage" class="form-select form-select-sm" style="width: 80px;" onchange="changeRowsPerPage()">
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="all">ALL</option>
-                    </select>
-                </div>
+                <h5 class="fw-bold m-0">Asset List <small class="fw-normal text-muted fs-6" id="rowCount"></small></h5>
+                <select id="rowsPerPage" class="form-select form-select-sm" style="width: 80px;" onchange="changeRowsPerPage()">
+                    <option value="20">20</option><option value="50">50</option><option value="-1">ALL</option>
+                </select>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Asset ID</th><th>Category</th><th>Master Status</th><th>Location</th><th>Assigned User</th><th class="text-center">Verification</th><th>Last Seen</th>
+                            <th>Asset ID</th><th>Category</th><th>Master Status</th><th>Location</th><th>Assigned User</th><th class="text-center">Audit Status</th><th>Last Date</th><th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="analysisBody">
-                        <tr><td colspan="7" class="text-center p-5"><div class="spinner-border text-primary"></div></td></tr>
+                        <tr><td colspan="8" class="text-center p-5"><div class="spinner-border text-primary"></div></td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3">
-                <div class="small text-muted" id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+                <div class="small text-muted" id="paginationInfo"></div>
                 <nav><ul class="pagination pagination-sm mb-0" id="paginationControls"></ul></nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-certificate me-2"></i>Verification Proof</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light" id="modalBody"></div>
             </div>
         </div>
     </div>
@@ -164,19 +192,18 @@
         });
 
         function refreshAnalysis() {
-            Swal.fire({ title: 'Analyzing Data...', didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Fetching Data...', didOpen: () => Swal.showLoading() });
             fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getVerificationAnalysis" }) })
             .then(res => res.json())
             .then(result => {
                 if(result.status === "success") {
                     rawData = result.data;
-                    handleFilter(); // Initial filter & card update
+                    handleFilter();
                     Swal.close();
                 }
             }).catch(() => Swal.fire("Error", "API Connection Failed", "error"));
         }
 
-        // --- FILTER LOGIC WITH DYNAMIC CARD UPDATES ---
         function handleFilter() {
             const search = document.getElementById('tableSearch').value.toLowerCase();
             const selectedMaster = $('#filterMasterStatus').val() || [];
@@ -190,75 +217,173 @@
             });
 
             currentPage = 1;
-            updateSummaryCards(filteredData); // Update cards based on filter
+            updateSummaryCards(filteredData);
             renderTable();
-            renderCharts(); // Sync charts with filter
+            renderCharts();
         }
 
         function updateSummaryCards(data) {
             const total = data.length;
-            const verified = data.filter(d => d.auditStatus === "Verified").length;
-            const pending = total - verified;
-            const rate = total > 0 ? ((verified / total) * 100).toFixed(1) : 0;
+            const approved = data.filter(d => d.auditStatus === "Approved").length;
+            const pendingReview = data.filter(d => d.auditStatus === "Pending Review").length;
+            const totalSubmitted = approved + pendingReview;
+            
+            const submissionRate = total > 0 ? ((totalSubmitted / total) * 100).toFixed(1) : 0;
+            const approvalRate = total > 0 ? ((approved / total) * 100).toFixed(1) : 0;
 
             document.getElementById('totalAssets').innerText = total;
-            document.getElementById('totalVerified').innerText = verified;
-            document.getElementById('totalPending').innerText = pending;
-            document.getElementById('completionRate').innerText = rate + "%";
+            document.getElementById('totalVerified').innerText = approved;
+            document.getElementById('totalPending').innerText = pendingReview;
+            document.getElementById('submissionRate').innerText = submissionRate + "%";
+            document.getElementById('completionRate').innerText = approvalRate + "%";
+            document.getElementById('rowCount').innerText = `(${total} items)`;
         }
 
         function renderTable() {
             const body = document.getElementById('analysisBody');
             const start = (currentPage - 1) * rowsPerPage;
-            const end = rowsPerPage === -1 ? filteredData.length : start + rowsPerPage;
-            const pageData = filteredData.slice(start, rowsPerPage === -1 ? filteredData.length : end);
+            const end = rowsPerPage == -1 ? filteredData.length : start + rowsPerPage;
+            const pageData = filteredData.slice(start, end);
 
             if(filteredData.length === 0) {
-                body.innerHTML = '<tr><td colspan="7" class="text-center p-4">No matching records found.</td></tr>';
-                updatePaginationControls(0);
+                body.innerHTML = '<tr><td colspan="8" class="text-center p-4">No matching records.</td></tr>';
                 return;
             }
 
             body.innerHTML = pageData.map(item => `
-                <tr>
-                    <td class="fw-bold text-primary">${item.id}</td>
-                    <td><span class="badge bg-light text-dark border">${item.cat}</span></td>
-                    <td><span class="badge bg-info-subtle text-info border border-info-subtle">${item.masterStatus}</span></td>
+                <tr class="clickable-row">
+                    <td class="fw-bold text-primary" onclick="showDetails('${item.id}')">${item.id}</td>
+                    <td>${item.cat}</td>
+                    <td><span class="badge bg-info-subtle text-dark border border-info">${item.masterStatus}</span></td>
                     <td>${item.loc}</td>
                     <td>${item.user}</td>
-                    <td class="text-center"><span class="badge ${item.auditStatus === 'Verified' ? 'badge-verified' : 'badge-pending'}">${item.auditStatus}</span></td>
+                    <td class="text-center">
+                        <span class="badge ${getStatusClass(item.auditStatus)}">${item.auditStatus}</span>
+                    </td>
                     <td class="small text-muted">${item.date}</td>
+                    <td>
+                        ${item.date === 'Never' ? 
+                            `<button class="btn btn-sm btn-outline-success" onclick="sendReminder('${item.user}', '${item.id}')"><i class="fab fa-whatsapp"></i></button>` :
+                            `<button class="btn btn-sm btn-primary" onclick="showDetails('${item.id}')"><i class="fas fa-search-plus"></i> View</button>`
+                        }
+                    </td>
                 </tr>
             `).join('');
-
             updatePaginationControls(filteredData.length);
         }
 
+        function getStatusClass(status) {
+            if(status === 'Approved') return 'badge-verified';
+            if(status === 'Rejected') return 'badge-rejected';
+            if(status === 'Pending Review') return 'badge-pending';
+            return 'bg-secondary';
+        }
+
+        function showDetails(id) {
+            const item = rawData.find(x => x.id === id);
+            if(!item || item.date === 'Never') {
+                Swal.fire("Pending", "User has not submitted proof yet.", "info");
+                return;
+            }
+
+            const content = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="img-preview-box">
+                            ${item.frontLink ? `<img src="${item.frontLink}" onclick="window.open('${item.frontLink}')">` : '<i class="fas fa-image fa-3x text-muted"></i>'}
+                            <div class="position-absolute bottom-0 start-0 p-2 bg-dark text-white w-100 opacity-75 small text-center">FRONT VIEW</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="img-preview-box">
+                            ${item.backLink ? `<img src="${item.backLink}" onclick="window.open('${item.backLink}')">` : '<i class="fas fa-image fa-3x text-muted"></i>'}
+                            <div class="position-absolute bottom-0 start-0 p-2 bg-dark text-white w-100 opacity-75 small text-center">BACK VIEW</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 rounded bg-white border border-primary-subtle">
+                    <div class="row mb-2">
+                        <div class="col-6"><small class="text-muted d-block">Employee Name</small> <strong>${item.user}</strong></div>
+                        <div class="col-6 text-end"><small class="text-muted d-block">Submission Date</small> <strong>${item.date}</strong></div>
+                    </div>
+                    <div class="mb-4">
+                        <small class="text-muted d-block">User Remarks</small>
+                        <p class="fst-italic text-primary mb-0">"${item.remarks || 'No issues reported'}"</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success flex-grow-1 py-2 fw-bold" onclick="updateAuditStatus(${item.verifyRow}, 'Approved')">
+                            <i class="fas fa-check-circle me-2"></i> APPROVE
+                        </button>
+                        <button class="btn btn-danger flex-grow-1 py-2 fw-bold" onclick="updateAuditStatus(${item.verifyRow}, 'Rejected')">
+                            <i class="fas fa-times-circle me-2"></i> REJECT
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modalBody').innerHTML = content;
+            new bootstrap.Modal(document.getElementById('detailsModal')).show();
+        }
+
+        function updateAuditStatus(rowIndex, status) {
+            Swal.fire({
+                title: `Confirm ${status}?`,
+                text: `Set audit status to ${status}`,
+                icon: 'question',
+                showCancelButton: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
+                    fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ action: "updateVerificationStatus", rowIndex: rowIndex, newStatus: status })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        Swal.fire('Updated', `Asset has been ${status}`, 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('detailsModal')).hide();
+                        refreshAnalysis();
+                    });
+                }
+            });
+        }
+
+        function downloadCSV() {
+            let csv = "Asset ID,Category,Master Status,Location,User,Audit Status,Last Verified\n";
+            filteredData.forEach(row => {
+                csv += `"${row.id}","${row.cat}","${row.masterStatus}","${row.loc}","${row.user}","${row.auditStatus}","${row.date}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `Verification_Report_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+
+        function clearFilters() {
+            document.getElementById('tableSearch').value = '';
+            $('#filterMasterStatus, #filterAuditStatus').val(null).trigger('change');
+            handleFilter();
+        }
+
         function updatePaginationControls(totalRecords) {
-            const currentRows = rowsPerPage === -1 ? totalRecords : rowsPerPage;
-            const totalPages = Math.ceil(totalRecords / currentRows) || 1;
-            const info = document.getElementById('paginationInfo');
-            const controls = document.getElementById('paginationControls');
+            const actualRows = rowsPerPage == -1 ? totalRecords : rowsPerPage;
+            const totalPages = Math.ceil(totalRecords / actualRows) || 1;
+            const start = totalRecords === 0 ? 0 : (currentPage - 1) * actualRows + 1;
+            const end = Math.min(currentPage * actualRows, totalRecords);
+            document.getElementById('paginationInfo').innerText = `Showing ${start} to ${end} of ${totalRecords}`;
 
-            const start = totalRecords === 0 ? 0 : (currentPage - 1) * currentRows + 1;
-            const end = Math.min(currentPage * currentRows, totalRecords);
-            info.innerText = `Showing ${start} to ${totalRecords === 0 ? 0 : (rowsPerPage === -1 ? totalRecords : end)} of ${totalRecords} entries`;
-
-            let html = `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a></li>`;
+            let html = `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Prev</a></li>`;
             for(let i=1; i<=totalPages; i++) {
                 if(i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                     html += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i})">${i}</a></li>`;
-                } else if (i === currentPage - 2 || i === currentPage + 2) {
-                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
                 }
             }
             html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a></li>`;
-            controls.innerHTML = html;
+            document.getElementById('paginationControls').innerHTML = html;
         }
 
-        function changePage(page) { currentPage = page; renderTable(); window.scrollTo({ top: 400, behavior: 'smooth' }); }
-
-        function changeRowsPerPage() { rowsPerPage = document.getElementById('rowsPerPage').value === 'all' ? -1 : parseInt(document.getElementById('rowsPerPage').value); currentPage = 1; renderTable(); }
+        function changePage(page) { currentPage = page; renderTable(); }
+        function changeRowsPerPage() { rowsPerPage = parseInt(document.getElementById('rowsPerPage').value); currentPage = 1; renderTable(); }
 
         function renderCharts() {
             const ctxPie = document.getElementById('statusPieChart').getContext('2d');
@@ -266,10 +391,15 @@
             pieChartInstance = new Chart(ctxPie, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Verified', 'Pending'],
+                    labels: ['Approved', 'Pending Review', 'Rejected', 'Not Submitted'],
                     datasets: [{
-                        data: [filteredData.filter(d => d.auditStatus === "Verified").length, filteredData.filter(d => d.auditStatus === "Pending").length],
-                        backgroundColor: ['#1cc88a', '#f6c23e']
+                        data: [
+                            filteredData.filter(d => d.auditStatus === "Approved").length,
+                            filteredData.filter(d => d.auditStatus === "Pending Review").length,
+                            filteredData.filter(d => d.auditStatus === "Rejected").length,
+                            filteredData.filter(d => d.auditStatus === "Pending").length
+                        ],
+                        backgroundColor: ['#1cc88a', '#f6c23e', '#e74a3b', '#858796']
                     }]
                 },
                 options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
@@ -283,13 +413,15 @@
                 data: {
                     labels: locs,
                     datasets: [
-                        { label: 'Verified', data: locs.map(l => filteredData.filter(d => d.loc === l && d.auditStatus === 'Verified').length), backgroundColor: '#1cc88a' },
-                        { label: 'Pending', data: locs.map(l => filteredData.filter(d => d.loc === l && d.auditStatus === 'Pending').length), backgroundColor: '#f6c23e' }
+                        { label: 'Approved', data: locs.map(l => filteredData.filter(d => d.loc === l && d.auditStatus === 'Approved').length), backgroundColor: '#1cc88a' },
+                        { label: 'Pending Review', data: locs.map(l => filteredData.filter(d => d.loc === l && d.auditStatus === 'Pending Review').length), backgroundColor: '#f6c23e' }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
             });
         }
+        
+        function sendReminder(user, id) { window.open(`https://wa.me/?text=Hi ${user}, your asset ${id} verification is pending. Kindly scan and verify.`, '_blank'); }
         function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
     </script>
 </body>
