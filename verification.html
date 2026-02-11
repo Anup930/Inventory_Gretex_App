@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification Analysis - Gretex ERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { height: 100vh; width: 250px; position: fixed; top: 0; left: 0; background-color: #222e3c; color: white; padding-top: 20px; z-index: 1000; display: flex; flex-direction: column; }
+        .sidebar a { color: #aab8c5; padding: 12px 25px; display: flex; align-items: center; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
+        .sidebar a:hover, .sidebar a.active { background-color: rgba(255,255,255,0.1); color: white; border-left: 4px solid #4e73df; }
+        .sidebar-menu { flex-grow: 1; overflow-y: auto; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid #3e4b5b; background-color: #1a2530; }
+        .main-content { margin-left: 250px; padding: 30px; }
+        
+        .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #4e73df; height: 100%; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .chart-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 350px; }
+        .table-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 20px; }
+        
+        .badge-verified { background-color: #1cc88a; color: white; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; }
+        .badge-pending { background-color: #f6c23e; color: #333; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; }
+        
+        .pagination .page-link { color: #4e73df; border-radius: 5px; margin: 0 2px; }
+        .pagination .active .page-link { background-color: #4e73df; border-color: #4e73df; color: white; }
+    </style>
+    <script>
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        if (!user) window.location.href = "index.html";
+    </script>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h4 class="text-center mt-4 mb-4"><i class="fas fa-warehouse me-2"></i>Gretex ERP</h4>
+        <div class="sidebar-menu">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="verification.html" class="active"><i class="fas fa-clipboard-check"></i> Verification Analysis</a>
+            <a href="reconciliation.html"><i class="fas fa-tasks"></i> Reconciliation</a>
+            <a href="AssetHistory.html"><i class="fas fa-history"></i> Asset History</a>
+        </div>
+        <div class="sidebar-footer"><a href="#" onclick="logout()" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a></div>
+    </div>
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold">Verification Analytics</h3>
+            <button class="btn btn-primary shadow-sm" onclick="refreshAnalysis()"><i class="fas fa-sync-alt me-2"></i> Sync Now</button>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><div class="stat-card"><p class="text-muted small fw-bold mb-1">TOTAL ASSETS</p><h3 id="totalAssets">0</h3></div></div>
+            <div class="col-md-3"><div class="stat-card" style="border-top-color: #1cc88a;"><p class="text-muted small fw-bold mb-1">VERIFIED</p><h3 id="totalVerified" class="text-success">0</h3></div></div>
+            <div class="col-md-3"><div class="stat-card" style="border-top-color: #f6c23e;"><p class="text-muted small fw-bold mb-1">PENDING</p><h3 id="totalPending" class="text-warning">0</h3></div></div>
+            <div class="col-md-3"><div class="stat-card" style="border-top-color: #36b9cc;"><p class="text-muted small fw-bold mb-1">COMPLETION %</p><h3 id="completionRate">0%</h3></div></div>
+        </div>
+
+        <div class="table-card mb-4 p-3 border-start border-4 border-primary">
+            <h6 class="fw-bold mb-3"><i class="fas fa-filter me-2 text-primary"></i>Advanced Filters</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="small fw-bold text-muted">Asset Master Status</label>
+                    <select id="filterMasterStatus" class="form-select select2" multiple="multiple">
+                        <option value="Available">Available</option>
+                        <option value="In-Use">In-Use</option>
+                        <option value="Repair">Repair</option>
+                        <option value="Scrap">Scrap</option>
+                        <option value="GIFT">GIFT</option>
+                        <option value="Missing">Missing</option>
+                        <option value="IB Spare">IB Spare</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="small fw-bold text-muted">Verification Status</label>
+                    <select id="filterAuditStatus" class="form-select select2" multiple="multiple">
+                        <option value="Verified">Verified</option>
+                        <option value="Pending">Pending</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="small fw-bold text-muted">Search Asset or User</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" id="tableSearch" class="form-control" placeholder="Search ID, Name, Category..." onkeyup="handleFilter()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-8"><div class="chart-container"><h6 class="text-muted fw-bold mb-3">Location-wise Audit Health</h6><canvas id="locationChart"></canvas></div></div>
+            <div class="col-md-4"><div class="chart-container"><h6 class="text-muted fw-bold mb-3">Overall Completion</h6><canvas id="statusPieChart"></canvas></div></div>
+        </div>
+
+        <div class="table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0">Asset Audit List</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted fw-bold">Show:</small>
+                    <select id="rowsPerPage" class="form-select form-select-sm" style="width: 80px;" onchange="changeRowsPerPage()">
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="all">ALL</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Asset ID</th><th>Category</th><th>Master Status</th><th>Location</th><th>Assigned User</th><th class="text-center">Verification</th><th>Last Seen</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysisBody">
+                        <tr><td colspan="7" class="text-center p-5"><div class="spinner-border text-primary"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3">
+                <div class="small text-muted" id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+                <nav><ul class="pagination pagination-sm mb-0" id="paginationControls"></ul></nav>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbypAYvqG8Lw5-tVd-JaE4PNc6FEzkTRsEBr36uqGwA92wTxxMAOAgV9xeW9QPm4Q-0V2w/exec"; 
+        
+        let rawData = [], filteredData = [];
+        let currentPage = 1, rowsPerPage = 20;
+        let locationChartInstance = null, pieChartInstance = null;
+
+        $(document).ready(function() {
+            $('.select2').select2({ theme: 'bootstrap-5', placeholder: "Select filters" });
+            $('#filterMasterStatus, #filterAuditStatus').on('change', handleFilter);
+            refreshAnalysis();
+        });
+
+        function refreshAnalysis() {
+            Swal.fire({ title: 'Analyzing Data...', didOpen: () => Swal.showLoading() });
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getVerificationAnalysis" }) })
+            .then(res => res.json())
+            .then(result => {
+                if(result.status === "success") {
+                    rawData = result.data;
+                    handleFilter(); // Initial filter & card update
+                    Swal.close();
+                }
+            }).catch(() => Swal.fire("Error", "API Connection Failed", "error"));
+        }
+
+        // --- FILTER LOGIC WITH DYNAMIC CARD UPDATES ---
+        function handleFilter() {
+            const search = document.getElementById('tableSearch').value.toLowerCase();
+            const selectedMaster = $('#filterMasterStatus').val() || [];
+            const selectedAudit = $('#filterAuditStatus').val() || [];
+
+            filteredData = rawData.filter(d => {
+                const matchesSearch = (d.id + d.cat + d.loc + d.user).toLowerCase().includes(search);
+                const matchesMaster = (selectedMaster.length === 0) || selectedMaster.includes(d.masterStatus);
+                const matchesAudit = (selectedAudit.length === 0) || selectedAudit.includes(d.auditStatus);
+                return matchesSearch && matchesMaster && matchesAudit;
+            });
+
+            currentPage = 1;
+            updateSummaryCards(filteredData); // Update cards based on filter
+            renderTable();
+            renderCharts(); // Sync charts with filter
+        }
+
+        function updateSummaryCards(data) {
+            const total = data.length;
+            const verified = data.filter(d => d.auditStatus === "Verified").length;
+            const pending = total - verified;
+            const rate = total > 0 ? ((verified / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('totalAssets').innerText = total;
+            document.getElementById('totalVerified').innerText = verified;
+            document.getElementById('totalPending').innerText = pending;
+            document.getElementById('completionRate').innerText = rate + "%";
+        }
+
+        function renderTable() {
+            const body = document.getElementById('analysisBody');
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = rowsPerPage === -1 ? filteredData.length : start + rowsPerPage;
+            const pageData = filteredData.slice(start, rowsPerPage === -1 ? filteredData.length : end);
+
+            if(filteredData.length === 0) {
+                body.innerHTML = '<tr><td colspan="7" class="text-center p-4">No matching records found.</td></tr>';
+                updatePaginationControls(0);
+                return;
+            }
+
+            body.innerHTML = pageData.map(item => `
+                <tr>
+                    <td class="fw-bold text-primary">${item.id}</td>
+                    <td><span class="badge bg-light text-dark border">${item.cat}</span></td>
+                    <td><span class="badge bg-info-subtle text-info border border-info-subtle">${item.masterStatus}</span></td>
+                    <td>${item.loc}</td>
+                    <td>${item.user}</td>
+                    <td class="text-center"><span class="badge ${item.auditStatus === 'Verified' ? 'badge-verified' : 'badge-pending'}">${item.auditStatus}</span></td>
+                    <td class="small text-muted">${item.date}</td>
+                </tr>
+            `).join('');
+
+            updatePaginationControls(filteredData.length);
+        }
+
+        function updatePaginationControls(totalRecords) {
+            const currentRows = rowsPerPage === -1 ? totalRecords : rowsPerPage;
+            const totalPages = Math.ceil(totalRecords / currentRows) || 1;
+            const info = document.getElementById('paginationInfo');
+            const controls = document.getElementById('paginationControls');
+
+            const start = totalRecords === 0 ? 0 : (currentPage - 1) * currentRows + 1;
+            const end = Math.min(currentPage * currentRows, totalRecords);
+            info.innerText = `Showing ${start} to ${totalRecords === 0 ? 0 : (rowsPerPage === -1 ? totalRecords : end)} of ${totalRecords} entries`;
+
+            let html = `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a></li>`;
+            for(let i=1; i<=totalPages; i++) {
+                if(i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    html += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i})">${i}</a></li>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+            html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a></li>`;
+            controls.innerHTML = html;
+        }
+
+        function changePage(page) { currentPage = page; renderTable(); window.scrollTo({ top: 400, behavior: 'smooth' }); }
+
+        function changeRowsPerPage() { rowsPerPage = document.getElementById('rowsPerPage').value === 'all' ? -1 : parseInt(document.getElementById('rowsPerPage').value); currentPage = 1; renderTable(); }
+
+        function renderCharts() {
+            const ctxPie = document.getElementById('statusPieChart').getContext('2d');
+            if(pieChartInstance) pieChartInstance.destroy();
+            pieChartInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Verified', 'Pending'],
+                    datasets: [{
+                        data: [filteredData.filter(d => d.auditStatus === "Verified").length, filteredData.filter(d => d.auditStatus === "Pending").length],
+                        backgroundColor: ['#1cc88a', '#f6c23e']
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            const locs = [...new Set(filteredData.map(d => d.loc))].sort();
+            const ctxBar = document.getElementById('locationChart').getContext('2d');
+            if(locationChartInstance) locationChartInstance.destroy();
+            locationChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: locs,
+                    datasets: [
+                        { label: 'Verified', data: locs.map(l => filteredData.filter(d => d.loc === l && d.auditStatus === 'Verified').length), backgroundColor: '#1cc88a' },
+                        { label: 'Pending', data: locs.map(l => filteredData.filter(d => d.loc === l && d.auditStatus === 'Pending').length), backgroundColor: '#f6c23e' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+        }
+        function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>
