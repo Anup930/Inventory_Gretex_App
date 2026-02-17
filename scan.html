@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Redirecting...</title>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const assetId = params.get('id');
+
+    if (assetId) {
+      window.location.href = 
+        "https://inventory-vercel-psi.vercel.app/scan.html?id=" + assetId;
+    } else {
+      document.write("Invalid QR Code");
+    }
+  </script>
+</head>
+<body>
+  Redirecting...
+</body>
+</html>
